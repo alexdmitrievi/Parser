@@ -1,0 +1,45 @@
+# Парсер Тендеров — Контекст проекта
+
+## Стек
+- Python 3.11+, httpx, BeautifulSoup4, lxml, pydantic, tenacity
+- Supabase (PostgreSQL) — БД
+- Vercel Serverless — Telegram webhook + REST API
+- GitHub Actions — cron-парсинг (каждые 6-12 часов)
+
+## Архитектура
+```
+scrapers/       — парсеры площадок (наследуют от base.py BaseScraper)
+pipeline/       — normalizer, tagger, notifier
+bot/            — Telegram-бот (чистый Bot API через httpx, без aiogram)
+api/            — Vercel serverless functions
+shared/         — config, db (supabase-py), models (pydantic), constants
+scripts/        — entry points для GitHub Actions
+```
+
+## Модель данных (Supabase таблица tenders)
+Ключевые поля: source_platform, registry_number, law_type (44-fz / 223-fz / commercial),
+purchase_method, title, description, customer_name, customer_inn, customer_region,
+okpd2_codes[], nmck, submission_deadline, status, niche_tags[], original_url
+
+UNIQUE constraint: (source_platform, registry_number) — для дедупликации через upsert.
+
+## Что уже реализовано (8 парсеров)
+1. eis_ftp.py — FTP zakupki.gov.ru (XML в ZIP), 44-ФЗ
+2. eis_api.py — HTTP поиск на zakupki.gov.ru, 44-ФЗ + 223-ФЗ
+3. roseltorg.py — Росэлторг, 44-ФЗ
+4. sberbank_ast.py — Сбербанк-АСТ, 44-ФЗ
+5. rts_tender.py — РТС-тендер, 44-ФЗ
+6. tektorg.py — ТЭК-Торг, 223-ФЗ
+7. b2b_center.py — B2B-Center, коммерческие
+8. tenderguru.py — агрегатор
+
+## Ниши
+- furniture (мебель): ОКПД2 31.x, keywords в shared/config.py
+- construction (подряды): ОКПД2 41-43, 71.1, 81.1
+
+## Стиль кода
+- Type hints везде, docstrings Google-style
+- Logging через стандартный logging (не print)
+- Обработка ошибок: try/except с логированием, graceful degradation
+- Комментарии бизнес-логики на русском, технические на английском
+- Каждый scraper наследует BaseScraper (retry, rate limiting, User-Agent rotation)
