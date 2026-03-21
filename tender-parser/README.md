@@ -1,138 +1,66 @@
-# 🔍 Парсер Тендеров — Telegram Bot + API
+# Парсер Тендеров — Telegram Bot + API
 
 Система парсинга тендеров с государственных и коммерческих площадок РФ.
-Telegram-бот для поиска и подписки на тендеры. Бесплатный хостинг.
+Telegram-бот с поиском, фильтрами и автоматическими уведомлениями.
 
 ## Архитектура
 
-```
-GitHub Actions (cron)  →  Парсинг площадок  →  Supabase (PostgreSQL)
-                                                       ↑
-Vercel (serverless)    →  Telegram webhook   →  Поиск / подписки
-                       →  REST API /api/tenders
-```
+| Компонент | Сервис | Стоимость |
+|-----------|--------|-----------|
+| Telegram бот (webhook) | Vercel Serverless | Бесплатно |
+| API поиска | Vercel Serverless | Бесплатно |
+| Парсинг (cron) | GitHub Actions | Бесплатно |
+| Уведомления (cron) | GitHub Actions | Бесплатно |
+| База данных | Supabase PostgreSQL | Бесплатно (500MB) |
 
-## Площадки
+## Деплой: пошаговая инструкция
 
-- **ЕИС** (zakupki.gov.ru) — FTP-выгрузки, 44-ФЗ, 223-ФЗ
-- **TenderGuru** — агрегатор (HTTP scraping)
-- *Планируется:* Сбербанк-АСТ, РТС-тендер, B2B-Center, Fabrikant
+### Шаг 1: Создать Telegram-бота
+1. Открыть @BotFather в Telegram
+2. Отправить /newbot, задать имя и username
+3. Скопировать токен
 
-## Ниши (пресеты)
+### Шаг 2: Создать БД в Supabase
+1. Зайти на supabase.com, создать проект
+2. SQL Editor → выполнить scripts/init_db.sql
+3. Settings → API → скопировать URL и anon key
 
-- 🛋 **Мебель** — ОКПД2: 31.x, ключевые слова: мебель, диван, кресло...
-- 🏗 **Подряды** — ОКПД2: 41-43, 71.1, ключевые слова: подряд, ремонт, СМР...
-
----
-
-## Быстрый старт (15 минут)
-
-### 1. Создать Telegram-бота
-
-1. Открой [@BotFather](https://t.me/BotFather)
-2. `/newbot` → задай имя и username
-3. Скопируй токен (формат: `123456:ABC-DEF...`)
-
-### 2. Создать базу данных в Supabase
-
-1. Зайди на [supabase.com](https://supabase.com), создай проект
-2. Открой **SQL Editor**
-3. Скопируй содержимое `scripts/init_db.sql` и выполни
-4. Запиши **Project URL** и **anon key** из Settings → API
-
-### 3. Форкнуть репозиторий и добавить секреты
-
-1. Форкни этот репозиторий на GitHub
-2. Перейди в Settings → Secrets and variables → Actions
-3. Добавь секреты:
-   - `TELEGRAM_BOT_TOKEN` — токен бота
-   - `SUPABASE_URL` — URL проекта (https://xxxxx.supabase.co)
-   - `SUPABASE_KEY` — anon key
-
-### 4. Деплой на Vercel
-
-1. Зайди на [vercel.com](https://vercel.com), подключи GitHub-репо
-2. В настройках проекта добавь Environment Variables:
-   - `TELEGRAM_BOT_TOKEN`
-   - `SUPABASE_URL`
-   - `SUPABASE_KEY`
-3. Деплой произойдёт автоматически
-
-### 5. Установить Telegram webhook
-
+### Шаг 3: Запушить в GitHub
 ```bash
-# Замени URL на свой Vercel-домен
-export TELEGRAM_BOT_TOKEN="123456:ABC-DEF..."
-export SUPABASE_URL="https://xxxxx.supabase.co"
-export SUPABASE_KEY="eyJhb..."
+cd tender-parser
+git init && git add . && git commit -m "init"
+git branch -M main
+git remote add origin https://github.com/YOU/tender-parser.git
+git push -u origin main
+```
+Settings → Secrets → добавить: TELEGRAM_BOT_TOKEN, SUPABASE_URL, SUPABASE_KEY
 
-python scripts/setup_webhook.py https://YOUR-PROJECT.vercel.app/api/webhook
+### Шаг 4: Деплой на Vercel
+1. vercel.com → Add New Project → выбрать репо
+2. Environment Variables → добавить те же 3 переменные
+3. Deploy
+
+### Шаг 5: Установить Webhook
+```
+https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<VERCEL_URL>/api/webhook
 ```
 
-Или вручную в браузере:
-```
-https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://YOUR-PROJECT.vercel.app/api/webhook
-```
+### Шаг 6: Проверить
+Написать боту /start в Telegram.
 
-### 6. Готово!
-
-- GitHub Actions запустятся автоматически по cron (парсинг + рассылка)
-- Для ручного запуска: Actions → Parse EIS FTP → Run workflow
-- Откройте бота в Telegram и нажмите `/start`
-
----
-
-## Структура проекта
-
-```
-tender-parser/
-├── api/                    # Vercel Serverless Functions
-│   ├── webhook.py          # POST /api/webhook — Telegram
-│   └── tenders.py          # GET /api/tenders — REST API
-├── bot/                    # Telegram-бот
-│   ├── handler.py          # Роутинг команд и callback
-│   ├── keyboards.py        # Inline-клавиатуры
-│   └── messages.py         # Шаблоны сообщений
-├── scrapers/               # Парсеры площадок
-│   ├── base.py             # Базовый класс
-│   ├── eis_ftp.py          # ЕИС FTP
-│   └── tenderguru.py       # TenderGuru
-├── pipeline/               # Обработка данных
-│   ├── normalizer.py       # Нормализация
-│   ├── tagger.py           # Авто-тегирование по нишам
-│   └── notifier.py         # Рассылка уведомлений
-├── shared/                 # Общие модули
-│   ├── config.py           # Конфигурация
-│   ├── db.py               # Supabase клиент
-│   ├── models.py           # Pydantic-модели
-│   └── constants.py        # Константы
-├── scripts/
-│   ├── run_parser.py       # Запуск парсеров
-│   ├── run_notifier.py     # Запуск рассылки
-│   ├── setup_webhook.py    # Установка webhook
-│   └── init_db.sql         # SQL миграция
-├── .github/workflows/      # GitHub Actions cron
-├── vercel.json
-├── requirements.txt
-└── .env.example
-```
+## Команды бота
+- /start — Главное меню
+- /search — Поиск тендеров
+- /subscribe — Создать подписку
+- /mysubs — Мои подписки
+- /hot — Горячие тендеры
+- /help — Справка
 
 ## API
-
 ```
-GET /api/tenders?q=мебель&region=Омская+область&min_nmck=100000&page=1
+GET /api/tenders?q=мебель&region=Москва&niche=furniture&page=1
 ```
 
-Параметры: `q`, `region`, `min_nmck`, `max_nmck`, `okpd2`, `niche`, `status`, `law_type`, `page`, `per_page`
-
-## Добавление новых площадок
-
-1. Создай файл `scrapers/new_platform.py`
-2. Наследуй от `BaseScraper`
-3. Реализуй `parse_tenders()` и `run()`
-4. Добавь вызов в `scripts/run_parser.py`
-5. Добавь GitHub Actions workflow
-
----
-
-**Лицензия:** MIT
+## Ниши
+- Мебель (ОКПД2: 31.0x) — Омск, Новосибирск, Тюмень
+- Подряды (ОКПД2: 41-43, 71.1, 81.1) — вся РФ
