@@ -5,6 +5,10 @@ on:
     - cron: '0 * * * *'  # Каждый час
   workflow_dispatch: {}
 
+defaults:
+  run:
+    working-directory: tender-parser
+
 jobs:
   notify:
     runs-on: ubuntu-latest
@@ -17,9 +21,10 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: tender-parser/requirements-parser.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-parser.txt
 
       - name: Send notifications
         run: python scripts/run_notifier.py --since 65

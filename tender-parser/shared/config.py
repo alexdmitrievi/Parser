@@ -51,6 +51,20 @@ def get_env(key: str, default: str = "") -> str:
     return os.environ.get(key, default)
 
 
+def supabase_url() -> str:
+    """URL проекта Supabase (для скриптов и status updater)."""
+    return get_env("SUPABASE_URL") or get_env("NEXT_PUBLIC_SUPABASE_URL")
+
+
+def supabase_key() -> str:
+    """Ключ Supabase: для админ-скриптов сначала service role, иначе anon/SUPABASE_KEY."""
+    return (
+        get_env("SUPABASE_SERVICE_ROLE_KEY")
+        or get_env("SUPABASE_KEY")
+        or get_env("SUPABASE_ANON_KEY")
+    )
+
+
 def get_config() -> dict:
     return {
         "telegram_bot_token": get_env("TELEGRAM_BOT_TOKEN"),

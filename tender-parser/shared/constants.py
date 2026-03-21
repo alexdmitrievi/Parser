@@ -12,6 +12,17 @@ POPULAR_REGIONS = [
     "Республика Татарстан",
 ]
 
+# Приоритет источников при merge одного registry_number (дедупликация)
+PRIMARY_SOURCE_PRIORITY = (
+    "eis",
+    "etp_ets",
+    "etpgpb",
+    "lot_online",
+    "zakupki_mos",
+    "fabrikant",
+    "tenderpro",
+)
+
 # Маппинг площадок
 PLATFORMS = {
     "eis": {"name": "ЕИС (zakupki.gov.ru)", "url": "https://zakupki.gov.ru"},

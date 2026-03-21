@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from datetime import datetime
+from typing import Any, Optional
 
 from supabase import create_client, Client
 
@@ -250,3 +251,57 @@ def register_user(telegram_user_id: int, username: str = "", first_name: str = "
         }, on_conflict="telegram_user_id").execute()
     except Exception as e:
         logger.error(f"Error registering user: {e}")
+
+
+# ──────────────────────── Dict-строки (scrapers/scripts/run_parser) ────────────────────────
+
+
+def _serialize_row_for_db(row: dict[str, Any]) -> dict[str, Any]:
+    """Привести dict парсера к колонкам таблицы tenders."""
+    out = dict(row)
+    if "external_url" in out:
+        out["original_url"] = out.pop("external_url") or out.get("original_url")
+    if "raw_payload" in out:
+        out["raw_data"] = out.pop("raw_payload")
+    for key in ("publish_date", "submission_deadline", "auction_date"):
+        val = out.get(key)
+        if isinstance(val, datetime):
+            out[key] = val.isoformat()
+    return out
+
+
+def fetch_tender_by_registry(registry_number: str) -> dict[str, Any] | None:
+    """Одна запись по номеру закупки (для merge при дедупликации)."""
+    if not (registry_number or "").strip():
+        return None
+    db = get_db()
+    try:
+        result = (
+            db.table("tenders")
+            .select("*")
+            .eq("registry_number", registry_number.strip())
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        return rows[0] if rows else None
+    except Exception as e:
+        logger.error(f"fetch_tender_by_registry: {e}")
+        return None
+
+
+def upsert_tender(row: dict[str, Any]) -> None:
+    """Upsert dict-строки (альт. парсер); конфликт по source_platform + registry_number."""
+    db = get_db()
+    payload = _serialize_row_for_db(row)
+    sp = payload.get("source_platform")
+    reg = payload.get("registry_number")
+    if not sp or not reg:
+        logger.warning("upsert_tender: missing source_platform or registry_number")
+        return
+    try:
+        db.table("tenders").upsert(
+            payload, on_conflict="source_platform,registry_number"
+        ).execute()
+    except Exception as e:
+        logger.error(f"upsert_tender: {e}")

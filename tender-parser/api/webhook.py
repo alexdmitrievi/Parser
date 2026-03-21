@@ -1,53 +1,48 @@
-"""Vercel Serverless Function: Telegram webhook handler.
-
-POST /api/webhook — принимает Update от Telegram.
+"""
+Telegram webhook для Vercel Python (@vercel/python).
+В начале — корень репозитория в sys.path (импорт bot/, shared/).
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import sys
-import os
-
-# Добавляем корень проекта в path для импортов
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from http.server import BaseHTTPRequestHandler
+from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 logger = logging.getLogger(__name__)
 
 
 class handler(BaseHTTPRequestHandler):
-    """Vercel Python serverless handler."""
+    """Vercel ожидает класс handler(BaseHTTPRequestHandler)."""
 
-    def do_POST(self):
+    def do_POST(self) -> None:
         try:
-            content_length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(content_length)
-            update = json.loads(body)
+            length = int(self.headers.get("Content-Length", 0))
+            raw = self.rfile.read(length)
+            data = json.loads(raw.decode("utf-8"))
+            from bot.handler import process_update
 
-            logger.info(f"Received update: {update.get('update_id', '?')}")
-
-            from bot.handler import handle_update
-            handle_update(update)
-
+            asyncio.run(process_update(data))
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(b'{"ok": true}')
-
-        except Exception as e:
-            logger.error(f"Webhook error: {e}", exc_info=True)
-            self.send_response(200)  # Всегда 200, чтобы Telegram не ретраил
-            self.send_header("Content-Type", "application/json")
+            self.wfile.write(b"OK")
+        except Exception:
+            logger.exception("webhook POST failed")
+            self.send_response(500)
             self.end_headers()
-            self.wfile.write(b'{"ok": true}')
+            self.wfile.write(b"ERR")
 
-    def do_GET(self):
-        """Health check."""
+    def do_GET(self) -> None:
         self.send_response(200)
-        self.send_header("Content-Type", "application/json")
         self.end_headers()
-        self.wfile.write(b'{"status": "Tender Parser Bot is running"}')
+        self.wfile.write(b'{"ok":true}')
+
+    def log_message(self, fmt: str, *args: object) -> None:
+        logger.info("%s - %s", self.address_string(), fmt % args if args else fmt)

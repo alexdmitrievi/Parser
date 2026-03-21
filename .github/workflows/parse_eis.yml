@@ -1,14 +1,18 @@
-name: Parse Commercial Platforms
+name: Parse EIS (Government)
 
 on:
   schedule:
-    - cron: '0 */12 * * *'  # Каждые 12 часов
+    - cron: '0 */6 * * *'  # Каждые 6 часов
   workflow_dispatch: {}
+
+defaults:
+  run:
+    working-directory: tender-parser
 
 jobs:
   parse:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -16,10 +20,17 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - run: pip install -r requirements.txt
+          cache-dependency-path: tender-parser/requirements-parser.txt
+      - run: pip install -r requirements-parser.txt
 
-      - name: Parse Commercial (B2B-Center, TenderGuru)
-        run: python scripts/run_parser.py --source commercial
+      - name: Parse EIS FTP
+        run: python scripts/run_parser.py --source eis_ftp
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Parse EIS API
+        run: python scripts/run_parser.py --source eis_api
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}

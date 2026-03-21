@@ -27,11 +27,14 @@ CREATE TABLE IF NOT EXISTS tenders (
     original_url TEXT,
     raw_data JSONB,
     niche_tags TEXT[] DEFAULT '{}',
+    sources TEXT[] DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
 
     UNIQUE(source_platform, registry_number)
 );
+
+ALTER TABLE tenders ADD COLUMN IF NOT EXISTS sources TEXT[] DEFAULT '{}';
 
 -- Полнотекстовый поиск (русский)
 ALTER TABLE tenders ADD COLUMN IF NOT EXISTS fts tsvector
@@ -102,6 +105,14 @@ CREATE TABLE IF NOT EXISTS bot_users (
     is_premium BOOLEAN DEFAULT FALSE,
     max_subscriptions INT DEFAULT 3,
     created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Состояние диалогов бота (wizard и т.п.; опционально — handler может использовать callback_data)
+CREATE TABLE IF NOT EXISTS bot_state (
+    telegram_user_id BIGINT PRIMARY KEY,
+    state TEXT DEFAULT '',
+    data JSONB DEFAULT '{}',
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 

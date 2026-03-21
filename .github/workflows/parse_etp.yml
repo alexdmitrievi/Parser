@@ -1,9 +1,13 @@
-name: Parse EIS (Government)
+name: Parse Federal ETPs
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Каждые 6 часов
+    - cron: '0 3,15 * * *'  # 2 раза в день (03:00, 15:00 UTC)
   workflow_dispatch: {}
+
+defaults:
+  run:
+    working-directory: tender-parser
 
 jobs:
   parse:
@@ -16,16 +20,11 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - run: pip install -r requirements.txt
+          cache-dependency-path: tender-parser/requirements-parser.txt
+      - run: pip install -r requirements-parser.txt
 
-      - name: Parse EIS FTP
-        run: python scripts/run_parser.py --source eis_ftp
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-
-      - name: Parse EIS API
-        run: python scripts/run_parser.py --source eis_api
+      - name: Parse Federal ETPs (Roseltorg, Sberbank-AST, RTS, TekTorg)
+        run: python scripts/run_parser.py --source etp
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
