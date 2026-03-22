@@ -6,6 +6,7 @@
     { "src": "web/**", "use": "@vercel/static" }
   ],
   "routes": [
+    { "handle": "filesystem" },
     { "src": "/api/webhook", "dest": "/api/webhook.py" },
     { "src": "/api/search(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/subscriptions(.*)", "dest": "/api/tenders.py" },
@@ -13,8 +14,6 @@
     { "src": "/api/stats", "dest": "/api/tenders.py" },
     { "src": "/api/niches", "dest": "/api/tenders.py" },
     { "src": "/health", "dest": "/api/tenders.py" },
-    { "src": "/web/(.*)", "dest": "/web/$1" },
-    { "src": "/web", "dest": "/web/index.html" },
     { "src": "/", "dest": "/web/index.html" }
   ]
 }
