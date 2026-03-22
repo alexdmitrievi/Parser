@@ -1,8 +1,7 @@
-# Минимум для Vercel (webhook + tenders API через Mangum / FastAPI)
+# Vercel serverless: webhook + tenders API
 supabase>=2.0.0
 httpx>=0.27.0
 pydantic>=2.5.0
 fastapi>=0.115.0
-mangum>=0.17.0
-python-telegram-bot>=21.0
 starlette>=0.37.0
+python-telegram-bot>=21.0
