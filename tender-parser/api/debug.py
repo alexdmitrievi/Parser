@@ -1,10 +1,11 @@
-"""Диагностика: показывает ошибки импорта и конфигурации."""
+"""Диагностика: показывает ошибки импорта, конфигурации и БД."""
 
 from __future__ import annotations
 
 import json
 import os
 import sys
+import traceback
 from http.server import BaseHTTPRequestHandler
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,45 +18,56 @@ class handler(BaseHTTPRequestHandler):
         info = {
             "python": sys.version,
             "root": _ROOT,
-            "sys_path": sys.path[:5],
             "env_supabase_url": bool(os.getenv("SUPABASE_URL")),
             "env_supabase_key": bool(os.getenv("SUPABASE_KEY")),
-            "env_telegram": bool(os.getenv("TELEGRAM_BOT_TOKEN")),
             "imports": {},
+            "db_test": None,
+            "mangum_test": None,
         }
 
-        for mod in ["mangum", "fastapi", "supabase", "httpx", "pydantic", "starlette"]:
+        # Test imports
+        for mod in ["mangum", "fastapi", "supabase", "httpx", "pydantic"]:
             try:
                 __import__(mod)
                 info["imports"][mod] = "ok"
             except Exception as e:
                 info["imports"][mod] = str(e)
 
+        # Test actual DB query
         try:
             from shared.config import supabase_url, supabase_key
-            info["imports"]["shared.config"] = "ok"
-            info["supabase_url_value"] = supabase_url()[:30] + "..." if supabase_url() else "EMPTY"
+            from supabase import create_client
+            url, key = supabase_url(), supabase_key()
+            cli = create_client(url, key)
+            res = cli.table("tenders").select("id", count="exact").limit(1).execute()
+            count = getattr(res, "count", None)
+            rows = len(res.data) if res.data else 0
+            info["db_test"] = {"status": "ok", "total_tenders": count, "rows_returned": rows}
         except Exception as e:
-            info["imports"]["shared.config"] = str(e)
+            info["db_test"] = {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
-        try:
-            from shared.db import get_db
-            info["imports"]["shared.db"] = "ok"
-        except Exception as e:
-            info["imports"]["shared.db"] = str(e)
-
-        try:
-            from bot.messages import format_tender_card
-            info["imports"]["bot.messages"] = "ok"
-        except Exception as e:
-            info["imports"]["bot.messages"] = str(e)
-
+        # Test Mangum + FastAPI
         try:
             from api.main import app
-            info["imports"]["api.main"] = "ok"
-            info["routes"] = [r.path for r in app.routes][:20]
+            from mangum import Mangum
+            m = Mangum(app, lifespan="off")
+            # Simulate a request to /health
+            test_event = {
+                "httpMethod": "GET",
+                "path": "/health",
+                "headers": {"host": "test"},
+                "queryStringParameters": None,
+                "body": None,
+                "isBase64Encoded": False,
+                "requestContext": {"http": {"method": "GET", "path": "/health"}},
+                "version": "2.0",
+                "rawPath": "/health",
+                "rawQueryString": "",
+            }
+            result = m(test_event, None)
+            info["mangum_test"] = {"status": "ok", "response": result}
         except Exception as e:
-            info["imports"]["api.main"] = str(e)
+            info["mangum_test"] = {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
