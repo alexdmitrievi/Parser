@@ -313,3 +313,45 @@ def upsert_tender(row: dict[str, Any]) -> None:
         ).execute()
     except Exception as e:
         logger.error(f"upsert_tender: {e}")
+
+
+# ──────────────────────── Состояние бота (bot_state) ────────────────────────
+
+
+def get_user_state(telegram_user_id: int) -> dict[str, Any]:
+    """Получить состояние диалога бота (wizard step, фильтры и т.д.)."""
+    db = get_db()
+    try:
+        result = (
+            db.table("bot_state")
+            .select("data")
+            .eq("telegram_user_id", telegram_user_id)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        return dict(rows[0]["data"]) if rows and rows[0].get("data") else {}
+    except Exception as e:
+        logger.error(f"get_user_state: {e}")
+        return {}
+
+
+def set_user_state(telegram_user_id: int, state: dict[str, Any]) -> None:
+    """Сохранить состояние диалога бота (upsert в bot_state)."""
+    db = get_db()
+    try:
+        db.table("bot_state").upsert(
+            {
+                "telegram_user_id": telegram_user_id,
+                "state": "",
+                "data": state,
+            },
+            on_conflict="telegram_user_id",
+        ).execute()
+    except Exception as e:
+        logger.error(f"set_user_state: {e}")
+
+
+def clear_user_state(telegram_user_id: int) -> None:
+    """Очистить состояние диалога бота."""
+    set_user_state(telegram_user_id, {})

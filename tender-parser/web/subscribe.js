@@ -13,6 +13,12 @@ function apiBase() {
   return "";
 }
 
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = String(s ?? "");
+  return d.innerHTML;
+}
+
 function setStatus(text, kind = "neutral") {
   globalStatus.textContent = text;
   globalStatus.classList.remove("error", "ok");
@@ -21,8 +27,8 @@ function setStatus(text, kind = "neutral") {
 }
 
 function formatArr(a) {
-  if (!a || !a.length) return "—";
-  return a.join(", ");
+  if (!a || !a.length) return "\u2014";
+  return a.map((v) => esc(v)).join(", ");
 }
 
 function renderList(items) {
@@ -42,15 +48,15 @@ function renderList(items) {
     card.innerHTML = `
       <div class="sub-head">
         <strong>Подписка</strong>
-        <button type="button" class="btn danger btn-del" data-id="${id}">Удалить</button>
+        <button type="button" class="btn danger btn-del" data-id="${esc(id)}">Удалить</button>
       </div>
       <dl>
         <dt>Ключевые слова</dt><dd>${formatArr(row.keywords)}</dd>
         <dt>Регионы</dt><dd>${formatArr(row.regions)}</dd>
         <dt>Ниши (теги)</dt><dd>${formatArr(row.niche_tags)}</dd>
-        <dt>НМЦК</dt><dd>${row.min_nmck ?? "—"} — ${row.max_nmck ?? "—"}</dd>
+        <dt>НМЦК</dt><dd>${esc(row.min_nmck ?? "\u2014")} \u2014 ${esc(row.max_nmck ?? "\u2014")}</dd>
         <dt>Типы законов</dt><dd>${formatArr(row.law_types)}</dd>
-        <dt>Создана</dt><dd>${row.created_at || "—"}</dd>
+        <dt>Создана</dt><dd>${esc(row.created_at || "\u2014")}</dd>
       </dl>
     `;
     listArea.appendChild(card);
@@ -67,7 +73,10 @@ async function deleteOne(subscriptionId) {
     setStatus("Укажите email.", "error");
     return;
   }
-  setStatus("Удаление…", "neutral");
+  if (!confirm("Удалить подписку? Это действие нельзя отменить.")) {
+    return;
+  }
+  setStatus("Удаление\u2026", "neutral");
   const q = new URLSearchParams({ email });
   const url = `${apiBase()}/api/subscriptions/${encodeURIComponent(subscriptionId)}?${q}`;
   try {
@@ -90,7 +99,7 @@ async function loadList() {
     setStatus("Введите email для списка подписок.", "error");
     return;
   }
-  setStatus("Загрузка…", "neutral");
+  setStatus("Загрузка\u2026", "neutral");
   listArea.classList.add("hidden");
   listEmpty.classList.add("hidden");
   const q = new URLSearchParams({ email });
@@ -130,7 +139,7 @@ form.addEventListener("submit", async (ev) => {
     setStatus("Укажите email.", "error");
     return;
   }
-  setStatus("Сохранение…", "neutral");
+  setStatus("Сохранение\u2026", "neutral");
   try {
     const res = await fetch(`${apiBase()}/api/subscriptions/create`, {
       method: "POST",

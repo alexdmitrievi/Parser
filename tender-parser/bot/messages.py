@@ -24,7 +24,7 @@ def format_tender_card(t: dict[str, Any]) -> str:
     customer = str(t.get("customer_name") or "—")
     region = str(t.get("customer_region") or "—")
     deadline = str(t.get("submission_deadline") or "—")
-    url = str(t.get("external_url") or t.get("original_url") or "").strip()
+    url = str(t.get("original_url") or "").strip()
     tags = t.get("niche_tags") or []
     tags_s = ", ".join(tags) if tags else "—"
     lines = [

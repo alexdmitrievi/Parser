@@ -17,6 +17,21 @@ function apiBase() {
   return "";
 }
 
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = String(s ?? "");
+  return d.innerHTML;
+}
+
+function fmtMoney(n) {
+  if (n == null) return "\u2014";
+  try {
+    return Number(n).toLocaleString("ru-RU") + " \u20BD";
+  } catch {
+    return String(n);
+  }
+}
+
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
   statusEl.classList.toggle("error", isError);
@@ -24,13 +39,13 @@ function setStatus(text, isError = false) {
 
 function showSummary(total, page, pages, perPage) {
   summaryEl.textContent =
-    `Найдено: ${total} · стр. ${page}/${pages} · по ${perPage} на странице`;
+    `Найдено: ${total} \u00b7 стр. ${page}/${pages} \u00b7 по ${perPage} на странице`;
   summaryEl.classList.remove("hidden");
 }
 
-function renderCards(cards) {
+function renderCards(items) {
   resultsEl.innerHTML = "";
-  if (!cards || cards.length === 0) {
+  if (!items || items.length === 0) {
     const p = document.createElement("p");
     p.className = "card";
     p.textContent =
@@ -38,10 +53,25 @@ function renderCards(cards) {
     resultsEl.appendChild(p);
     return;
   }
-  for (const text of cards) {
+  for (const t of items) {
     const div = document.createElement("div");
     div.className = "card";
-    div.textContent = text;
+
+    const url = t.original_url || "";
+    const tags = (t.niche_tags || []).map((s) => esc(s)).join(", ") || "\u2014";
+    const deadline = t.submission_deadline
+      ? new Date(t.submission_deadline).toLocaleDateString("ru-RU")
+      : "\u2014";
+
+    div.innerHTML = `
+      <div class="card-title">${esc(t.title || "Без названия")}</div>
+      <div class="card-row"><span class="card-label">НМЦК:</span> ${esc(fmtMoney(t.nmck))} \u00b7 ${esc(t.law_type || "\u2014")}</div>
+      <div class="card-row"><span class="card-label">Заказчик:</span> ${esc(t.customer_name || "\u2014")}</div>
+      <div class="card-row"><span class="card-label">Регион:</span> ${esc(t.customer_region || "\u2014")}</div>
+      <div class="card-row"><span class="card-label">Дедлайн:</span> ${esc(deadline)}</div>
+      <div class="card-row"><span class="card-label">Теги:</span> ${tags}</div>
+      ${url ? `<a class="card-link" href="${esc(url)}" target="_blank" rel="noopener">Открыть на площадке</a>` : ""}
+    `;
     resultsEl.appendChild(div);
   }
 }
@@ -68,7 +98,7 @@ function buildQueryString() {
 }
 
 async function runSearch() {
-  setStatus("Загрузка…", false);
+  setStatus("Загрузка\u2026", false);
   resultsEl.innerHTML = "";
   summaryEl.classList.add("hidden");
   pagerEl.classList.add("hidden");
@@ -96,10 +126,10 @@ async function runSearch() {
     const page = data.page ?? 1;
     const pages = data.pages ?? 1;
     const perPage = data.per_page ?? 5;
-    const cards = data.cards || [];
+    const items = data.items || [];
 
     showSummary(total, page, pages, perPage);
-    renderCards(cards);
+    renderCards(items);
     if (total > 0) {
       pageInfo.textContent = `${page} / ${pages}`;
       btnPrev.disabled = page <= 1;

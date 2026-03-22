@@ -23,6 +23,7 @@ from shared.db import (
     clear_user_state,
     count_tenders,
     get_user_state,
+    register_user,
     search_tenders,
     set_user_state,
 )
@@ -107,6 +108,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_user:
         return
     uid = update.effective_user.id
+    register_user(uid, update.effective_user.username or "", update.effective_user.first_name or "")
     _reset(uid)
     kb = [
         [InlineKeyboardButton("Поиск тендеров", callback_data="search:start")],
@@ -192,14 +194,19 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             from supabase import create_client
 
             cli = create_client(url, key)
+            niche_val = st.get("niche")
+            kw_raw = st.get("keywords") or ""
             cli.table("subscriptions").insert(
                 {
                     "telegram_user_id": uid,
-                    "niche": st.get("niche"),
-                    "keywords": st.get("keywords"),
-                    "region": st.get("region"),
-                    "nmck_min": st.get("nmck_min"),
-                    "nmck_max": st.get("nmck_max"),
+                    "name": str(uid),
+                    "niche_tags": [niche_val] if niche_val and niche_val != "custom" else [],
+                    "keywords": [k.strip() for k in kw_raw.split(",") if k.strip()] if kw_raw else [],
+                    "regions": [st["region"]] if st.get("region") else [],
+                    "min_nmck": st.get("nmck_min"),
+                    "max_nmck": st.get("nmck_max"),
+                    "law_types": [],
+                    "okpd2_prefixes": [],
                 }
             ).execute()
         _reset(uid)

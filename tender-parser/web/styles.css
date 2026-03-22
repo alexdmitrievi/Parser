@@ -19,6 +19,32 @@ body {
   line-height: 1.45;
 }
 
+.nav-bar {
+  display: flex;
+  gap: 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1rem;
+}
+
+.nav-link {
+  padding: 0.75rem 1.25rem;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.nav-link:hover {
+  color: var(--text);
+}
+
+.nav-link.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
 .wrap {
   max-width: 52rem;
   margin: 0 auto;
@@ -131,8 +157,37 @@ select {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  white-space: pre-wrap;
   font-size: 0.95rem;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
+}
+
+.card-row {
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.card-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.card-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.card-link:hover {
+  text-decoration: underline;
 }
 
 .pager {
