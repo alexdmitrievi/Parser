@@ -1,4 +1,4 @@
-"""Диагностика: показывает ошибки импорта, конфигурации и БД."""
+"""Диагностика: проверка импортов, БД и FastAPI."""
 
 from __future__ import annotations
 
@@ -17,57 +17,49 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         info = {
             "python": sys.version,
-            "root": _ROOT,
             "env_supabase_url": bool(os.getenv("SUPABASE_URL")),
             "env_supabase_key": bool(os.getenv("SUPABASE_KEY")),
             "imports": {},
             "db_test": None,
-            "mangum_test": None,
+            "fastapi_test": None,
         }
 
-        # Test imports
-        for mod in ["mangum", "fastapi", "supabase", "httpx", "pydantic"]:
+        for mod in ["fastapi", "supabase", "httpx", "pydantic", "starlette"]:
             try:
                 __import__(mod)
                 info["imports"][mod] = "ok"
             except Exception as e:
                 info["imports"][mod] = str(e)
 
-        # Test actual DB query
+        # Test DB
         try:
             from shared.config import supabase_url, supabase_key
             from supabase import create_client
-            url, key = supabase_url(), supabase_key()
-            cli = create_client(url, key)
+            cli = create_client(supabase_url(), supabase_key())
             res = cli.table("tenders").select("id", count="exact").limit(1).execute()
-            count = getattr(res, "count", None)
-            rows = len(res.data) if res.data else 0
-            info["db_test"] = {"status": "ok", "total_tenders": count, "rows_returned": rows}
+            info["db_test"] = {"status": "ok", "total_tenders": getattr(res, "count", 0)}
         except Exception as e:
-            info["db_test"] = {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+            info["db_test"] = {"status": "error", "error": str(e)}
 
-        # Test Mangum + FastAPI
+        # Test FastAPI via TestClient
         try:
             from api.main import app
-            from mangum import Mangum
-            m = Mangum(app, lifespan="off")
-            # Simulate a request to /health
-            test_event = {
-                "httpMethod": "GET",
-                "path": "/health",
-                "headers": {"host": "test"},
-                "queryStringParameters": None,
-                "body": None,
-                "isBase64Encoded": False,
-                "requestContext": {"http": {"method": "GET", "path": "/health"}},
-                "version": "2.0",
-                "rawPath": "/health",
-                "rawQueryString": "",
+            from starlette.testclient import TestClient
+            client = TestClient(app, raise_server_exceptions=False)
+            resp = client.get("/health")
+            info["fastapi_test"] = {
+                "status": "ok",
+                "health_status_code": resp.status_code,
+                "health_body": resp.json(),
             }
-            result = m(test_event, None)
-            info["mangum_test"] = {"status": "ok", "response": result}
+            # Test search endpoint
+            resp2 = client.get("/api/search/tenders?page=1&per_page=1&status=active")
+            info["search_test"] = {
+                "status_code": resp2.status_code,
+                "body": resp2.json() if resp2.status_code < 500 else resp2.text[:500],
+            }
         except Exception as e:
-            info["mangum_test"] = {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+            info["fastapi_test"] = {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
