@@ -2,16 +2,19 @@
   "version": 2,
   "builds": [
     { "src": "api/webhook.py", "use": "@vercel/python" },
-    { "src": "api/tenders.py", "use": "@vercel/python" }
+    { "src": "api/tenders.py", "use": "@vercel/python" },
+    { "src": "web/**", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/webhook", "dest": "/api/webhook.py" },
     { "src": "/api/search(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/subscriptions(.*)", "dest": "/api/tenders.py" },
-    { "src": "/web(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/tenders(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/stats", "dest": "/api/tenders.py" },
     { "src": "/api/niches", "dest": "/api/tenders.py" },
-    { "src": "/health", "dest": "/api/tenders.py" }
+    { "src": "/health", "dest": "/api/tenders.py" },
+    { "src": "/web/(.*)", "dest": "/web/$1" },
+    { "src": "/web", "dest": "/web/index.html" },
+    { "src": "/", "dest": "/web/index.html" }
   ]
 }
