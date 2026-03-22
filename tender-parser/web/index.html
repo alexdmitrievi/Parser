@@ -4,88 +4,131 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Поиск тендеров — Подряд PRO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/web/styles.css" />
 </head>
 <body>
-  <nav class="nav-bar">
-    <a href="/web/" class="nav-link active">Поиск тендеров</a>
-    <a href="/web/subscribe.html" class="nav-link">Подписки</a>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <span class="logo-icon">&#9670;</span>
+      <span>Подряд PRO</span>
+    </div>
+    <div class="navbar-links">
+      <a href="/web/" class="nav-link active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span>Поиск</span>
+      </a>
+      <a href="/web/subscribe.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span>Подписки</span>
+      </a>
+      <a href="/web/stats.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        <span>Аналитика</span>
+      </a>
+    </div>
   </nav>
-  <main class="wrap">
-    <header class="header">
+
+  <div class="container">
+    <!-- Header -->
+    <header class="page-header">
       <h1>Поиск тендеров</h1>
-      <p class="lead">Те же фильтры и выдача, что в Telegram-боте (раздел «Поиск тендеров»).</p>
+      <p class="subtitle">Поиск по базе государственных и коммерческих тендеров РФ</p>
     </header>
 
-    <form id="search-form" class="form" novalidate>
-      <label class="field">
-        <span class="label">Ключевые слова</span>
-        <input type="text" name="q" id="q" placeholder="Введите ключевые слова для поиска по названию и описанию…" autocomplete="off" />
-      </label>
+    <!-- Filters -->
+    <section class="glass form-panel">
+      <form id="search-form" novalidate>
+        <div class="field">
+          <label class="field-label" for="q">Ключевые слова</label>
+          <div class="search-input-wrap">
+            <span class="search-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </span>
+            <input type="text" name="q" id="q" placeholder="Мебель, строительные работы, ремонт..." autocomplete="off" />
+          </div>
+        </div>
 
-      <div class="row">
-        <label class="field">
-          <span class="label">Регион</span>
-          <input type="text" name="region" id="region" placeholder="Например: Омская область" />
-        </label>
-        <label class="field">
-          <span class="label">Ниша</span>
-          <select name="niche" id="niche" title="Фильтр по тегу ниши">
-            <option value="">Любая</option>
-            <option value="furniture">Мебель (furniture)</option>
-            <option value="construction">Стройка / ремонт (construction)</option>
-          </select>
-        </label>
-      </div>
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label" for="region">Регион</label>
+            <input type="text" name="region" id="region" placeholder="Омская область" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="niche">Ниша</label>
+            <select name="niche" id="niche">
+              <option value="">Любая</option>
+              <option value="furniture">Мебель</option>
+              <option value="construction">Стройка / ремонт</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="law_type">Тип закона</label>
+            <select name="law_type" id="law_type">
+              <option value="">Любой</option>
+              <option value="44-fz">44-ФЗ</option>
+              <option value="223-fz">223-ФЗ</option>
+              <option value="commercial">Коммерческий</option>
+            </select>
+          </div>
+        </div>
 
-      <div class="row">
-        <label class="field">
-          <span class="label">НМЦК от, ₽</span>
-          <input type="number" name="min_nmck" id="min_nmck" min="0" step="1" placeholder="Не задано" />
-        </label>
-        <label class="field">
-          <span class="label">НМЦК до, ₽</span>
-          <input type="number" name="max_nmck" id="max_nmck" min="0" step="1" placeholder="Не задано" />
-        </label>
-        <label class="field">
-          <span class="label">Тип закона</span>
-          <select name="law_type" id="law_type" title="44-ФЗ / 223-ФЗ / коммерческий">
-            <option value="">Любой</option>
-            <option value="44-fz">44-ФЗ</option>
-            <option value="223-fz">223-ФЗ</option>
-            <option value="commercial">Коммерческий</option>
-          </select>
-        </label>
-        <label class="field">
-          <span class="label">На странице</span>
-          <select name="per_page" id="per_page" title="Количество записей на странице">
-            <option value="5" selected>5</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-          </select>
-        </label>
-      </div>
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label" for="min_nmck">НМЦК от, &#8381;</label>
+            <input type="number" name="min_nmck" id="min_nmck" min="0" step="1" placeholder="0" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="max_nmck">НМЦК до, &#8381;</label>
+            <input type="number" name="max_nmck" id="max_nmck" min="0" step="1" placeholder="Не ограничено" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="per_page">На странице</label>
+            <select name="per_page" id="per_page">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+            </select>
+          </div>
+        </div>
 
-      <input type="hidden" name="page" id="page" value="1" />
+        <input type="hidden" name="page" id="page" value="1" />
 
-      <div class="actions">
-        <button type="submit" id="btn-search" class="btn primary">Найти</button>
-        <button type="button" id="btn-reset" class="btn">Сбросить</button>
-      </div>
-    </form>
+        <div class="actions">
+          <button type="submit" id="btn-search" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            Найти
+          </button>
+          <button type="button" id="btn-reset" class="btn btn-ghost">Сбросить</button>
+        </div>
+      </form>
+    </section>
 
-    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <!-- Status -->
+    <p id="status" class="status-msg" role="status" aria-live="polite"></p>
 
-    <section id="summary" class="summary hidden" aria-live="polite"></section>
+    <!-- Summary -->
+    <div id="summary" class="summary hidden" aria-live="polite"></div>
 
-    <section id="results" class="results" aria-label="Результаты поиска"></section>
+    <!-- Results -->
+    <section id="results" class="results-grid" aria-label="Результаты поиска"></section>
 
+    <!-- Pagination -->
     <nav id="pager" class="pager hidden" aria-label="Пагинация">
-      <button type="button" id="btn-prev" class="btn">Назад</button>
+      <button type="button" id="btn-prev" class="btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Назад
+      </button>
       <span id="page-info" class="page-info"></span>
-      <button type="button" id="btn-next" class="btn">Вперёд</button>
+      <button type="button" id="btn-next" class="btn">
+        Вперёд
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
     </nav>
-  </main>
+  </div>
+
   <script src="/web/app.js"></script>
 </body>
 </html>

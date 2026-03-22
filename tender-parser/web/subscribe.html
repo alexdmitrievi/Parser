@@ -3,89 +3,121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Подписка на тендеры — Подряд PRO</title>
-  <link rel="stylesheet" href="/web/subscribe.css" />
+  <title>Подписки — Подряд PRO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/web/styles.css" />
 </head>
 <body>
-  <nav class="nav-bar">
-    <a href="/web/" class="nav-link">Поиск тендеров</a>
-    <a href="/web/subscribe.html" class="nav-link active">Подписки</a>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <span class="logo-icon">&#9670;</span>
+      <span>Подряд PRO</span>
+    </div>
+    <div class="navbar-links">
+      <a href="/web/" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span>Поиск</span>
+      </a>
+      <a href="/web/subscribe.html" class="nav-link active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span>Подписки</span>
+      </a>
+      <a href="/web/stats.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        <span>Аналитика</span>
+      </a>
+    </div>
   </nav>
-  <main class="wrap">
-    <header class="header">
-      <h1>Подписка на тендеры</h1>
-      <p class="lead">
-        Создайте подписку с фильтрами (как в Telegram-боте). Уведомления по email — позже;
-        сейчас подписка сохраняется в базе для будущей рассылки.
-      </p>
+
+  <div class="container">
+    <header class="page-header">
+      <h1>Подписки на тендеры</h1>
+      <p class="subtitle">Создайте подписку с фильтрами — получайте уведомления о новых тендерах</p>
     </header>
 
-    <p id="global-status" class="status" role="status" aria-live="polite"></p>
+    <p id="global-status" class="status-msg" role="status" aria-live="polite"></p>
 
-    <section class="panel" aria-labelledby="create-title">
+    <!-- Create subscription -->
+    <section class="glass panel" aria-labelledby="create-title">
       <h2 id="create-title">Новая подписка</h2>
       <form id="sub-form" novalidate>
-        <label class="field">
-          <span class="label">Email</span>
-          <input type="email" name="email" id="email" required autocomplete="email" placeholder="name@example.com" title="Используется как идентификатор" />
-        </label>
+        <div class="field">
+          <label class="field-label" for="email">Email</label>
+          <input type="email" name="email" id="email" required autocomplete="email" placeholder="name@example.com" />
+        </div>
 
-        <label class="field">
-          <span class="label">Ниша</span>
-          <select name="niche" id="niche" title="Категория закупок">
-            <option value="">Не выбрана</option>
-            <option value="furniture">Мебель</option>
-            <option value="construction">Стройка / ремонт</option>
-            <option value="custom">Свои ключевые слова</option>
-          </select>
-        </label>
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label" for="niche">Ниша</label>
+            <select name="niche" id="niche">
+              <option value="">Не выбрана</option>
+              <option value="furniture">Мебель</option>
+              <option value="construction">Стройка / ремонт</option>
+              <option value="custom">Свои ключевые слова</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="region">Регион</label>
+            <input type="text" name="region" id="region" placeholder="Омская область (пусто = вся РФ)" />
+          </div>
+        </div>
 
-        <label class="field">
-          <span class="label">Ключевые слова</span>
-          <textarea name="keywords" id="keywords" placeholder="Через запятую или с новой строки. Для «Свои ключевые слова» — обязательно."></textarea>
-        </label>
+        <div class="field">
+          <label class="field-label" for="keywords">Ключевые слова</label>
+          <textarea name="keywords" id="keywords" placeholder="Через запятую или каждое с новой строки"></textarea>
+        </div>
 
-        <label class="field">
-          <span class="label">Регион</span>
-          <input type="text" name="region" id="region" placeholder="Например: Омская область. Пусто — вся РФ." />
-        </label>
-
-        <div class="row">
-          <label class="field">
-            <span class="label">НМЦК от, ₽</span>
-            <input type="number" name="min_nmck" id="min_nmck" min="0" step="1" placeholder="Не задано" />
-          </label>
-          <label class="field">
-            <span class="label">НМЦК до, ₽</span>
-            <input type="number" name="max_nmck" id="max_nmck" min="0" step="1" placeholder="Не задано" />
-          </label>
-          <label class="field">
-            <span class="label">Тип закона</span>
-            <select name="law_type" id="law_type" title="Фильтр по типу закона">
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label" for="min_nmck">НМЦК от, &#8381;</label>
+            <input type="number" name="min_nmck" id="min_nmck" min="0" step="1" placeholder="0" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="max_nmck">НМЦК до, &#8381;</label>
+            <input type="number" name="max_nmck" id="max_nmck" min="0" step="1" placeholder="Не ограничено" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="law_type">Тип закона</label>
+            <select name="law_type" id="law_type">
               <option value="">Любой</option>
               <option value="44-fz">44-ФЗ</option>
               <option value="223-fz">223-ФЗ</option>
               <option value="commercial">Коммерческий</option>
             </select>
-          </label>
+          </div>
         </div>
 
         <div class="actions">
-          <button type="submit" class="btn primary">Подписаться</button>
+          <button type="submit" class="btn btn-green">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            Подписаться
+          </button>
         </div>
       </form>
     </section>
 
-    <section class="panel" aria-labelledby="list-title">
+    <!-- List subscriptions -->
+    <section class="glass panel" aria-labelledby="list-title">
       <h2 id="list-title">Мои подписки</h2>
-      <p class="lead" style="margin-top: 0">Укажите тот же email и нажмите «Мои подписки», чтобы увидеть активные записи.</p>
+      <p class="subtitle mb-2">Укажите тот же email и нажмите кнопку, чтобы увидеть активные записи.</p>
       <div class="actions">
-        <button type="button" id="btn-list" class="btn">Мои подписки</button>
+        <button type="button" id="btn-list" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Мои подписки
+        </button>
       </div>
-      <div id="list-area" class="list-block hidden" aria-live="polite"></div>
-      <p id="list-empty" class="empty hidden">Подписок с этим email не найдено.</p>
+      <div id="list-area" class="hidden mt-2" aria-live="polite"></div>
+      <p id="list-empty" class="empty-state hidden">
+        <span class="empty-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="1" x2="23" y1="1" y2="23"/></svg>
+        </span>
+        <br />Подписок с этим email не найдено.
+      </p>
     </section>
-  </main>
+  </div>
+
   <script src="/web/subscribe.js"></script>
 </body>
 </html>

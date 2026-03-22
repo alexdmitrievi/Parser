@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Аналитика — Подряд PRO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/web/styles.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <span class="logo-icon">&#9670;</span>
+      <span>Подряд PRO</span>
+    </div>
+    <div class="navbar-links">
+      <a href="/web/" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span>Поиск</span>
+      </a>
+      <a href="/web/subscribe.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span>Подписки</span>
+      </a>
+      <a href="/web/stats.html" class="nav-link active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        <span>Аналитика</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <header class="page-header">
+      <h1>Аналитика тендеров</h1>
+      <p class="subtitle">Обзор текущей базы тендеров: статистика по нишам, регионам и активности</p>
+    </header>
+
+    <p id="status" class="status-msg" role="status" aria-live="polite"></p>
+
+    <!-- KPI Cards -->
+    <section class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card glass">
+        <div class="kpi-icon blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value" id="kpi-total">—</div>
+          <div class="kpi-label">Всего тендеров</div>
+        </div>
+      </div>
+
+      <div class="kpi-card glass">
+        <div class="kpi-icon green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value" id="kpi-recent">—</div>
+          <div class="kpi-label">За последние 7 дней</div>
+        </div>
+      </div>
+
+      <div class="kpi-card glass">
+        <div class="kpi-icon purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value" id="kpi-niches">—</div>
+          <div class="kpi-label">Ниш в базе</div>
+        </div>
+      </div>
+
+      <div class="kpi-card glass">
+        <div class="kpi-icon amber">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value" id="kpi-regions">—</div>
+          <div class="kpi-label">Регионов</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="charts-grid">
+      <div class="chart-panel glass">
+        <h3>Распределение по нишам</h3>
+        <canvas id="chart-niches" height="260"></canvas>
+      </div>
+      <div class="chart-panel glass">
+        <h3>Топ-10 регионов</h3>
+        <canvas id="chart-regions" height="260"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="/web/stats.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 /**
- * Поиск тендеров: вызов GET /api/search/tenders (как логика бота).
+ * Подряд PRO — Поиск тендеров
  */
 
 const form = document.getElementById("search-form");
@@ -12,10 +12,6 @@ const btnPrev = document.getElementById("btn-prev");
 const btnNext = document.getElementById("btn-next");
 const pageInfo = document.getElementById("page-info");
 const btnReset = document.getElementById("btn-reset");
-
-function apiBase() {
-  return "";
-}
 
 function esc(s) {
   const d = document.createElement("div");
@@ -32,45 +28,101 @@ function fmtMoney(n) {
   }
 }
 
+function lawBadge(law) {
+  if (!law) return "";
+  const map = {
+    "44-fz": { cls: "badge-44fz", label: "44-\u0424\u0417" },
+    "223-fz": { cls: "badge-223fz", label: "223-\u0424\u0417" },
+    "commercial": { cls: "badge-commercial", label: "\u041a\u043e\u043c\u043c." },
+  };
+  const m = map[law];
+  if (!m) return `<span class="badge">${esc(law)}</span>`;
+  return `<span class="badge ${m.cls}">${m.label}</span>`;
+}
+
+function nicheBadges(tags) {
+  if (!tags || !tags.length) return "";
+  const nameMap = { furniture: "\u041c\u0435\u0431\u0435\u043b\u044c", construction: "\u0421\u0442\u0440\u043e\u0439\u043a\u0430" };
+  return tags.map((t) => `<span class="badge badge-niche">${esc(nameMap[t] || t)}</span>`).join("");
+}
+
+function deadlineInfo(dl) {
+  if (!dl) return { text: "\u2014", cls: "" };
+  try {
+    const d = new Date(dl);
+    const now = new Date();
+    const diff = (d - now) / (1000 * 60 * 60 * 24);
+    const text = d.toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" });
+    if (diff < 0) return { text: text + " (\u0438\u0441\u0442\u0451\u043a)", cls: "deadline-danger" };
+    if (diff < 3) return { text, cls: "deadline-danger" };
+    if (diff < 7) return { text, cls: "deadline-warning" };
+    return { text, cls: "" };
+  } catch {
+    return { text: String(dl).slice(0, 10), cls: "" };
+  }
+}
+
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
   statusEl.classList.toggle("error", isError);
 }
 
 function showSummary(total, page, pages, perPage) {
-  summaryEl.textContent =
-    `Найдено: ${total} \u00b7 стр. ${page}/${pages} \u00b7 по ${perPage} на странице`;
+  summaryEl.textContent = `\u041d\u0430\u0439\u0434\u0435\u043d\u043e: ${total} \u00b7 \u0441\u0442\u0440. ${page}/${pages}`;
   summaryEl.classList.remove("hidden");
 }
 
 function renderCards(items) {
   resultsEl.innerHTML = "";
   if (!items || items.length === 0) {
-    const p = document.createElement("p");
-    p.className = "card";
-    p.textContent =
-      "Ничего не найдено. Уточните запрос или проверьте подключение к базе.";
-    resultsEl.appendChild(p);
+    resultsEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 6 0"/></svg>
+        </div>
+        <p>\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e. \u0423\u0442\u043e\u0447\u043d\u0438\u0442\u0435 \u0437\u0430\u043f\u0440\u043e\u0441 \u0438\u043b\u0438 \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u0435 \u0444\u0438\u043b\u044c\u0442\u0440\u044b.</p>
+      </div>`;
     return;
   }
+
   for (const t of items) {
-    const div = document.createElement("div");
-    div.className = "card";
-
     const url = t.original_url || "";
-    const tags = (t.niche_tags || []).map((s) => esc(s)).join(", ") || "\u2014";
-    const deadline = t.submission_deadline
-      ? new Date(t.submission_deadline).toLocaleDateString("ru-RU")
-      : "\u2014";
-
+    const dl = deadlineInfo(t.submission_deadline);
+    const div = document.createElement("div");
+    div.className = "tender-card glass";
     div.innerHTML = `
-      <div class="card-title">${esc(t.title || "Без названия")}</div>
-      <div class="card-row"><span class="card-label">НМЦК:</span> ${esc(fmtMoney(t.nmck))} \u00b7 ${esc(t.law_type || "\u2014")}</div>
-      <div class="card-row"><span class="card-label">Заказчик:</span> ${esc(t.customer_name || "\u2014")}</div>
-      <div class="card-row"><span class="card-label">Регион:</span> ${esc(t.customer_region || "\u2014")}</div>
-      <div class="card-row"><span class="card-label">Дедлайн:</span> ${esc(deadline)}</div>
-      <div class="card-row"><span class="card-label">Теги:</span> ${tags}</div>
-      ${url ? `<a class="card-link" href="${esc(url)}" target="_blank" rel="noopener">Открыть на площадке</a>` : ""}
+      <div class="tender-card-header">
+        <div class="tender-title">${esc(t.title || "\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f")}</div>
+        <div class="tender-badges">
+          ${lawBadge(t.law_type)}
+          ${nicheBadges(t.niche_tags)}
+        </div>
+      </div>
+      <div class="tender-body">
+        <div class="tender-field">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span class="tender-nmck">${esc(fmtMoney(t.nmck))}</span>
+        </div>
+        <div class="tender-field ${dl.cls}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          ${esc(dl.text)}
+        </div>
+        <div class="tender-field">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
+          ${esc(t.customer_name || "\u2014")}
+        </div>
+        <div class="tender-field">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${esc(t.customer_region || "\u2014")}
+        </div>
+      </div>
+      ${url ? `
+      <div class="tender-footer">
+        <a class="tender-link" href="${esc(url)}" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+          \u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043d\u0430 \u043f\u043b\u043e\u0449\u0430\u0434\u043a\u0435
+        </a>
+      </div>` : ""}
     `;
     resultsEl.appendChild(div);
   }
@@ -93,18 +145,19 @@ function buildQueryString() {
   if (lawType) params.set("law_type", lawType);
   params.set("status", "active");
   params.set("page", pageInput.value || "1");
-  params.set("per_page", fd.get("per_page") || "5");
+  params.set("per_page", fd.get("per_page") || "10");
   return params.toString();
 }
 
 async function runSearch() {
-  setStatus("Загрузка\u2026", false);
+  setStatus("", false);
+  statusEl.innerHTML = '<span class="spinner"></span> \u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430\u2026';
   resultsEl.innerHTML = "";
   summaryEl.classList.add("hidden");
   pagerEl.classList.add("hidden");
 
   const qs = buildQueryString();
-  const url = `${apiBase()}/api/search/tenders?${qs}`;
+  const url = `/api/search/tenders?${qs}`;
 
   try {
     const res = await fetch(url, { method: "GET", headers: { Accept: "application/json" } });
@@ -113,19 +166,15 @@ async function runSearch() {
       let msg = `HTTP ${res.status}`;
       try {
         const j = JSON.parse(raw);
-        if (j.detail) {
-          msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail);
-        }
-      } catch {
-        if (raw) msg = raw;
-      }
+        if (j.detail) msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail);
+      } catch { if (raw) msg = raw; }
       throw new Error(msg);
     }
     const data = JSON.parse(raw);
     const total = data.total ?? 0;
     const page = data.page ?? 1;
     const pages = data.pages ?? 1;
-    const perPage = data.per_page ?? 5;
+    const perPage = data.per_page ?? 10;
     const items = data.items || [];
 
     showSummary(total, page, pages, perPage);
@@ -139,7 +188,7 @@ async function runSearch() {
     setStatus("", false);
   } catch (e) {
     console.error(e);
-    setStatus("Ошибка загрузки данных. Проверьте сеть и настройки API.", true);
+    setStatus("\u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438 \u0434\u0430\u043d\u043d\u044b\u0445. \u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0441\u0435\u0442\u044c.", true);
     resultsEl.innerHTML = "";
   }
 }
@@ -152,7 +201,7 @@ form.addEventListener("submit", (ev) => {
 
 btnReset.addEventListener("click", () => {
   form.reset();
-  document.getElementById("per_page").value = "5";
+  document.getElementById("per_page").value = "10";
   pageInput.value = "1";
   setStatus("");
   summaryEl.classList.add("hidden");
