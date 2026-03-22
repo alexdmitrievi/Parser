@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Подписка на тендеры — Подряд PRO</title>
+  <link rel="stylesheet" href="/web/subscribe.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="header">
+      <h1>Подписка на тендеры</h1>
+      <p class="lead">
+        Создайте подписку с фильтрами (как в Telegram-боте). Уведомления по email — позже;
+        сейчас подписка сохраняется в базе для будущей рассылки.
+      </p>
+    </header>
+
+    <p id="global-status" class="status" role="status" aria-live="polite"></p>
+
+    <section class="panel" aria-labelledby="create-title">
+      <h2 id="create-title">Новая подписка</h2>
+      <form id="sub-form" novalidate>
+        <label class="field">
+          <span class="label">Email</span>
+          <input type="email" name="email" id="email" required autocomplete="email" placeholder="name@example.com" title="Используется как идентификатор" />
+        </label>
+
+        <label class="field">
+          <span class="label">Ниша</span>
+          <select name="niche" id="niche" title="Категория закупок">
+            <option value="">Не выбрана</option>
+            <option value="furniture">Мебель</option>
+            <option value="construction">Стройка / ремонт</option>
+            <option value="custom">Свои ключевые слова</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="label">Ключевые слова</span>
+          <textarea name="keywords" id="keywords" placeholder="Через запятую или с новой строки. Для «Свои ключевые слова» — обязательно."></textarea>
+        </label>
+
+        <label class="field">
+          <span class="label">Регион</span>
+          <input type="text" name="region" id="region" placeholder="Например: Омская область. Пусто — вся РФ." />
+        </label>
+
+        <div class="row">
+          <label class="field">
+            <span class="label">НМЦК от, ₽</span>
+            <input type="number" name="min_nmck" id="min_nmck" min="0" step="1" placeholder="Не задано" />
+          </label>
+          <label class="field">
+            <span class="label">НМЦК до, ₽</span>
+            <input type="number" name="max_nmck" id="max_nmck" min="0" step="1" placeholder="Не задано" />
+          </label>
+          <label class="field">
+            <span class="label">Тип закона</span>
+            <select name="law_type" id="law_type" title="Фильтр по типу закона">
+              <option value="">Любой</option>
+              <option value="44-fz">44-ФЗ</option>
+              <option value="223-fz">223-ФЗ</option>
+              <option value="commercial">Коммерческий</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn primary">Подписаться</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" aria-labelledby="list-title">
+      <h2 id="list-title">Мои подписки</h2>
+      <p class="lead" style="margin-top: 0">Укажите тот же email и нажмите «Мои подписки», чтобы увидеть активные записи.</p>
+      <div class="actions">
+        <button type="button" id="btn-list" class="btn">Мои подписки</button>
+      </div>
+      <div id="list-area" class="list-block hidden" aria-live="polite"></div>
+      <p id="list-empty" class="empty hidden">Подписок с этим email не найдено.</p>
+    </section>
+  </main>
+  <script src="/web/subscribe.js"></script>
+</body>
+</html>

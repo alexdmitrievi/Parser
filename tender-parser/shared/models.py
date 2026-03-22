@@ -79,3 +79,24 @@ class SearchFilters(BaseModel):
     law_type: Optional[str] = None
     page: int = 1
     per_page: int = 5
+
+    @classmethod
+    def from_state_dict(
+        cls,
+        filters: dict,
+        page: int,
+        per_page: int = 5,
+    ) -> "SearchFilters":
+        """Собрать из state['filters'] (бот) или JSON тела запроса (веб)."""
+        return cls(
+            query=filters.get("query"),
+            region=filters.get("region"),
+            min_nmck=filters.get("min_nmck"),
+            max_nmck=filters.get("max_nmck"),
+            niche=filters.get("niche"),
+            okpd2=filters.get("okpd2"),
+            law_type=filters.get("law_type") or filters.get("law"),
+            status=filters.get("status") or "active",
+            page=page,
+            per_page=per_page,
+        )

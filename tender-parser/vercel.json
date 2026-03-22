@@ -6,6 +6,9 @@
   ],
   "routes": [
     { "src": "/api/webhook", "dest": "/api/webhook.py" },
+    { "src": "/api/search(.*)", "dest": "/api/tenders.py" },
+    { "src": "/api/subscriptions(.*)", "dest": "/api/tenders.py" },
+    { "src": "/web(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/tenders(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/stats", "dest": "/api/tenders.py" },
     { "src": "/api/niches", "dest": "/api/tenders.py" },

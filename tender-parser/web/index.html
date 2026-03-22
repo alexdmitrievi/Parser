@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Поиск тендеров — Подряд PRO</title>
+  <link rel="stylesheet" href="/web/styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="header">
+      <h1>Поиск тендеров</h1>
+      <p class="lead">Те же фильтры и выдача, что в Telegram-боте (раздел «Поиск тендеров»).</p>
+    </header>
+
+    <form id="search-form" class="form" novalidate>
+      <label class="field">
+        <span class="label">Ключевые слова</span>
+        <input type="text" name="q" id="q" placeholder="Введите ключевые слова для поиска по названию и описанию…" autocomplete="off" />
+      </label>
+
+      <div class="row">
+        <label class="field">
+          <span class="label">Регион</span>
+          <input type="text" name="region" id="region" placeholder="Например: Омская область" />
+        </label>
+        <label class="field">
+          <span class="label">Ниша</span>
+          <select name="niche" id="niche" title="Фильтр по тегу ниши">
+            <option value="">Любая</option>
+            <option value="furniture">Мебель (furniture)</option>
+            <option value="construction">Стройка / ремонт (construction)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row">
+        <label class="field">
+          <span class="label">НМЦК от, ₽</span>
+          <input type="number" name="min_nmck" id="min_nmck" min="0" step="1" placeholder="Не задано" />
+        </label>
+        <label class="field">
+          <span class="label">НМЦК до, ₽</span>
+          <input type="number" name="max_nmck" id="max_nmck" min="0" step="1" placeholder="Не задано" />
+        </label>
+        <label class="field">
+          <span class="label">Тип закона</span>
+          <select name="law_type" id="law_type" title="44-ФЗ / 223-ФЗ / коммерческий">
+            <option value="">Любой</option>
+            <option value="44-fz">44-ФЗ</option>
+            <option value="223-fz">223-ФЗ</option>
+            <option value="commercial">Коммерческий</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label">На странице</span>
+          <select name="per_page" id="per_page" title="Количество записей на странице">
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+          </select>
+        </label>
+      </div>
+
+      <input type="hidden" name="page" id="page" value="1" />
+
+      <div class="actions">
+        <button type="submit" id="btn-search" class="btn primary">Найти</button>
+        <button type="button" id="btn-reset" class="btn">Сбросить</button>
+      </div>
+    </form>
+
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <section id="summary" class="summary hidden" aria-live="polite"></section>
+
+    <section id="results" class="results" aria-label="Результаты поиска"></section>
+
+    <nav id="pager" class="pager hidden" aria-label="Пагинация">
+      <button type="button" id="btn-prev" class="btn">Назад</button>
+      <span id="page-info" class="page-info"></span>
+      <button type="button" id="btn-next" class="btn">Вперёд</button>
+    </nav>
+  </main>
+  <script src="/web/app.js"></script>
+</body>
+</html>

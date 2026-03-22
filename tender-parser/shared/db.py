@@ -104,7 +104,7 @@ def search_tenders(filters: SearchFilters) -> list[dict]:
 
 
 def count_tenders(filters: SearchFilters) -> int:
-    """Подсчёт тендеров по фильтрам."""
+    """Подсчёт тендеров по фильтрам (те же условия, что и search_tenders)."""
     db = get_db()
     query = db.table("tenders").select("id", count="exact")
 
@@ -112,10 +112,18 @@ def count_tenders(filters: SearchFilters) -> int:
         query = query.text_search("fts", filters.query, config="russian")
     if filters.region:
         query = query.eq("customer_region", filters.region)
+    if filters.min_nmck is not None:
+        query = query.gte("nmck", filters.min_nmck)
+    if filters.max_nmck is not None:
+        query = query.lte("nmck", filters.max_nmck)
+    if filters.okpd2:
+        query = query.contains("okpd2_codes", [filters.okpd2])
     if filters.niche:
         query = query.contains("niche_tags", [filters.niche])
     if filters.status:
         query = query.eq("status", filters.status)
+    if filters.law_type:
+        query = query.eq("law_type", filters.law_type)
 
     try:
         result = query.execute()
