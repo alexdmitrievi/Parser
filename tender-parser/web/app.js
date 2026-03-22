@@ -188,7 +188,7 @@ async function runSearch() {
     setStatus("", false);
   } catch (e) {
     console.error(e);
-    setStatus("\u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438 \u0434\u0430\u043d\u043d\u044b\u0445. \u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0441\u0435\u0442\u044c.", true);
+    setStatus("\u041e\u0448\u0438\u0431\u043a\u0430: " + (e.message || "\u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0441\u0435\u0442\u044c."), true);
     resultsEl.innerHTML = "";
   }
 }
