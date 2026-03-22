@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import math
+import traceback
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
@@ -11,6 +13,8 @@ from bot.messages import format_tender_card
 from shared.config import supabase_key, supabase_url
 from shared.db import count_tenders, search_tenders as fetch_tenders
 from shared.models import SearchFilters
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["web-search"])
 
@@ -42,19 +46,23 @@ def search_tenders_web(
         "law_type": law_type or None,
         "status": status or "active",
     }
-    fl = SearchFilters.from_state_dict(filters_dict, page=page, per_page=per_page)
-    total = count_tenders(fl)
-    per = max(1, fl.per_page)
-    pages = max(1, math.ceil(total / per)) if total else 1
-    safe_page = min(max(1, page), pages)
-    fl = fl.model_copy(update={"page": safe_page})
-    rows = fetch_tenders(fl)
-    cards = [format_tender_card(r) for r in rows]
-    return {
-        "total": total,
-        "page": safe_page,
-        "pages": pages,
-        "per_page": per,
-        "items": rows,
-        "cards": cards,
-    }
+    try:
+        fl = SearchFilters.from_state_dict(filters_dict, page=page, per_page=per_page)
+        total = count_tenders(fl)
+        per = max(1, fl.per_page)
+        pages = max(1, math.ceil(total / per)) if total else 1
+        safe_page = min(max(1, page), pages)
+        fl = fl.model_copy(update={"page": safe_page})
+        rows = fetch_tenders(fl)
+        cards = [format_tender_card(r) for r in rows]
+        return {
+            "total": total,
+            "page": safe_page,
+            "pages": pages,
+            "per_page": per,
+            "items": rows,
+            "cards": cards,
+        }
+    except Exception as e:
+        logger.error(f"search error: {e}\n{traceback.format_exc()}")
+        raise HTTPException(500, detail=f"Ошибка поиска: {e}")

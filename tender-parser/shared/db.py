@@ -63,11 +63,10 @@ def search_tenders(filters: SearchFilters) -> list[dict]:
     query = db.table("tenders").select("*")
 
     if filters.query:
-        # Полнотекстовый поиск по русскому тексту
-        query = query.text_search("fts", filters.query, config="russian")
+        query = query.ilike("title", f"%{filters.query}%")
 
     if filters.region:
-        query = query.eq("customer_region", filters.region)
+        query = query.ilike("customer_region", f"%{filters.region}%")
 
     if filters.min_nmck is not None:
         query = query.gte("nmck", filters.min_nmck)
@@ -109,9 +108,9 @@ def count_tenders(filters: SearchFilters) -> int:
     query = db.table("tenders").select("id", count="exact")
 
     if filters.query:
-        query = query.text_search("fts", filters.query, config="russian")
+        query = query.ilike("title", f"%{filters.query}%")
     if filters.region:
-        query = query.eq("customer_region", filters.region)
+        query = query.ilike("customer_region", f"%{filters.region}%")
     if filters.min_nmck is not None:
         query = query.gte("nmck", filters.min_nmck)
     if filters.max_nmck is not None:
