@@ -78,11 +78,20 @@ async function runSearch() {
 
   try {
     const res = await fetch(url, { method: "GET", headers: { Accept: "application/json" } });
+    const raw = await res.text();
     if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(errText || `HTTP ${res.status}`);
+      let msg = `HTTP ${res.status}`;
+      try {
+        const j = JSON.parse(raw);
+        if (j.detail) {
+          msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail);
+        }
+      } catch {
+        if (raw) msg = raw;
+      }
+      throw new Error(msg);
     }
-    const data = await res.json();
+    const data = JSON.parse(raw);
     const total = data.total ?? 0;
     const page = data.page ?? 1;
     const pages = data.pages ?? 1;

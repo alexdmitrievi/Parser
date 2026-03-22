@@ -3,6 +3,31 @@
 Система парсинга тендеров с государственных и коммерческих площадок РФ.
 Telegram-бот с поиском, фильтрами и автоматическими уведомлениями.
 
+## Локальный запуск API и веб-страниц
+
+Рабочая директория — **`tender-parser`** (каталог с `api/`, `web/`, `requirements-parser.txt`).
+
+```bash
+cd tender-parser
+python -m pip install -r requirements-parser.txt
+copy .env.example .env
+# заполните .env (TELEGRAM_BOT_TOKEN, SUPABASE_URL, SUPABASE_KEY)
+```
+
+Запуск FastAPI с автоперезагрузкой:
+
+```bash
+npm run dev
+```
+
+То же самое без npm:
+
+```bash
+python -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Открыть в браузере: [http://127.0.0.1:8000/web/](http://127.0.0.1:8000/web/) (поиск), [http://127.0.0.1:8000/web/subscribe.html](http://127.0.0.1:8000/web/subscribe.html) (подписки), документация API: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+
 ## Архитектура
 
 | Компонент | Сервис | Стоимость |

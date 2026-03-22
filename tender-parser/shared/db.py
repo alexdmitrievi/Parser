@@ -87,11 +87,11 @@ def search_tenders(filters: SearchFilters) -> list[dict]:
     if filters.law_type:
         query = query.eq("law_type", filters.law_type)
 
-    # Пагинация
+    # Пагинация: сортировка по времени появления в БД (парсеры всегда дают created_at)
     offset = (filters.page - 1) * filters.per_page
     query = (
         query
-        .order("publish_date", desc=True)
+        .order("created_at", desc=True)
         .range(offset, offset + filters.per_page - 1)
     )
 

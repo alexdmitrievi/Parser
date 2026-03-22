@@ -27,11 +27,19 @@ def _require_env(name: str) -> str:
 
 
 def main() -> None:
-    _require_env("SUPABASE_URL")
-    _require_env("SUPABASE_KEY")
     token = _require_env("TELEGRAM_BOT_TOKEN")
 
+    from shared.config import supabase_key, supabase_url
     from shared.db import get_db
+
+    if not supabase_url():
+        print("FAIL: задайте SUPABASE_URL или NEXT_PUBLIC_SUPABASE_URL")
+        sys.exit(1)
+    if not supabase_key():
+        print(
+            "FAIL: задайте SUPABASE_KEY или SUPABASE_SERVICE_ROLE_KEY или SUPABASE_ANON_KEY"
+        )
+        sys.exit(1)
 
     db = get_db()
     result = db.table("tenders").select("id", count="exact").limit(1).execute()

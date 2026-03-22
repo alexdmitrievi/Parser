@@ -66,10 +66,11 @@ def supabase_key() -> str:
 
 
 def get_config() -> dict:
+    """Те же URL/ключи, что и в routes_tenders / веб-роутерах (fallback SERVICE_ROLE / ANON)."""
     return {
         "telegram_bot_token": get_env("TELEGRAM_BOT_TOKEN"),
-        "supabase_url": get_env("SUPABASE_URL"),
-        "supabase_key": get_env("SUPABASE_KEY"),
+        "supabase_url": supabase_url(),
+        "supabase_key": supabase_key(),
         "eis_ftp_host": get_env("EIS_FTP_HOST", "ftp.zakupki.gov.ru"),
         "scraping_bee_api_key": get_env("SCRAPING_BEE_API_KEY"),
         "log_level": get_env("LOG_LEVEL", "INFO"),

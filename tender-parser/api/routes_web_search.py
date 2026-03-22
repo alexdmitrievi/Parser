@@ -5,9 +5,10 @@ from __future__ import annotations
 import math
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from bot.messages import format_tender_card
+from shared.config import supabase_key, supabase_url
 from shared.db import count_tenders, search_tenders as fetch_tenders
 from shared.models import SearchFilters
 
@@ -27,6 +28,11 @@ def search_tenders_web(
     per_page: int = Query(5, ge=1, le=50),
 ) -> dict[str, Any]:
     """Поиск как в боте: SearchFilters + count_tenders + search_tenders, карточки как format_tender_card."""
+    if not supabase_url() or not supabase_key():
+        raise HTTPException(
+            status_code=503,
+            detail="База данных не настроена: задайте SUPABASE_URL и SUPABASE_KEY или SUPABASE_SERVICE_ROLE_KEY",
+        )
     filters_dict: dict[str, Any] = {
         "query": (q or "").strip() or None,
         "region": region or None,
