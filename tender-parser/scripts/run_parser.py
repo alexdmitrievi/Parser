@@ -125,6 +125,29 @@ def run_tenderguru() -> int:
     )
 
 
+# ──────── Playwright-парсеры ────────
+
+def run_tektorg_pw() -> int:
+    from scrapers.tektorg_pw import TekTorgPlaywrightScraper
+    logger.info("=== TekTorg (Playwright) ===")
+    scraper = TekTorgPlaywrightScraper()
+    return _process_and_save(scraper.run(max_pages=2), "TekTorg PW")
+
+
+def run_fabrikant_pw() -> int:
+    from scrapers.fabrikant_pw import FabrikantPlaywrightScraper
+    logger.info("=== Fabrikant (Playwright) ===")
+    scraper = FabrikantPlaywrightScraper()
+    return _process_and_save(scraper.run(max_pages=2), "Fabrikant PW")
+
+
+def run_sberbank_ast_pw() -> int:
+    from scrapers.sberbank_ast_pw import SberbankAstPlaywrightScraper
+    logger.info("=== Sberbank-AST (Playwright) ===")
+    scraper = SberbankAstPlaywrightScraper()
+    return _process_and_save(scraper.run(), "Sberbank-AST PW")
+
+
 # ──────── Группы ────────
 
 GROUPS = {
@@ -132,6 +155,7 @@ GROUPS = {
     "eis_api": [run_eis_api],
     "etp": [run_roseltorg, run_sberbank_ast, run_rts_tender, run_tektorg],
     "commercial": [run_b2b_center, run_tenderguru],
+    "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
     "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
             run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
 }
