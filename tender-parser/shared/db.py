@@ -68,10 +68,38 @@ def insert_tenders(tenders: list[TenderCreate]) -> int:
     return total
 
 
+def _stem_russian(word: str) -> str:
+    """Простейшая стемминг-функция: обрезает типичные русские окончания."""
+    word = word.lower().strip()
+    if len(word) <= 3:
+        return word
+    # Обрезаем типичные окончания (от длинных к коротким)
+    for suffix in [
+        "ьями", "ями", "иях", "ьях", "ами", "ями",
+        "ого", "его", "ому", "ему", "ыми", "ими",
+        "ьев", "ьёв", "ьям", "ией", "иям",
+        "ов", "ев", "ёв", "ей", "ий", "ой", "ый", "ая", "яя",
+        "ые", "ие", "ых", "их", "ям", "ях", "ам", "ах",
+        "ом", "ем", "ём", "ть", "ся",
+        "а", "я", "о", "е", "ё", "у", "ю", "ы", "и",
+    ]:
+        if word.endswith(suffix) and len(word) - len(suffix) >= 3:
+            return word[: -len(suffix)]
+    return word
+
+
 def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
     """Применить общие фильтры к запросу (используется в search и count)."""
     if filters.query:
-        query = query.ilike("title", f"%{filters.query}%")
+        # Ищем каждое слово запроса (обрезанное до корня) в title, description, customer_name
+        words = filters.query.strip().split()
+        for word in words:
+            stem = _stem_russian(word)
+            if len(stem) < 2:
+                stem = word.lower()
+            query = query.or_(
+                f"title.ilike.%{stem}%,description.ilike.%{stem}%,customer_name.ilike.%{stem}%"
+            )
     if filters.region:
         # Ищем регион в customer_region, customer_name, title и description
         r = filters.region

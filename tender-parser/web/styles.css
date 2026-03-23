@@ -227,10 +227,22 @@ textarea {
 select {
   cursor: pointer;
   appearance: none;
+  -webkit-appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.6rem center;
-  padding-right: 2.2rem;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+  -webkit-tap-highlight-color: transparent;
+}
+
+select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 0.5rem;
 }
 
 .search-input-wrap {
@@ -278,31 +290,65 @@ select {
 
 .autocomplete-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 2px);
   left: 0;
   right: 0;
   z-index: 50;
-  max-height: 220px;
+  max-height: 260px;
   overflow-y: auto;
   background: var(--bg-secondary);
   border: 1px solid var(--border-hover);
-  border-top: none;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,0,0,0.1);
+  transform-origin: top center;
+  animation: dropdownIn 0.15s ease-out;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar {
+  width: 5px;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .autocomplete-item {
-  padding: 0.5rem 0.85rem;
+  padding: 0.6rem 0.9rem;
   font-size: 0.9rem;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: background 0.1s ease, color 0.1s ease;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
 }
 
 .autocomplete-item:hover,
 .autocomplete-item.active {
   background: rgba(59, 130, 246, 0.15);
   color: var(--text-primary);
+}
+
+.autocomplete-item.active {
+  background: rgba(59, 130, 246, 0.2);
 }
 
 /* --- Advanced Filters --- */
