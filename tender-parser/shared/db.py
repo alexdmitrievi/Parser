@@ -25,16 +25,22 @@ def get_db() -> Client:
 
 def insert_tenders(tenders: list[TenderCreate]) -> int:
     """Вставить тендеры с дедупликацией (upsert по source_platform + registry_number).
+    Дедуплицирует внутри батча и отправляет частями по 200.
     Возвращает количество вставленных/обновлённых записей.
     """
     if not tenders:
         return 0
 
     db = get_db()
+    # Дедупликация внутри батча по (source_platform, registry_number)
+    seen: set[tuple[str, str]] = set()
     rows = []
     for t in tenders:
+        key = (t.source_platform, t.registry_number or "")
+        if key in seen:
+            continue
+        seen.add(key)
         data = t.model_dump(mode="json")
-        # Supabase ожидает JSON-совместимые типы
         if data.get("publish_date"):
             data["publish_date"] = str(data["publish_date"])
         if data.get("submission_deadline"):
@@ -43,18 +49,23 @@ def insert_tenders(tenders: list[TenderCreate]) -> int:
             data["auction_date"] = str(data["auction_date"])
         rows.append(data)
 
-    try:
-        result = (
-            db.table("tenders")
-            .upsert(rows, on_conflict="source_platform,registry_number")
-            .execute()
-        )
-        count = len(result.data) if result.data else 0
-        logger.info(f"Upserted {count} tenders")
-        return count
-    except Exception as e:
-        logger.error(f"Error inserting tenders: {e}")
-        return 0
+    total = 0
+    batch_size = 200
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i:i + batch_size]
+        try:
+            result = (
+                db.table("tenders")
+                .upsert(batch, on_conflict="source_platform,registry_number")
+                .execute()
+            )
+            count = len(result.data) if result.data else 0
+            total += count
+        except Exception as e:
+            logger.error(f"Error inserting batch {i//batch_size}: {e}")
+
+    logger.info(f"Upserted {total} tenders (from {len(rows)} unique)")
+    return total
 
 
 def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
