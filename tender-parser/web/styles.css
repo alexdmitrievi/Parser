@@ -198,7 +198,7 @@ a:hover {
 input, select, textarea {
   width: 100%;
   max-width: 100%;
-  padding: 0.6rem 0.85rem;
+  padding: 0.65rem 0.85rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.3);
@@ -207,6 +207,7 @@ input, select, textarea {
   font-family: inherit;
   transition: var(--transition);
   outline: none;
+  min-height: 42px;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -260,6 +261,14 @@ select {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   gap: 1rem;
+}
+
+.form-row-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.form-row-3 {
+  grid-template-columns: 1fr 1fr 1fr;
 }
 
 /* --- Autocomplete Dropdown --- */
@@ -853,7 +862,7 @@ select {
     gap: 0.4rem;
   }
 
-  .navbar-brand span:not(.logo-icon) {
+  .navbar-brand > span {
     display: none;
   }
 
@@ -898,7 +907,9 @@ select {
     margin-bottom: 1.25rem;
   }
 
-  .form-row {
+  .form-row,
+  .form-row-2,
+  .form-row-3 {
     grid-template-columns: 1fr;
     gap: 0;
   }
