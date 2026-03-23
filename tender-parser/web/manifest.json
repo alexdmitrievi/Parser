@@ -1,6 +1,6 @@
 {
-  "name": "Подряд PRO — Поиск тендеров",
-  "short_name": "Подряд PRO",
+  "name": "Тендер PRO — Поиск тендеров",
+  "short_name": "Тендер PRO",
   "description": "Поиск государственных и коммерческих закупок по всей России",
   "start_url": "/web/",
   "display": "standalone",

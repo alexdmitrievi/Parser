@@ -1,5 +1,5 @@
 /**
- * Подряд PRO — Подписки на тендеры
+ * Тендер PRO — Подписки на тендеры
  * Autocomplete, dynamic niches
  */
 

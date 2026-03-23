@@ -16,7 +16,7 @@ from api.routes_suggestions import router as suggestions_router
 
 _CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 
-app = FastAPI(title="Подряд PRO — Tenders API", version="1.0.0")
+app = FastAPI(title="Тендер PRO — Tenders API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_CORS_ORIGINS,

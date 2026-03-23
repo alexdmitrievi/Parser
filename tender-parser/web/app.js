@@ -1,5 +1,5 @@
 /**
- * Подряд PRO — Поиск тендеров
+ * Тендер PRO — Поиск тендеров
  * Autocomplete, advanced filters, dynamic niches, sorting
  */
 
