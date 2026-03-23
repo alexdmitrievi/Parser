@@ -1,7 +1,9 @@
 """Парсер B2B-Center (b2b-center.ru).
 
 Крупнейшая коммерческая площадка РФ — ~30% коммерческих тендеров.
-Поиск доступен без авторизации. JSON API.
+Парсит таблицу table.search-results на /market/.
+Структура: 5 колонок — Название | Заказчик | Опубликовано | Дедлайн | Избранное.
+Цена и регион в списке отсутствуют — только на странице тендера.
 """
 
 from __future__ import annotations
@@ -34,21 +36,13 @@ class B2BCenterScraper(BaseScraper):
         params = {"query": query, "page": str(page)}
         return f"{self.SEARCH_URL}?{urlencode(params)}"
 
-    def _parse_price(self, text: str) -> Optional[float]:
-        if not text:
-            return None
-        cleaned = re.sub(r"[^\d.,]", "", text.replace(",", ".").replace(" ", ""))
-        try:
-            return float(cleaned)
-        except ValueError:
-            return None
-
     def _parse_date(self, text: str) -> Optional[datetime]:
         if not text:
             return None
-        for fmt in ["%d.%m.%Y", "%d.%m.%Y %H:%M", "%d %B %Y"]:
+        text = text.strip()
+        for fmt in ["%d.%m.%Y %H:%M", "%d.%m.%Y", "%Y-%m-%d"]:
             try:
-                return datetime.strptime(text.strip(), fmt)
+                return datetime.strptime(text, fmt)
             except ValueError:
                 continue
         return None
@@ -57,66 +51,55 @@ class B2BCenterScraper(BaseScraper):
         soup = BeautifulSoup(html, "html.parser")
         results = []
 
-        # B2B-Center: блоки тендеров в таблице или списке
-        blocks = soup.select(
-            ".search-results-item, .tender-list-item, "
-            "table.search-results tr, .market-item, "
-            ".lot-item, article.tender"
-        )
+        # Реальная структура: table.search-results > tr (первый — заголовок)
+        table = soup.select_one("table.search-results")
+        if not table:
+            # Fallback: любая таблица с тендерными ссылками
+            table = soup.find("table")
+        if not table:
+            return results
 
-        for block in blocks:
+        rows = table.find_all("tr")
+        for row in rows:
+            cells = row.find_all("td")
+            if len(cells) < 4:
+                continue
+
             item = {}
 
-            # Ссылка + заголовок
-            link = block.select_one("a.tender-title, a.lot-title, h3 a, h2 a, a[href*='/market/']")
+            # Колонка 0: Название + ссылка
+            link = cells[0].find("a")
             if link:
-                item["title"] = link.get_text(strip=True)
+                title_text = link.get_text(strip=True)
+                if not title_text or len(title_text) < 5:
+                    continue
+                item["title"] = title_text
                 href = link.get("href", "")
                 if href and not href.startswith("http"):
                     href = self.base_url + href
                 item["url"] = href
-
-                # Извлекаем номер из URL или текста
-                num_match = re.search(r"/(\d{5,})", href)
+                # Номер из URL
+                num_match = re.search(r"tender-(\d+)", href)
                 if num_match:
                     item["registry_number"] = num_match.group(1)
-
-            if not item.get("title"):
-                # Пробуем любой текстовый блок
-                td = block.select_one("td:first-child a, .title")
-                if td:
-                    item["title"] = td.get_text(strip=True)
-                    href = td.get("href", "")
-                    if href:
-                        item["url"] = self.base_url + href if not href.startswith("http") else href
-
-            if not item.get("title"):
+            else:
                 continue
 
-            # Заказчик / организатор
-            org = block.select_one(".organizer, .customer, .company-name, td:nth-child(2)")
-            if org:
-                item["customer"] = org.get_text(strip=True)
+            # Колонка 1: Заказчик
+            if len(cells) > 1:
+                cust_link = cells[1].find("a")
+                if cust_link:
+                    item["customer"] = cust_link.get_text(strip=True)
+                else:
+                    item["customer"] = cells[1].get_text(strip=True) or None
 
-            # Цена
-            price = block.select_one(".price, .sum, .tender-price, td.price")
-            if price:
-                item["nmck"] = self._parse_price(price.get_text())
+            # Колонка 2: Дата публикации
+            if len(cells) > 2:
+                item["publish_date"] = cells[2].get_text(strip=True)
 
-            # Дата окончания
-            date_el = block.select_one(".date-end, .deadline, time, td.date")
-            if date_el:
-                item["deadline"] = date_el.get_text(strip=True)
-
-            # Тип (конкурс, аукцион и т.д.)
-            type_el = block.select_one(".type, .tender-type, .procedure-type")
-            if type_el:
-                item["method"] = type_el.get_text(strip=True)
-
-            # Регион
-            region_el = block.select_one(".region, .location, .delivery-place")
-            if region_el:
-                item["region"] = region_el.get_text(strip=True)
+            # Колонка 3: Дедлайн
+            if len(cells) > 3:
+                item["deadline"] = cells[3].get_text(strip=True)
 
             results.append(item)
 
@@ -125,24 +108,16 @@ class B2BCenterScraper(BaseScraper):
     def parse_tenders(self, raw_items: list[dict]) -> list[TenderCreate]:
         tenders = []
         for item in raw_items:
-            method = (item.get("method") or "").lower()
-            purchase_method = "other"
-            if "аукцион" in method:
-                purchase_method = "auction"
-            elif "конкурс" in method:
-                purchase_method = "contest"
-            elif "котировк" in method or "запрос цен" in method:
-                purchase_method = "quotation"
-
             tenders.append(TenderCreate(
                 source_platform=self.platform,
                 registry_number=item.get("registry_number"),
                 law_type="commercial",
-                purchase_method=purchase_method,
+                purchase_method=None,
                 title=item["title"],
                 customer_name=item.get("customer"),
-                customer_region=item.get("region"),
-                nmck=item.get("nmck"),
+                customer_region=None,  # Не доступен в списке
+                nmck=None,  # Не доступен в списке
+                publish_date=self._parse_date(item.get("publish_date", "")),
                 submission_deadline=self._parse_date(item.get("deadline", "")),
                 original_url=item.get("url", ""),
             ))
@@ -151,8 +126,10 @@ class B2BCenterScraper(BaseScraper):
     def run(self, queries: list[str] | None = None, max_pages: int = 3, **kwargs) -> list[TenderCreate]:
         if queries is None:
             queries = [
-                "мебель", "мягкая мебель", "офисная мебель",
-                "подряд строительство", "ремонт помещений", "отделочные работы",
+                "поставка оборудования", "ремонт", "строительство",
+                "IT услуги", "мебель", "транспортные услуги",
+                "уборка", "охрана", "продукты питания",
+                "медицинское оборудование", "канцтовары",
             ]
 
         all_tenders: list[TenderCreate] = []
