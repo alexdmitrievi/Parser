@@ -73,7 +73,9 @@ def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
     if filters.query:
         query = query.ilike("title", f"%{filters.query}%")
     if filters.region:
-        query = query.ilike("customer_region", f"%{filters.region}%")
+        # Ищем регион в customer_region, customer_name, title и description
+        r = filters.region
+        query = query.or_(f"customer_region.ilike.%{r}%,customer_name.ilike.%{r}%,title.ilike.%{r}%,description.ilike.%{r}%")
     if filters.min_nmck is not None:
         query = query.gte("nmck", filters.min_nmck)
     if filters.max_nmck is not None:
