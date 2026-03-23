@@ -1,16 +1,16 @@
 /**
  * Подряд PRO — Аналитика тендеров
- * Light theme chart colors
+ * Dark theme chart colors
  */
 
 const statusEl = document.getElementById("status");
 
 const COLORS = [
-  "#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626",
-  "#0891b2", "#db2777", "#0d9488", "#ea580c", "#4f46e5",
+  "#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444",
+  "#06b6d4", "#ec4899", "#14b8a6", "#f97316", "#6366f1",
 ];
 
-const COLORS_BG = COLORS.map(c => c + "18");
+const COLORS_BG = COLORS.map(c => c + "33");
 
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
@@ -29,7 +29,6 @@ async function loadStats() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // KPI
     document.getElementById("kpi-total").textContent = (data.total ?? 0).toLocaleString("ru-RU");
     document.getElementById("kpi-recent").textContent = (data.created_last_7_days ?? 0).toLocaleString("ru-RU");
 
@@ -38,7 +37,6 @@ async function loadStats() {
     document.getElementById("kpi-niches").textContent = Object.keys(niches).length;
     document.getElementById("kpi-regions").textContent = Object.keys(regions).length;
 
-    // Niche chart
     const nicheLabels = Object.keys(niches).map(nicheLabel);
     const nicheValues = Object.values(niches);
 
@@ -50,7 +48,7 @@ async function loadStats() {
           datasets: [{
             data: nicheValues,
             backgroundColor: COLORS.slice(0, nicheLabels.length),
-            borderColor: "#ffffff",
+            borderColor: "rgba(10,14,23,0.8)",
             borderWidth: 2,
           }],
         },
@@ -61,7 +59,7 @@ async function loadStats() {
             legend: {
               position: "bottom",
               labels: {
-                color: "#475569",
+                color: "#94a3b8",
                 padding: 16,
                 font: { family: "Inter, system-ui", size: 13 },
               },
@@ -71,7 +69,6 @@ async function loadStats() {
       });
     }
 
-    // Regions chart — top 10
     const regionEntries = Object.entries(regions)
       .filter(([k]) => k !== "unknown")
       .sort((a, b) => b[1] - a[1])
@@ -102,11 +99,11 @@ async function loadStats() {
           },
           scales: {
             x: {
-              ticks: { color: "#94a3b8", font: { family: "Inter, system-ui" } },
-              grid: { color: "rgba(0,0,0,0.04)" },
+              ticks: { color: "#64748b", font: { family: "Inter, system-ui" } },
+              grid: { color: "rgba(255,255,255,0.04)" },
             },
             y: {
-              ticks: { color: "#475569", font: { family: "Inter, system-ui", size: 12 } },
+              ticks: { color: "#94a3b8", font: { family: "Inter, system-ui", size: 12 } },
               grid: { display: false },
             },
           },

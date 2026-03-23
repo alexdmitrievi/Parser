@@ -15,6 +15,7 @@
     { "src": "/api/tenders(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/stats", "dest": "/api/tenders.py" },
     { "src": "/api/niches", "dest": "/api/tenders.py" },
+    { "src": "/api/suggest(.*)", "dest": "/api/tenders.py" },
     { "src": "/health", "dest": "/api/tenders.py" },
     { "src": "/", "dest": "/web/index.html" }
   ]
