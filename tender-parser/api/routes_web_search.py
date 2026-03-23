@@ -27,6 +27,11 @@ def search_tenders_web(
     min_nmck: float | None = Query(None),
     max_nmck: float | None = Query(None),
     law_type: str | None = Query(None, description="44-fz, 223-fz, commercial"),
+    purchase_method: str | None = Query(None, description="Способ закупки: AE, OK, ZK, ZP, EP"),
+    date_from: str | None = Query(None, description="Дата публикации от (YYYY-MM-DD)"),
+    date_to: str | None = Query(None, description="Дата публикации до (YYYY-MM-DD)"),
+    source_platform: str | None = Query(None, description="Площадка-источник"),
+    sort: str = Query("created_at", description="Сортировка: created_at, deadline, nmck, publish_date"),
     status: str = Query("active"),
     page: int = Query(1, ge=1),
     per_page: int = Query(5, ge=1, le=50),
@@ -44,6 +49,11 @@ def search_tenders_web(
         "max_nmck": max_nmck,
         "niche": niche or None,
         "law_type": law_type or None,
+        "purchase_method": purchase_method or None,
+        "date_from": date_from or None,
+        "date_to": date_to or None,
+        "source_platform": source_platform or None,
+        "sort_by": sort or "created_at",
         "status": status or "active",
     }
     try:

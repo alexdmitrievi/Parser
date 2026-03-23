@@ -1,15 +1,16 @@
 /**
  * Подряд PRO — Аналитика тендеров
+ * Light theme chart colors
  */
 
 const statusEl = document.getElementById("status");
 
 const COLORS = [
-  "#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444",
-  "#06b6d4", "#ec4899", "#14b8a6", "#f97316", "#6366f1",
+  "#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626",
+  "#0891b2", "#db2777", "#0d9488", "#ea580c", "#4f46e5",
 ];
 
-const COLORS_BG = COLORS.map((c) => c + "33");
+const COLORS_BG = COLORS.map(c => c + "18");
 
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
@@ -17,11 +18,7 @@ function setStatus(text, isError = false) {
 }
 
 function nicheLabel(tag) {
-  const map = {
-    furniture: "\u041c\u0435\u0431\u0435\u043b\u044c",
-    construction: "\u0421\u0442\u0440\u043e\u0439\u043a\u0430",
-  };
-  return map[tag] || tag;
+  return tag.charAt(0).toUpperCase() + tag.slice(1);
 }
 
 async function loadStats() {
@@ -53,7 +50,7 @@ async function loadStats() {
           datasets: [{
             data: nicheValues,
             backgroundColor: COLORS.slice(0, nicheLabels.length),
-            borderColor: "rgba(10,14,23,0.8)",
+            borderColor: "#ffffff",
             borderWidth: 2,
           }],
         },
@@ -64,7 +61,7 @@ async function loadStats() {
             legend: {
               position: "bottom",
               labels: {
-                color: "#94a3b8",
+                color: "#475569",
                 padding: 16,
                 font: { family: "Inter, system-ui", size: 13 },
               },
@@ -105,11 +102,11 @@ async function loadStats() {
           },
           scales: {
             x: {
-              ticks: { color: "#64748b", font: { family: "Inter, system-ui" } },
-              grid: { color: "rgba(255,255,255,0.04)" },
+              ticks: { color: "#94a3b8", font: { family: "Inter, system-ui" } },
+              grid: { color: "rgba(0,0,0,0.04)" },
             },
             y: {
-              ticks: { color: "#94a3b8", font: { family: "Inter, system-ui", size: 12 } },
+              ticks: { color: "#475569", font: { family: "Inter, system-ui", size: 12 } },
               grid: { display: false },
             },
           },

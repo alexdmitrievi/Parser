@@ -34,7 +34,7 @@
   <div class="container">
     <header class="page-header">
       <h1>Подписки на тендеры</h1>
-      <p class="subtitle">Создайте подписку с фильтрами — получайте уведомления о новых тендерах</p>
+      <p class="subtitle">Создайте подписку с фильтрами — получайте уведомления о новых закупках</p>
     </header>
 
     <p id="global-status" class="status-msg" role="status" aria-live="polite"></p>
@@ -50,17 +50,18 @@
 
         <div class="form-row">
           <div class="field">
-            <label class="field-label" for="niche">Ниша</label>
+            <label class="field-label" for="niche">Категория</label>
             <select name="niche" id="niche">
               <option value="">Не выбрана</option>
-              <option value="furniture">Мебель</option>
-              <option value="construction">Стройка / ремонт</option>
               <option value="custom">Свои ключевые слова</option>
             </select>
           </div>
           <div class="field">
             <label class="field-label" for="region">Регион</label>
-            <input type="text" name="region" id="region" placeholder="Омская область (пусто = вся РФ)" />
+            <div class="autocomplete-wrap">
+              <input type="text" name="region" id="region" placeholder="Начните вводить регион..." autocomplete="off" />
+              <div id="region-dropdown" class="autocomplete-dropdown hidden"></div>
+            </div>
           </div>
         </div>
 

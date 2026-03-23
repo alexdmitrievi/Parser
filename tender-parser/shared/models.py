@@ -77,6 +77,11 @@ class SearchFilters(BaseModel):
     niche: Optional[str] = None
     status: str = "active"
     law_type: Optional[str] = None
+    purchase_method: Optional[str] = None
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+    source_platform: Optional[str] = None
+    sort_by: str = "created_at"
     page: int = 1
     per_page: int = 5
 
@@ -97,6 +102,11 @@ class SearchFilters(BaseModel):
             okpd2=filters.get("okpd2"),
             law_type=filters.get("law_type") or filters.get("law"),
             status=filters.get("status") or "active",
+            purchase_method=filters.get("purchase_method"),
+            date_from=filters.get("date_from"),
+            date_to=filters.get("date_to"),
+            source_platform=filters.get("source_platform"),
+            sort_by=filters.get("sort_by") or "created_at",
             page=page,
             per_page=per_page,
         )

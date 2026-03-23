@@ -35,7 +35,7 @@
     <!-- Header -->
     <header class="page-header">
       <h1>Поиск тендеров</h1>
-      <p class="subtitle">Поиск по базе государственных и коммерческих тендеров РФ</p>
+      <p class="subtitle">Находите государственные и коммерческие закупки по всей России</p>
     </header>
 
     <!-- Filters -->
@@ -47,21 +47,22 @@
             <span class="search-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             </span>
-            <input type="text" name="q" id="q" placeholder="Мебель, строительные работы, ремонт..." autocomplete="off" />
+            <input type="text" name="q" id="q" placeholder="Введите предмет закупки, например: ремонт, поставка оборудования, IT-услуги..." autocomplete="off" />
           </div>
         </div>
 
         <div class="form-row">
           <div class="field">
             <label class="field-label" for="region">Регион</label>
-            <input type="text" name="region" id="region" placeholder="Омская область" />
+            <div class="autocomplete-wrap">
+              <input type="text" name="region" id="region" placeholder="Начните вводить регион..." autocomplete="off" />
+              <div id="region-dropdown" class="autocomplete-dropdown hidden"></div>
+            </div>
           </div>
           <div class="field">
-            <label class="field-label" for="niche">Ниша</label>
+            <label class="field-label" for="niche">Категория</label>
             <select name="niche" id="niche">
               <option value="">Любая</option>
-              <option value="furniture">Мебель</option>
-              <option value="construction">Стройка / ремонт</option>
             </select>
           </div>
           <div class="field">
@@ -90,7 +91,40 @@
               <option value="5">5</option>
               <option value="10" selected>10</option>
               <option value="20">20</option>
+              <option value="50">50</option>
             </select>
+          </div>
+        </div>
+
+        <!-- Advanced filters -->
+        <button type="button" id="advanced-toggle" class="advanced-toggle">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          Расширенные фильтры
+        </button>
+        <div id="advanced-body" class="advanced-body">
+          <div class="form-row">
+            <div class="field">
+              <label class="field-label" for="purchase_method">Способ закупки</label>
+              <select name="purchase_method" id="purchase_method">
+                <option value="">Любой</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label" for="source_platform">Площадка</label>
+              <select name="source_platform" id="source_platform">
+                <option value="">Любая</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label class="field-label" for="date_from">Опубликовано от</label>
+              <input type="date" name="date_from" id="date_from" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="date_to">Опубликовано до</label>
+              <input type="date" name="date_to" id="date_to" />
+            </div>
           </div>
         </div>
 
@@ -109,8 +143,19 @@
     <!-- Status -->
     <p id="status" class="status-msg" role="status" aria-live="polite"></p>
 
-    <!-- Summary -->
-    <div id="summary" class="summary hidden" aria-live="polite"></div>
+    <!-- Results toolbar -->
+    <div id="results-toolbar" class="results-toolbar hidden">
+      <div class="results-count" id="results-count"></div>
+      <div class="sort-group">
+        <label for="sort-select">Сортировка:</label>
+        <select id="sort-select">
+          <option value="created_at">По дате добавления</option>
+          <option value="deadline">По дедлайну</option>
+          <option value="nmck">По НМЦК</option>
+          <option value="publish_date">По дате публикации</option>
+        </select>
+      </div>
+    </div>
 
     <!-- Results -->
     <section id="results" class="results-grid" aria-label="Результаты поиска"></section>

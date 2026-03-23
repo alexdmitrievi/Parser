@@ -1,10 +1,12 @@
 /**
  * Подряд PRO — Поиск тендеров
+ * Autocomplete, advanced filters, dynamic niches, sorting
  */
 
 const form = document.getElementById("search-form");
 const statusEl = document.getElementById("status");
-const summaryEl = document.getElementById("summary");
+const resultsToolbar = document.getElementById("results-toolbar");
+const resultsCountEl = document.getElementById("results-count");
 const resultsEl = document.getElementById("results");
 const pagerEl = document.getElementById("pager");
 const pageInput = document.getElementById("page");
@@ -12,6 +14,11 @@ const btnPrev = document.getElementById("btn-prev");
 const btnNext = document.getElementById("btn-next");
 const pageInfo = document.getElementById("page-info");
 const btnReset = document.getElementById("btn-reset");
+const sortSelect = document.getElementById("sort-select");
+const advancedToggle = document.getElementById("advanced-toggle");
+const advancedBody = document.getElementById("advanced-body");
+
+/* ── Helpers ── */
 
 function esc(s) {
   const d = document.createElement("div");
@@ -21,11 +28,15 @@ function esc(s) {
 
 function fmtMoney(n) {
   if (n == null) return "\u2014";
+  try { return Number(n).toLocaleString("ru-RU") + " \u20BD"; }
+  catch { return String(n); }
+}
+
+function fmtDate(iso) {
+  if (!iso) return "\u2014";
   try {
-    return Number(n).toLocaleString("ru-RU") + " \u20BD";
-  } catch {
-    return String(n);
-  }
+    return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" });
+  } catch { return String(iso).slice(0, 10); }
 }
 
 function lawBadge(law) {
@@ -42,8 +53,27 @@ function lawBadge(law) {
 
 function nicheBadges(tags) {
   if (!tags || !tags.length) return "";
-  const nameMap = { furniture: "\u041c\u0435\u0431\u0435\u043b\u044c", construction: "\u0421\u0442\u0440\u043e\u0439\u043a\u0430" };
-  return tags.map((t) => `<span class="badge badge-niche">${esc(nameMap[t] || t)}</span>`).join("");
+  return tags.map(t => `<span class="badge badge-niche">${esc(t)}</span>`).join("");
+}
+
+function platformBadge(p) {
+  if (!p) return "";
+  const names = {
+    eis: "\u0415\u0418\u0421", roseltorg: "\u0420\u043e\u0441\u044d\u043b\u0442\u043e\u0440\u0433", sberbank_ast: "\u0421\u0431\u0435\u0440\u0431\u0430\u043d\u043a-\u0410\u0421\u0422",
+    rts_tender: "\u0420\u0422\u0421", b2b_center: "B2B-Center", tektorg: "\u0422\u042d\u041a-\u0422\u043e\u0440\u0433",
+    tenderguru: "TenderGuru", fabrikant: "Fabrikant", tenderpro: "TenderPro",
+    etpgpb: "\u042d\u0422\u041f \u0413\u041f\u0411", etp_ets: "\u042d\u0422\u041f \u0415\u0422\u0421",
+  };
+  return `<span class="badge badge-platform">${esc(names[p] || p)}</span>`;
+}
+
+function methodBadge(m) {
+  if (!m) return "";
+  const names = {
+    AE: "\u0410\u0443\u043a\u0446\u0438\u043e\u043d", OK: "\u041a\u043e\u043d\u043a\u0443\u0440\u0441", ZK: "\u0417\u0430\u043f\u0440\u043e\u0441 \u043a\u043e\u0442\u0438\u0440\u043e\u0432\u043e\u043a",
+    ZP: "\u0417\u0430\u043f\u0440\u043e\u0441 \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0439", EP: "\u0415\u0434. \u043f\u043e\u0441\u0442\u0430\u0432\u0449\u0438\u043a", OA: "\u041e\u0442\u043a\u0440. \u0430\u0443\u043a\u0446\u0438\u043e\u043d",
+  };
+  return `<span class="badge badge-method">${esc(names[m] || m)}</span>`;
 }
 
 function deadlineInfo(dl) {
@@ -57,9 +87,7 @@ function deadlineInfo(dl) {
     if (diff < 3) return { text, cls: "deadline-danger" };
     if (diff < 7) return { text, cls: "deadline-warning" };
     return { text, cls: "" };
-  } catch {
-    return { text: String(dl).slice(0, 10), cls: "" };
-  }
+  } catch { return { text: String(dl).slice(0, 10), cls: "" }; }
 }
 
 function setStatus(text, isError = false) {
@@ -67,10 +95,189 @@ function setStatus(text, isError = false) {
   statusEl.classList.toggle("error", isError);
 }
 
-function showSummary(total, page, pages, perPage) {
-  summaryEl.textContent = `\u041d\u0430\u0439\u0434\u0435\u043d\u043e: ${total} \u00b7 \u0441\u0442\u0440. ${page}/${pages}`;
-  summaryEl.classList.remove("hidden");
+/* ── Autocomplete ── */
+
+function setupAutocomplete(inputEl, dropdownEl, fetchFn) {
+  let timer = null;
+  let idx = -1;
+  let items = [];
+
+  function show(results) {
+    items = results;
+    idx = -1;
+    if (!results.length) { dropdownEl.classList.add("hidden"); dropdownEl.innerHTML = ""; return; }
+    dropdownEl.innerHTML = results
+      .map((t, i) => `<div class="autocomplete-item" data-index="${i}">${esc(t)}</div>`)
+      .join("");
+    dropdownEl.classList.remove("hidden");
+  }
+
+  function pick(i) {
+    if (i >= 0 && i < items.length) {
+      inputEl.value = items[i];
+      dropdownEl.classList.add("hidden");
+      items = [];
+      idx = -1;
+    }
+  }
+
+  function highlight() {
+    dropdownEl.querySelectorAll(".autocomplete-item").forEach((el, i) => {
+      el.classList.toggle("active", i === idx);
+      if (i === idx) el.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  inputEl.addEventListener("input", () => {
+    clearTimeout(timer);
+    const q = inputEl.value.trim();
+    if (q.length < 1) { dropdownEl.classList.add("hidden"); return; }
+    timer = setTimeout(async () => {
+      try { show(await fetchFn(q)); } catch { dropdownEl.classList.add("hidden"); }
+    }, 300);
+  });
+
+  inputEl.addEventListener("keydown", e => {
+    if (dropdownEl.classList.contains("hidden")) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); idx = Math.min(idx + 1, items.length - 1); highlight(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); idx = Math.max(idx - 1, 0); highlight(); }
+    else if (e.key === "Enter" && idx >= 0) { e.preventDefault(); pick(idx); }
+    else if (e.key === "Escape") { dropdownEl.classList.add("hidden"); }
+  });
+
+  dropdownEl.addEventListener("click", e => {
+    const item = e.target.closest(".autocomplete-item");
+    if (item) pick(parseInt(item.dataset.index, 10));
+  });
+
+  document.addEventListener("click", e => {
+    if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) dropdownEl.classList.add("hidden");
+  });
 }
+
+/* ── Region autocomplete ── */
+
+async function fetchRegionSuggestions(q) {
+  const res = await fetch(`/api/suggest/regions?q=${encodeURIComponent(q)}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.items || [];
+}
+
+setupAutocomplete(
+  document.getElementById("region"),
+  document.getElementById("region-dropdown"),
+  fetchRegionSuggestions
+);
+
+/* ── Dynamic niches ── */
+
+async function loadNiches() {
+  try {
+    const res = await fetch("/api/niches", { headers: { Accept: "application/json" } });
+    if (!res.ok) return;
+    const data = await res.json();
+    const sel = document.getElementById("niche");
+    const niches = data.niches || [];
+    for (const n of niches) {
+      const opt = document.createElement("option");
+      opt.value = n.name;
+      opt.textContent = `${n.name} (${n.count})`;
+      sel.appendChild(opt);
+    }
+  } catch { /* silent */ }
+}
+
+/* ── Dynamic platforms & methods ── */
+
+async function loadPlatforms() {
+  try {
+    const res = await fetch("/api/suggest/platforms");
+    if (!res.ok) return;
+    const data = await res.json();
+    const sel = document.getElementById("source_platform");
+    for (const p of data.items || []) {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name;
+      sel.appendChild(opt);
+    }
+  } catch { /* silent */ }
+}
+
+async function loadMethods() {
+  try {
+    const res = await fetch("/api/suggest/purchase-methods");
+    if (!res.ok) return;
+    const data = await res.json();
+    const sel = document.getElementById("purchase_method");
+    for (const m of data.items || []) {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = m.name;
+      sel.appendChild(opt);
+    }
+  } catch { /* silent */ }
+}
+
+/* ── Advanced filters toggle ── */
+
+advancedToggle.addEventListener("click", () => {
+  advancedToggle.classList.toggle("open");
+  advancedBody.classList.toggle("open");
+});
+
+/* ── Sort ── */
+
+sortSelect.addEventListener("change", () => {
+  pageInput.value = "1";
+  runSearch();
+});
+
+/* ── Build query ── */
+
+function buildQueryString() {
+  const fd = new FormData(form);
+  const params = new URLSearchParams();
+
+  const q = (fd.get("q") || "").trim();
+  if (q) params.set("q", q);
+
+  const region = (fd.get("region") || "").trim();
+  if (region) params.set("region", region);
+
+  const niche = (fd.get("niche") || "").trim();
+  if (niche) params.set("niche", niche);
+
+  const minNmck = fd.get("min_nmck");
+  if (minNmck !== "" && minNmck != null) params.set("min_nmck", String(minNmck));
+
+  const maxNmck = fd.get("max_nmck");
+  if (maxNmck !== "" && maxNmck != null) params.set("max_nmck", String(maxNmck));
+
+  const lawType = (fd.get("law_type") || "").trim();
+  if (lawType) params.set("law_type", lawType);
+
+  const purchaseMethod = (fd.get("purchase_method") || "").trim();
+  if (purchaseMethod) params.set("purchase_method", purchaseMethod);
+
+  const dateFrom = (fd.get("date_from") || "").trim();
+  if (dateFrom) params.set("date_from", dateFrom);
+
+  const dateTo = (fd.get("date_to") || "").trim();
+  if (dateTo) params.set("date_to", dateTo);
+
+  const sourcePlatform = (fd.get("source_platform") || "").trim();
+  if (sourcePlatform) params.set("source_platform", sourcePlatform);
+
+  params.set("sort", sortSelect.value || "created_at");
+  params.set("status", "active");
+  params.set("page", pageInput.value || "1");
+  params.set("per_page", fd.get("per_page") || "10");
+  return params.toString();
+}
+
+/* ── Render cards ── */
 
 function renderCards(items) {
   resultsEl.innerHTML = "";
@@ -80,7 +287,7 @@ function renderCards(items) {
         <div class="empty-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 6 0"/></svg>
         </div>
-        <p>\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e. \u0423\u0442\u043e\u0447\u043d\u0438\u0442\u0435 \u0437\u0430\u043f\u0440\u043e\u0441 \u0438\u043b\u0438 \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u0435 \u0444\u0438\u043b\u044c\u0442\u0440\u044b.</p>
+        <p>\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u043a\u043b\u044e\u0447\u0435\u0432\u044b\u0435 \u0441\u043b\u043e\u0432\u0430 \u0438\u043b\u0438 \u0440\u0430\u0441\u0448\u0438\u0440\u044c\u0442\u0435 \u0444\u0438\u043b\u044c\u0442\u0440\u044b.</p>
       </div>`;
     return;
   }
@@ -95,24 +302,26 @@ function renderCards(items) {
         <div class="tender-title">${esc(t.title || "\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f")}</div>
         <div class="tender-badges">
           ${lawBadge(t.law_type)}
+          ${platformBadge(t.source_platform)}
+          ${methodBadge(t.purchase_method)}
           ${nicheBadges(t.niche_tags)}
         </div>
       </div>
       <div class="tender-body">
         <div class="tender-field">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           <span class="tender-nmck">${esc(fmtMoney(t.nmck))}</span>
         </div>
         <div class="tender-field ${dl.cls}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
           ${esc(dl.text)}
         </div>
         <div class="tender-field">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
           ${esc(t.customer_name || "\u2014")}
         </div>
         <div class="tender-field">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
           ${esc(t.customer_region || "\u2014")}
         </div>
       </div>
@@ -122,38 +331,32 @@ function renderCards(items) {
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
           \u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043d\u0430 \u043f\u043b\u043e\u0449\u0430\u0434\u043a\u0435
         </a>
+        <div class="tender-meta">
+          ${t.publish_date ? `<span>\u041e\u043f\u0443\u0431\u043b.: ${esc(fmtDate(t.publish_date))}</span>` : ""}
+        </div>
       </div>` : ""}
     `;
     resultsEl.appendChild(div);
   }
 }
 
-function buildQueryString() {
-  const fd = new FormData(form);
-  const params = new URLSearchParams();
-  const q = (fd.get("q") || "").trim();
-  if (q) params.set("q", q);
-  const region = (fd.get("region") || "").trim();
-  if (region) params.set("region", region);
-  const niche = (fd.get("niche") || "").trim();
-  if (niche) params.set("niche", niche);
-  const minNmck = fd.get("min_nmck");
-  if (minNmck !== "" && minNmck != null) params.set("min_nmck", String(minNmck));
-  const maxNmck = fd.get("max_nmck");
-  if (maxNmck !== "" && maxNmck != null) params.set("max_nmck", String(maxNmck));
-  const lawType = (fd.get("law_type") || "").trim();
-  if (lawType) params.set("law_type", lawType);
-  params.set("status", "active");
-  params.set("page", pageInput.value || "1");
-  params.set("per_page", fd.get("per_page") || "10");
-  return params.toString();
+/* ── Skeleton loading ── */
+
+function showSkeleton() {
+  resultsEl.innerHTML = "";
+  for (let i = 0; i < 3; i++) {
+    const div = document.createElement("div");
+    div.className = "skeleton skeleton-card";
+    resultsEl.appendChild(div);
+  }
 }
+
+/* ── Search ── */
 
 async function runSearch() {
   setStatus("", false);
-  statusEl.innerHTML = '<span class="spinner"></span> \u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430\u2026';
-  resultsEl.innerHTML = "";
-  summaryEl.classList.add("hidden");
+  showSkeleton();
+  resultsToolbar.classList.add("hidden");
   pagerEl.classList.add("hidden");
 
   const qs = buildQueryString();
@@ -164,21 +367,21 @@ async function runSearch() {
     const raw = await res.text();
     if (!res.ok) {
       let msg = `HTTP ${res.status}`;
-      try {
-        const j = JSON.parse(raw);
-        if (j.detail) msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail);
-      } catch { if (raw) msg = raw; }
+      try { const j = JSON.parse(raw); if (j.detail) msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); }
+      catch { if (raw) msg = raw; }
       throw new Error(msg);
     }
     const data = JSON.parse(raw);
     const total = data.total ?? 0;
     const page = data.page ?? 1;
     const pages = data.pages ?? 1;
-    const perPage = data.per_page ?? 10;
-    const items = data.items || [];
 
-    showSummary(total, page, pages, perPage);
-    renderCards(items);
+    // Results toolbar
+    resultsCountEl.innerHTML = `\u041d\u0430\u0439\u0434\u0435\u043d\u043e: <span>${total.toLocaleString("ru-RU")}</span> \u0442\u0435\u043d\u0434\u0435\u0440\u043e\u0432`;
+    resultsToolbar.classList.remove("hidden");
+
+    renderCards(data.items || []);
+
     if (total > 0) {
       pageInfo.textContent = `${page} / ${pages}`;
       btnPrev.disabled = page <= 1;
@@ -190,10 +393,13 @@ async function runSearch() {
     console.error(e);
     setStatus("\u041e\u0448\u0438\u0431\u043a\u0430: " + (e.message || "\u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0441\u0435\u0442\u044c."), true);
     resultsEl.innerHTML = "";
+    resultsToolbar.classList.add("hidden");
   }
 }
 
-form.addEventListener("submit", (ev) => {
+/* ── Events ── */
+
+form.addEventListener("submit", ev => {
   ev.preventDefault();
   pageInput.value = "1";
   runSearch();
@@ -203,10 +409,14 @@ btnReset.addEventListener("click", () => {
   form.reset();
   document.getElementById("per_page").value = "10";
   pageInput.value = "1";
+  sortSelect.value = "created_at";
   setStatus("");
-  summaryEl.classList.add("hidden");
+  resultsToolbar.classList.add("hidden");
   resultsEl.innerHTML = "";
   pagerEl.classList.add("hidden");
+  // Close advanced if open
+  advancedToggle.classList.remove("open");
+  advancedBody.classList.remove("open");
 });
 
 btnPrev.addEventListener("click", () => {
@@ -220,3 +430,8 @@ btnNext.addEventListener("click", () => {
   pageInput.value = String(p);
   runSearch();
 });
+
+/* ── Init: load dynamic data ── */
+loadNiches();
+loadPlatforms();
+loadMethods();

@@ -66,17 +66,12 @@ def create_subscription(body: SubscriptionCreateBody) -> dict[str, Any]:
         raise HTTPException(400, "Некорректный email")
 
     niche = (body.niche or "").strip().lower() or None
-    if niche not in (None, "furniture", "construction", "custom"):
-        raise HTTPException(400, "Ниша: furniture, construction, custom или пусто")
-
     kw_list = _parse_keywords(body.keywords)
     if niche == "custom" and not kw_list:
         raise HTTPException(400, "Для ниши «свои ключевые слова» укажите ключевые слова")
 
-    if niche == "furniture":
-        niche_tags = ["furniture"]
-    elif niche == "construction":
-        niche_tags = ["construction"]
+    if niche and niche != "custom":
+        niche_tags = [niche]
     else:
         niche_tags = []
 

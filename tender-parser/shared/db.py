@@ -57,40 +57,51 @@ def insert_tenders(tenders: list[TenderCreate]) -> int:
         return 0
 
 
+def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
+    """Применить общие фильтры к запросу (используется в search и count)."""
+    if filters.query:
+        query = query.ilike("title", f"%{filters.query}%")
+    if filters.region:
+        query = query.ilike("customer_region", f"%{filters.region}%")
+    if filters.min_nmck is not None:
+        query = query.gte("nmck", filters.min_nmck)
+    if filters.max_nmck is not None:
+        query = query.lte("nmck", filters.max_nmck)
+    if filters.okpd2:
+        query = query.contains("okpd2_codes", [filters.okpd2])
+    if filters.niche:
+        query = query.contains("niche_tags", [filters.niche])
+    if filters.status:
+        query = query.eq("status", filters.status)
+    if filters.law_type:
+        query = query.eq("law_type", filters.law_type)
+    if filters.purchase_method:
+        query = query.eq("purchase_method", filters.purchase_method)
+    if filters.source_platform:
+        query = query.eq("source_platform", filters.source_platform)
+    if filters.date_from:
+        query = query.gte("publish_date", filters.date_from)
+    if filters.date_to:
+        query = query.lte("publish_date", filters.date_to + "T23:59:59")
+    return query
+
+
 def search_tenders(filters: SearchFilters) -> list[dict]:
     """Поиск тендеров с фильтрами и пагинацией."""
     db = get_db()
     query = db.table("tenders").select("*")
+    query = _apply_common_filters(query, filters)
 
-    if filters.query:
-        query = query.ilike("title", f"%{filters.query}%")
+    sort_col = {
+        "deadline": "submission_deadline",
+        "nmck": "nmck",
+        "publish_date": "publish_date",
+    }.get(filters.sort_by, "created_at")
 
-    if filters.region:
-        query = query.ilike("customer_region", f"%{filters.region}%")
-
-    if filters.min_nmck is not None:
-        query = query.gte("nmck", filters.min_nmck)
-
-    if filters.max_nmck is not None:
-        query = query.lte("nmck", filters.max_nmck)
-
-    if filters.okpd2:
-        query = query.contains("okpd2_codes", [filters.okpd2])
-
-    if filters.niche:
-        query = query.contains("niche_tags", [filters.niche])
-
-    if filters.status:
-        query = query.eq("status", filters.status)
-
-    if filters.law_type:
-        query = query.eq("law_type", filters.law_type)
-
-    # Пагинация: сортировка по времени появления в БД (парсеры всегда дают created_at)
     offset = (filters.page - 1) * filters.per_page
     query = (
         query
-        .order("created_at", desc=True)
+        .order(sort_col, desc=True)
         .range(offset, offset + filters.per_page - 1)
     )
 
@@ -106,29 +117,67 @@ def count_tenders(filters: SearchFilters) -> int:
     """Подсчёт тендеров по фильтрам (те же условия, что и search_tenders)."""
     db = get_db()
     query = db.table("tenders").select("id", count="exact")
-
-    if filters.query:
-        query = query.ilike("title", f"%{filters.query}%")
-    if filters.region:
-        query = query.ilike("customer_region", f"%{filters.region}%")
-    if filters.min_nmck is not None:
-        query = query.gte("nmck", filters.min_nmck)
-    if filters.max_nmck is not None:
-        query = query.lte("nmck", filters.max_nmck)
-    if filters.okpd2:
-        query = query.contains("okpd2_codes", [filters.okpd2])
-    if filters.niche:
-        query = query.contains("niche_tags", [filters.niche])
-    if filters.status:
-        query = query.eq("status", filters.status)
-    if filters.law_type:
-        query = query.eq("law_type", filters.law_type)
+    query = _apply_common_filters(query, filters)
 
     try:
         result = query.execute()
         return result.count or 0
     except Exception:
         return 0
+
+
+def suggest_regions(q: str, limit: int = 10) -> list[str]:
+    """Поиск регионов по подстроке (distinct customer_region)."""
+    db = get_db()
+    try:
+        result = (
+            db.table("tenders")
+            .select("customer_region")
+            .ilike("customer_region", f"%{q}%")
+            .not_.is_("customer_region", "null")
+            .limit(200)
+            .execute()
+        )
+        seen: set[str] = set()
+        out: list[str] = []
+        for r in result.data or []:
+            val = (r.get("customer_region") or "").strip()
+            if val and val not in seen:
+                seen.add(val)
+                out.append(val)
+                if len(out) >= limit:
+                    break
+        return out
+    except Exception as e:
+        logger.error(f"suggest_regions: {e}")
+        return []
+
+
+def suggest_customers(q: str, limit: int = 10) -> list[str]:
+    """Поиск заказчиков по подстроке (distinct customer_name)."""
+    db = get_db()
+    try:
+        result = (
+            db.table("tenders")
+            .select("customer_name")
+            .ilike("customer_name", f"%{q}%")
+            .not_.is_("customer_name", "null")
+            .limit(200)
+            .execute()
+        )
+        seen: set[str] = set()
+        out: list[str] = []
+        for r in result.data or []:
+            val = (r.get("customer_name") or "").strip()
+            if val and val not in seen:
+                seen.add(val)
+                out.append(val)
+                if len(out) >= limit:
+                    break
+        return out
+    except Exception as e:
+        logger.error(f"suggest_customers: {e}")
+        return []
 
 
 def get_new_tenders_since(since_minutes: int = 60) -> list[dict]:
