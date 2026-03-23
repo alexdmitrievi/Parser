@@ -93,16 +93,11 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
-.logo-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.logo-img {
   width: 32px;
   height: 32px;
-  background: var(--gradient);
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  color: #fff;
+  object-fit: contain;
 }
 
 .navbar-links {
@@ -862,10 +857,9 @@ select {
     display: none;
   }
 
-  .logo-icon {
+  .logo-img {
     width: 28px;
     height: 28px;
-    font-size: 0.8rem;
   }
 
   .navbar-links {
