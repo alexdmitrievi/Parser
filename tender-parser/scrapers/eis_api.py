@@ -16,9 +16,58 @@ from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 
 from shared.models import TenderCreate
+from shared.constants import RUSSIAN_REGIONS
 from scrapers.base import BaseScraper
 
 logger = logging.getLogger(__name__)
+
+# Маппинг корней слов из названий регионов → регион
+_REGION_KEYWORDS: list[tuple[str, str]] = []
+
+def _stem(word: str) -> str:
+    """Грубая стемминг: убираем типичные окончания."""
+    for suffix in ("ского", "ской", "ская", "ский", "ском", "ских", "ская",
+                   "ного", "ной", "ная", "ный", "ном", "ных",
+                   "кого", "кой", "кая", "кий", "ком", "ких",
+                   "ого", "ой", "ая", "ый", "ом", "ых", "ий"):
+        if word.endswith(suffix) and len(word) - len(suffix) >= 3:
+            return word[:-len(suffix)]
+    return word
+
+for _r in RUSSIAN_REGIONS:
+    _lower = _r.lower().replace(" — ", " ")
+    for _word in _lower.split():
+        if _word in ("край", "область", "округ", "республика", "автономная", "автономный", "еврейская"):
+            continue
+        stem = _stem(_word)
+        if len(stem) >= 3:
+            _REGION_KEYWORDS.append((stem, _r))
+
+# Явные паттерны для надёжности
+_REGION_KEYWORDS.extend([
+    ("москв", "Москва"), ("московск", "Московская область"),
+    ("петербург", "Санкт-Петербург"), ("ленинградск", "Ленинградская область"),
+    ("севастопол", "Севастополь"), ("крымск", "Республика Крым"),
+    ("новосибирск", "Новосибирская область"), ("омск", "Омская область"),
+    ("екатеринбург", "Свердловская область"), ("краснодар", "Краснодарский край"),
+    ("красноярск", "Красноярский край"), ("казан", "Республика Татарстан"),
+    ("тюмен", "Тюменская область"), ("челябинск", "Челябинская область"),
+    ("самар", "Самарская область"), ("нижн", "Нижегородская область"),
+    ("ростов", "Ростовская область"), ("воронеж", "Воронежская область"),
+    ("волгоград", "Волгоградская область"), ("уф", "Республика Башкортостан"),
+    ("новгород", "Новгородская область"), ("пермск", "Пермский край"),
+])
+
+
+def _detect_region(customer_name: str) -> Optional[str]:
+    """Определить регион из названия заказчика."""
+    if not customer_name:
+        return None
+    lower = customer_name.lower()
+    for keyword, region in _REGION_KEYWORDS:
+        if keyword in lower:
+            return region
+    return None
 
 
 class EisApiScraper(BaseScraper):
@@ -155,12 +204,15 @@ class EisApiScraper(BaseScraper):
     def parse_tenders(self, raw_items: list[dict]) -> list[TenderCreate]:
         tenders = []
         for item in raw_items:
+            customer = item.get("customer", "")
+            region = _detect_region(customer)
             tenders.append(TenderCreate(
                 source_platform=self.platform,
                 registry_number=item.get("registry_number"),
                 law_type=item.get("law_type", "44-fz"),
                 title=item["title"],
-                customer_name=item.get("customer"),
+                customer_name=customer,
+                customer_region=region,
                 nmck=item.get("nmck"),
                 publish_date=self._parse_date(item.get("publish_date", "")),
                 submission_deadline=self._parse_date(item.get("deadline", "")),
