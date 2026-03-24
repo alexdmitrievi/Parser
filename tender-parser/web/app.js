@@ -265,6 +265,17 @@ setupAutocomplete(
 
 /* ── Dynamic niches ── */
 
+const NICHE_NAMES = {
+  furniture: "\u041c\u0435\u0431\u0435\u043b\u044c",
+  construction: "\u0421\u0442\u0440\u043e\u0439\u043a\u0430 / \u0440\u0435\u043c\u043e\u043d\u0442",
+  it: "IT-\u0443\u0441\u043b\u0443\u0433\u0438",
+  security: "\u041e\u0445\u0440\u0430\u043d\u0430",
+  cleaning: "\u041a\u043b\u0438\u043d\u0438\u043d\u0433",
+  food: "\u041f\u0440\u043e\u0434\u0443\u043a\u0442\u044b \u043f\u0438\u0442\u0430\u043d\u0438\u044f",
+  medical: "\u041c\u0435\u0434\u0438\u0446\u0438\u043d\u0430",
+  transport: "\u0422\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442",
+};
+
 async function loadNiches() {
   try {
     const res = await fetch("/api/niches", { headers: { Accept: "application/json" } });
@@ -275,7 +286,7 @@ async function loadNiches() {
     for (const n of niches) {
       const opt = document.createElement("option");
       opt.value = n.name;
-      opt.textContent = `${n.name} (${n.count})`;
+      opt.textContent = `${NICHE_NAMES[n.name] || n.name} (${n.count})`;
       sel.appendChild(opt);
     }
   } catch { /* silent */ }
