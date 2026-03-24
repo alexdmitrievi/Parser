@@ -120,7 +120,8 @@ async function loadNiches() {
       const opt = document.createElement("option");
       opt.value = n.name;
       opt.textContent = `${n.name} (${n.count})`;
-      sel.insertBefore(opt, customOpt);
+      if (customOpt) sel.insertBefore(opt, customOpt);
+      else sel.appendChild(opt);
     }
   } catch { /* silent */ }
 }

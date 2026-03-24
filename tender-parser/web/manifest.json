@@ -2,6 +2,7 @@
   "name": "Тендер PRO — Поиск тендеров",
   "short_name": "Тендер PRO",
   "description": "Поиск государственных и коммерческих закупок по всей России",
+  "scope": "/",
   "start_url": "/web/",
   "display": "standalone",
   "background_color": "#0a0e17",

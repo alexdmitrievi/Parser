@@ -17,6 +17,7 @@ const btnReset = document.getElementById("btn-reset");
 const sortSelect = document.getElementById("sort-select");
 const advancedToggle = document.getElementById("advanced-toggle");
 const advancedBody = document.getElementById("advanced-body");
+const btnExportEl = document.getElementById("btn-export");
 
 /* ── Helpers ── */
 
@@ -103,7 +104,11 @@ function getFavorites() {
 }
 
 function saveFavorites(list) {
-  localStorage.setItem("podryad_favorites", JSON.stringify(list));
+  try {
+    localStorage.setItem("podryad_favorites", JSON.stringify(list));
+  } catch (e) {
+    /* H5: private mode / storage blocked on some WebViews */
+  }
 }
 
 function isFavorite(id) {
@@ -148,7 +153,9 @@ function exportCSV(items) {
   URL.revokeObjectURL(url);
 }
 
-document.getElementById("btn-export").addEventListener("click", () => exportCSV(_lastItems));
+if (btnExportEl) {
+  btnExportEl.addEventListener("click", () => exportCSV(_lastItems));
+}
 
 /* ── Autocomplete ── */
 
@@ -277,10 +284,12 @@ async function loadMethods() {
 
 /* ── Advanced filters toggle ── */
 
-advancedToggle.addEventListener("click", () => {
-  advancedToggle.classList.toggle("open");
-  advancedBody.classList.toggle("open");
-});
+if (advancedToggle && advancedBody) {
+  advancedToggle.addEventListener("click", () => {
+    advancedToggle.classList.toggle("open");
+    advancedBody.classList.toggle("open");
+  });
+}
 
 /* ── Sort ── */
 
@@ -490,8 +499,8 @@ btnReset.addEventListener("click", () => {
   resultsEl.innerHTML = "";
   pagerEl.classList.add("hidden");
   // Close advanced if open
-  advancedToggle.classList.remove("open");
-  advancedBody.classList.remove("open");
+  if (advancedToggle) advancedToggle.classList.remove("open");
+  if (advancedBody) advancedBody.classList.remove("open");
 });
 
 btnPrev.addEventListener("click", () => {

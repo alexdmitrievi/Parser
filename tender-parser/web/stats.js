@@ -22,7 +22,16 @@ function nicheLabel(tag) {
 }
 
 async function loadStats() {
+  if (!statusEl) return;
   statusEl.innerHTML = '<span class="spinner"></span> \u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u0430\u043d\u0430\u043b\u0438\u0442\u0438\u043a\u0438\u2026';
+
+  if (typeof Chart === "undefined") {
+    setStatus(
+      "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0433\u0440\u0430\u0444\u0438\u043a\u0438. \u041e\u0431\u043d\u043e\u0432\u0438\u0442\u0435 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0443 (\u043f\u043e\u0442\u044f\u043d\u0438\u0442\u0435 \u0432\u043d\u0438\u0437).",
+      true
+    );
+    return;
+  }
 
   try {
     const res = await fetch("/api/stats", { headers: { Accept: "application/json" } });

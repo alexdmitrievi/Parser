@@ -27,7 +27,11 @@ function getFavorites() {
 }
 
 function saveFavorites(list) {
-  localStorage.setItem("podryad_favorites", JSON.stringify(list));
+  try {
+    localStorage.setItem("podryad_favorites", JSON.stringify(list));
+  } catch (e) {
+    /* storage blocked (private mode / WebView) */
+  }
 }
 
 function removeFavorite(id) {
@@ -113,12 +117,16 @@ function render() {
   });
 }
 
-btnExport.addEventListener("click", () => exportCSV(getFavorites()));
-btnClear.addEventListener("click", () => {
-  if (confirm("Удалить все сохранённые тендеры?")) {
-    saveFavorites([]);
-    render();
-  }
-});
+if (btnExport) {
+  btnExport.addEventListener("click", () => exportCSV(getFavorites()));
+}
+if (btnClear) {
+  btnClear.addEventListener("click", () => {
+    if (confirm("Удалить все сохранённые тендеры?")) {
+      saveFavorites([]);
+      render();
+    }
+  });
+}
 
 render();
