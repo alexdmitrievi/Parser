@@ -33,28 +33,18 @@ def main() -> int:
         cli.table("tenders")
         .select("id, registry_number, status, submission_deadline, source_platform")
         .eq("status", "active")
-        .limit(500)
+        .limit(2000)
         .execute()
     )
     rows = getattr(res, "data", None) or []
-    for u in mark_expired_by_deadline(rows):
-        cli.table("tenders").update({"status": u["status"]}).eq("id", u["id"]).execute()
-
-    res2 = (
-        cli.table("tenders")
-        .select("id, registry_number, status, source_platform")
-        .eq("status", "active")
-        .eq("source_platform", "eis")
-        .limit(300)
-        .execute()
-    )
-    for r in getattr(res2, "data", None) or []:
-        reg = r.get("registry_number")
-        if not reg:
-            continue
-        st = fetch_eis_status(str(reg))
-        if st:
-            cli.table("tenders").update({"status": st}).eq("id", r["id"]).execute()
+    expired = mark_expired_by_deadline(rows)
+    logger.info(f"Found {len(expired)} expired tenders out of {len(rows)} active")
+    for u in expired:
+        try:
+            cli.table("tenders").update({"status": u["status"]}).eq("id", u["id"]).execute()
+        except Exception as e:
+            logger.warning(f"Failed to update {u['id']}: {e}")
+    logger.info(f"Marked {len(expired)} tenders as expired")
     logger.info("status update done")
     return 0
 

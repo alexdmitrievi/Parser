@@ -12,6 +12,22 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# Simple in-memory cache (TTL 5 minutes)
+_cache: dict[str, tuple[float, Any]] = {}
+_CACHE_TTL = 300  # seconds
+
+def _get_cached(key: str) -> Any:
+    import time
+    if key in _cache:
+        ts, val = _cache[key]
+        if time.time() - ts < _CACHE_TTL:
+            return val
+    return None
+
+def _set_cached(key: str, val: Any) -> None:
+    import time
+    _cache[key] = (time.time(), val)
+
 
 def _client():
     from shared.config import supabase_key, supabase_url
@@ -90,6 +106,9 @@ def get_tender(tender_id: str) -> dict[str, Any]:
 
 @router.get("/stats")
 def stats() -> dict[str, Any]:
+    cached = _get_cached("stats")
+    if cached:
+        return cached
     cli = _client()
     if not cli:
         raise HTTPException(503, "Database not configured")
@@ -112,12 +131,14 @@ def stats() -> dict[str, Any]:
                     recent += 1
             except ValueError:
                 pass
-    return {
+    result = {
         "total": len(rows),
         "by_niche": by_niche,
         "by_region": by_region,
         "created_last_7_days": recent,
     }
+    _set_cached("stats", result)
+    return result
 
 
 @router.get("/niches")

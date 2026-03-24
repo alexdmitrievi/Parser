@@ -984,6 +984,41 @@ select option {
   font-size: 0.95rem;
 }
 
+/* --- Hero Stats --- */
+.hero-stats {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.hero-stats span {
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
+/* --- Footer --- */
+.site-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.site-footer a {
+  color: var(--text-secondary);
+}
+
+.site-footer a:hover {
+  color: var(--accent-blue);
+}
+
+.footer-sep {
+  margin: 0 0.5rem;
+  opacity: 0.4;
+}
+
 /* --- Utilities --- */
 .hidden {
   display: none !important;
