@@ -2,7 +2,7 @@ name: Parse EIS (Government)
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Каждые 6 часов
+    - cron: '0 */6 * * *'
   workflow_dispatch: {}
 
 defaults:
@@ -24,15 +24,17 @@ jobs:
       - run: pip install -r requirements-parser.txt
 
       - name: Parse EIS API
+        continue-on-error: true
+        timeout-minutes: 20
         run: python scripts/run_parser.py --source eis_api
-        timeout-minutes: 18
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
       - name: Parse Roseltorg
-        run: python scripts/run_parser.py --source roseltorg
+        continue-on-error: true
         timeout-minutes: 10
+        run: python scripts/run_parser.py --source roseltorg
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
@@ -51,7 +53,8 @@ jobs:
       - run: pip install -r requirements-parser.txt
 
       - name: Parse EIS FTP
-        run: timeout 600 python scripts/run_parser.py --source eis_ftp || echo "EIS FTP timed out or failed, continuing"
+        continue-on-error: true
+        run: timeout 600 python scripts/run_parser.py --source eis_ftp || true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
