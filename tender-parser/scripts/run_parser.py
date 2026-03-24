@@ -201,6 +201,8 @@ GROUPS = {
     "commercial": [run_b2b_center, run_rostender, run_tenderguru],
     "rostender": [run_rostender],
     "auctions": [run_lot_online, run_torgi_gov_pw],
+    "auctions_rad": [run_lot_online],
+    "auctions_torgi": [run_torgi_gov_pw],
     "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
     "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
             run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
