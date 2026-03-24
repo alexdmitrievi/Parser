@@ -73,6 +73,13 @@ class B2BCenterScraper(BaseScraper):
                 title_text = link.get_text(strip=True)
                 if not title_text or len(title_text) < 5:
                     continue
+                # Убираем префикс "Процедура закупки № 1234567" / "Запрос предложений № 1234567"
+                title_text = re.sub(
+                    r"^(?:Процедура закупки|Запрос предложений|Запрос цен|Запрос котировок|Конкурс|Аукцион)\s*№?\s*\d+/?\.?\s*\d*",
+                    "", title_text
+                ).strip()
+                if not title_text or len(title_text) < 5:
+                    title_text = link.get_text(strip=True)  # вернуть оригинал
                 item["title"] = title_text
                 href = link.get("href", "")
                 if href and not href.startswith("http"):
