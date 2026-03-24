@@ -54,7 +54,17 @@ function lawBadge(law) {
 
 function nicheBadges(tags) {
   if (!tags || !tags.length) return "";
-  return tags.map(t => `<span class="badge badge-niche">${esc(t)}</span>`).join("");
+  const map = {
+    furniture: "\u041c\u0435\u0431\u0435\u043b\u044c",
+    construction: "\u0421\u0442\u0440\u043e\u0439\u043a\u0430",
+    it: "IT",
+    security: "\u041e\u0445\u0440\u0430\u043d\u0430",
+    cleaning: "\u041a\u043b\u0438\u043d\u0438\u043d\u0433",
+    food: "\u041f\u0438\u0442\u0430\u043d\u0438\u0435",
+    medical: "\u041c\u0435\u0434\u0438\u0446\u0438\u043d\u0430",
+    transport: "\u0422\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442",
+  };
+  return tags.map(t => `<span class="badge badge-niche">${esc(map[t] || t)}</span>`).join("");
 }
 
 function platformBadge(p) {

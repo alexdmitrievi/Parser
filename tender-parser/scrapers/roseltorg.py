@@ -130,14 +130,35 @@ class RoseltorgScraper(BaseScraper):
                         text = re.sub(r"^Организатор\s*", "", text)
                         data["customer"] = text
 
-            # Цена (из блока данных)
+            # Цена и дедлайн (из блока данных)
             data_block = item.select_one(".search-results__data")
             if data_block:
-                # Ищем цену — число с ₽
                 data_text = data_block.get_text()
                 price_match = re.search(r"([\d\s,.]+)\s*₽", data_text)
                 if price_match:
                     data["nmck"] = self._parse_price(price_match.group(1))
+
+                # Дедлайн из <time> или из текста
+                time_el = data_block.select_one("time.search-results__time, time")
+                if time_el:
+                    data["deadline"] = time_el.get_text(strip=True).replace(" в ", " ")
+                else:
+                    date_match = re.search(r"(\d{2}\.\d{2}\.\d{4})", data_text)
+                    if date_match:
+                        data["deadline"] = date_match.group(1)
+
+                # Способ закупки
+                method_el = data_block.select_one("p.search-results__type")
+                if method_el:
+                    method_text = method_el.get_text(strip=True).lower()
+                    if "аукцион" in method_text:
+                        data["purchase_method"] = "AE"
+                    elif "конкурс" in method_text:
+                        data["purchase_method"] = "OK"
+                    elif "котиров" in method_text or "запрос цен" in method_text:
+                        data["purchase_method"] = "ZK"
+                    elif "предложен" in method_text:
+                        data["purchase_method"] = "ZP"
 
             results.append(data)
 
@@ -150,6 +171,7 @@ class RoseltorgScraper(BaseScraper):
                 source_platform=self.platform,
                 registry_number=item.get("registry_number"),
                 law_type=item.get("law_type", "44-fz"),
+                purchase_method=item.get("purchase_method"),
                 title=item["title"],
                 customer_name=item.get("customer"),
                 customer_region=item.get("region"),
