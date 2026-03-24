@@ -711,6 +711,26 @@ select option {
   color: #c4b5fd;
 }
 
+.badge-status-active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.badge-status-expired {
+  background: rgba(100, 116, 139, 0.15);
+  color: #94a3b8;
+}
+
+.badge-status-cancelled {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.badge-status-completed {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
 /* --- Deadline Colors --- */
 .deadline-danger {
   color: var(--danger) !important;
