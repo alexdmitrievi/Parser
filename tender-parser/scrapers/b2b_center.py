@@ -105,6 +105,73 @@ class B2BCenterScraper(BaseScraper):
 
         return results
 
+    def _parse_detail(self, html: str) -> dict:
+        """Извлечь доп. данные с детальной страницы тендера."""
+        soup = BeautifulSoup(html, "html.parser")
+        detail = {}
+
+        # Парсим таблицу с параметрами (key-value rows)
+        for row in soup.select("table tr"):
+            cells = row.find_all("td")
+            if len(cells) >= 2:
+                key = cells[0].get_text(strip=True).lower()
+                val = cells[1].get_text(strip=True)
+                if not val or len(val) < 2:
+                    continue
+
+                if "организатор" in key:
+                    detail["customer"] = val[:200]
+                elif "стоимость" in key or "цена" in key or "нмцк" in key:
+                    price = self._parse_price(val)
+                    if price:
+                        detail["nmck"] = price
+                elif "адрес" in key and ("поставк" in key or "выполнен" in key or "оказан" in key):
+                    detail["region"] = val[:200]
+                elif "место" in key and "поставк" in key:
+                    detail["region"] = val[:200]
+
+        return detail
+
+    def _parse_price(self, text: str) -> Optional[float]:
+        if not text or "без указания" in text.lower():
+            return None
+        cleaned = re.sub(r"[^\d.,]", "", text.replace("\xa0", "").replace(" ", ""))
+        cleaned = cleaned.replace(",", ".")
+        try:
+            val = float(cleaned)
+            return val if val > 0 else None
+        except ValueError:
+            return None
+
+    def _enrich_tenders(self, tenders: list[TenderCreate], max_enrich: int = 30) -> list[TenderCreate]:
+        """Дозагрузить заказчика и регион с детальных страниц (для первых N тендеров)."""
+        enriched = 0
+        for t in tenders:
+            if enriched >= max_enrich:
+                break
+            if not t.original_url:
+                continue
+            # Загружаем только если нет заказчика или региона
+            if t.customer_name and t.customer_region:
+                continue
+            try:
+                self._delay()
+                resp = self.fetch(t.original_url)
+                detail = self._parse_detail(resp.text)
+                if detail.get("customer") and not t.customer_name:
+                    t.customer_name = detail["customer"]
+                if detail.get("region") and not t.customer_region:
+                    t.customer_region = detail["region"]
+                if detail.get("nmck") and not t.nmck:
+                    t.nmck = detail["nmck"]
+                enriched += 1
+                logger.debug(f"  Enriched: {t.registry_number} — customer={t.customer_name is not None}, region={t.customer_region is not None}")
+            except Exception as e:
+                logger.debug(f"  Enrich failed for {t.registry_number}: {e}")
+                continue
+        logger.info(f"[B2B-Center] Enriched {enriched} tenders with detail data")
+        return tenders
+
     def parse_tenders(self, raw_items: list[dict]) -> list[TenderCreate]:
         tenders = []
         for item in raw_items:
@@ -115,8 +182,8 @@ class B2BCenterScraper(BaseScraper):
                 purchase_method=None,
                 title=item["title"],
                 customer_name=item.get("customer"),
-                customer_region=None,  # Не доступен в списке
-                nmck=None,  # Не доступен в списке
+                customer_region=None,
+                nmck=None,
                 publish_date=self._parse_date(item.get("publish_date", "")),
                 submission_deadline=self._parse_date(item.get("deadline", "")),
                 original_url=item.get("url", ""),
@@ -163,6 +230,10 @@ class B2BCenterScraper(BaseScraper):
                     except Exception as e:
                         logger.warning(f"  Error page {page}: {e}")
                         break
+
+        # Дозагрузка заказчика/региона/цены с детальных страниц
+        if all_tenders:
+            all_tenders = self._enrich_tenders(all_tenders, max_enrich=30)
 
         logger.info(f"[B2B-Center] Total: {len(all_tenders)} tenders")
         return all_tenders
