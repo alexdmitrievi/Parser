@@ -240,7 +240,7 @@ class B2BCenterScraper(BaseScraper):
 
         # Дозагрузка заказчика/региона/цены с детальных страниц
         if all_tenders:
-            all_tenders = self._enrich_tenders(all_tenders, max_enrich=30)
+            all_tenders = self._enrich_tenders(all_tenders, max_enrich=100)
 
         logger.info(f"[B2B-Center] Total: {len(all_tenders)} tenders")
         return all_tenders
