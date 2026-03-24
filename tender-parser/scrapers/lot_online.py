@@ -104,6 +104,34 @@ class LotOnlineScraper(BaseScraper):
 
         return results
 
+    def _enrich_region(self, url: str) -> Optional[str]:
+        """Дозагрузить регион с детальной страницы лота."""
+        try:
+            resp = self.fetch(url)
+            text = resp.text
+            match = re.search(r'(?:Регион|Местонахождение|Субъект)[:\s]*([^\n<]{3,60})', text, re.IGNORECASE)
+            if match:
+                return match.group(1).strip()
+        except Exception:
+            pass
+        return None
+
+    def _enrich_lots(self, items: list[dict], max_enrich: int = 50) -> list[dict]:
+        """Дозагрузить регионы с детальных страниц."""
+        enriched = 0
+        for item in items:
+            if enriched >= max_enrich:
+                break
+            if item.get("region") or not item.get("url"):
+                continue
+            self._delay()
+            region = self._enrich_region(item["url"])
+            if region:
+                item["region"] = region
+                enriched += 1
+        logger.info(f"[РАД] Enriched {enriched} lots with region data")
+        return items
+
     def parse_tenders(self, raw_items: list[dict]) -> list[TenderCreate]:
         tenders = []
         for item in raw_items:
@@ -115,7 +143,7 @@ class LotOnlineScraper(BaseScraper):
                 title=item["title"],
                 description=item.get("category", ""),
                 customer_name=None,
-                customer_region=None,
+                customer_region=item.get("region"),
                 nmck=item.get("price"),
                 original_url=item.get("url", ""),
                 niche_tags=[item.get("property_type", "other_assets")],
@@ -145,6 +173,10 @@ class LotOnlineScraper(BaseScraper):
                     except Exception as e:
                         logger.warning(f"  Error page {page}: {e}")
                         break
+
+        # Дозагрузка регионов
+        if all_items:
+            all_items = self._enrich_lots(all_items, max_enrich=50)
 
         tenders = self.parse_tenders(all_items)
         logger.info(f"[РАД] Total: {len(tenders)} lots")

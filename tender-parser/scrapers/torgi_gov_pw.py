@@ -124,6 +124,42 @@ class TorgiGovPlaywrightScraper(PlaywrightScraper):
 
         return results
 
+    def _enrich_price(self, items: list[dict], max_enrich: int = 30) -> list[dict]:
+        """Дозагрузить цену с детальных страниц лотов."""
+        enriched = 0
+        for item in items:
+            if enriched >= max_enrich:
+                break
+            if item.get("price") or not item.get("url"):
+                continue
+            try:
+                self._delay()
+                html = self.goto(item["url"], wait_selector="div.prices", timeout=15000)
+                soup = BeautifulSoup(html, "html.parser")
+
+                # Ищу цену в div.prices
+                price_el = soup.select_one("div.prices__row__price-cell.lotPrice, div.lotPrice")
+                if price_el:
+                    price = self._parse_price(price_el.get_text())
+                    if price:
+                        item["price"] = price
+                        enriched += 1
+                else:
+                    # Fallback: regex
+                    text = soup.get_text()
+                    match = re.search(r'(\d[\d\s,.]+)\s*₽', text)
+                    if match:
+                        price = self._parse_price(match.group(1))
+                        if price:
+                            item["price"] = price
+                            enriched += 1
+            except Exception as e:
+                logger.debug(f"  Enrich failed: {e}")
+                continue
+
+        logger.info(f"[Торги.гов.ру] Enriched {enriched} lots with price data")
+        return items
+
     def parse_tenders(self, raw_items: list[dict]) -> list[TenderCreate]:
         tenders = []
         for item in raw_items:
@@ -135,7 +171,7 @@ class TorgiGovPlaywrightScraper(PlaywrightScraper):
                 description=item.get("biddtype", ""),
                 customer_name=None,
                 customer_region=item.get("region"),
-                nmck=None,
+                nmck=item.get("price"),
                 original_url=item.get("url", ""),
                 niche_tags=[item.get("property_type", "other_assets")],
             ))
@@ -176,6 +212,10 @@ class TorgiGovPlaywrightScraper(PlaywrightScraper):
                 all_items.extend(fresh)
                 items = fresh
                 logger.info(f"  Page {page_num}: {len(fresh)} new lots (total: {len(all_items)})")
+
+        # Дозагрузка цен с детальных страниц
+        if all_items:
+            all_items = self._enrich_price(all_items, max_enrich=30)
 
         tenders = self.parse_tenders(all_items)
         logger.info(f"[Торги.гов.ру] Total: {len(tenders)} lots")
