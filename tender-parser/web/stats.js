@@ -27,7 +27,7 @@ async function loadStats() {
 
   if (typeof Chart === "undefined") {
     setStatus(
-      "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0433\u0440\u0430\u0444\u0438\u043a\u0438. \u041e\u0431\u043d\u043e\u0432\u0438\u0442\u0435 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0443 (\u043f\u043e\u0442\u044f\u043d\u0438\u0442\u0435 \u0432\u043d\u0438\u0437).",
+      "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0433\u0440\u0430\u0444\u0438\u043a\u0438. \u041e\u0431\u043d\u043e\u0432\u0438\u0442\u0435 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0443.",
       true
     );
     return;
@@ -46,6 +46,7 @@ async function loadStats() {
     document.getElementById("kpi-niches").textContent = Object.keys(niches).length;
     document.getElementById("kpi-regions").textContent = Object.keys(regions).length;
 
+    // Niche doughnut chart
     const nicheLabels = Object.keys(niches).map(nicheLabel);
     const nicheValues = Object.values(niches);
 
@@ -63,14 +64,15 @@ async function loadStats() {
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: true,
           plugins: {
             legend: {
               position: "bottom",
               labels: {
                 color: "#94a3b8",
-                padding: 16,
-                font: { family: "Inter, system-ui", size: 13 },
+                padding: 12,
+                font: { family: "Inter, system-ui", size: 12 },
+                boxWidth: 14,
               },
             },
           },
@@ -78,11 +80,12 @@ async function loadStats() {
       });
     }
 
+    // Top-10 regions bar chart
     const regionEntries = Object.entries(regions)
-      .filter(([k]) => k !== "unknown")
+      .filter(([k]) => k !== "unknown" && k.trim() !== "")
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
-    const regionLabels = regionEntries.map(([k]) => k.length > 25 ? k.slice(0, 22) + "\u2026" : k);
+    const regionLabels = regionEntries.map(([k]) => k.length > 22 ? k.slice(0, 19) + "\u2026" : k);
     const regionValues = regionEntries.map(([, v]) => v);
 
     if (regionLabels.length > 0) {
@@ -102,17 +105,18 @@ async function loadStats() {
         options: {
           indexAxis: "y",
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: true,
+          aspectRatio: 1.4,
           plugins: {
             legend: { display: false },
           },
           scales: {
             x: {
-              ticks: { color: "#64748b", font: { family: "Inter, system-ui" } },
+              ticks: { color: "#64748b", font: { family: "Inter, system-ui", size: 11 } },
               grid: { color: "rgba(255,255,255,0.04)" },
             },
             y: {
-              ticks: { color: "#94a3b8", font: { family: "Inter, system-ui", size: 12 } },
+              ticks: { color: "#94a3b8", font: { family: "Inter, system-ui", size: 11 } },
               grid: { display: false },
             },
           },
