@@ -18,7 +18,17 @@ function setStatus(text, isError = false) {
 }
 
 function nicheLabel(tag) {
-  return tag.charAt(0).toUpperCase() + tag.slice(1);
+  const map = {
+    furniture: "Мебель",
+    construction: "Стройка / ремонт",
+    it: "IT-услуги",
+    security: "Охрана",
+    cleaning: "Клининг",
+    food: "Продукты питания",
+    medical: "Медицина",
+    transport: "Транспорт",
+  };
+  return map[tag] || tag.charAt(0).toUpperCase() + tag.slice(1);
 }
 
 async function loadStats() {
