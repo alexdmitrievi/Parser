@@ -1,18 +1,17 @@
-name: Parse Playwright (TekTorg + Fabrikant)
+name: Parse Playwright (TekTorg + Fabrikant + Auctions)
 
 on:
   schedule:
-    - cron: '0 6,18 * * *'  # Каждые 12 часов
-  workflow_dispatch:  # Ручной запуск
+    - cron: '0 6,18 * * *'
+  workflow_dispatch: {}
 
 jobs:
-  parse:
+  parse-playwright:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -23,9 +22,34 @@ jobs:
           pip install playwright
           playwright install chromium --with-deps
 
-      - name: Run Playwright parsers
+      - name: Parse Playwright scrapers
+        continue-on-error: true
         working-directory: tender-parser
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/run_parser.py --source playwright
+
+  parse-auctions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r tender-parser/requirements-parser.txt
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Parse РАД (lot-online)
+        continue-on-error: true
+        working-directory: tender-parser
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/run_parser.py --source auctions

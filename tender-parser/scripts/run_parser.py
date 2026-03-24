@@ -175,6 +175,13 @@ def run_lot_online() -> int:
     return _process_and_save(scraper.run(max_pages=5), "lot-online")
 
 
+def run_torgi_gov_pw() -> int:
+    from scrapers.torgi_gov_pw import TorgiGovPlaywrightScraper
+    logger.info("=== Торги.гов.ру (Playwright) ===")
+    scraper = TorgiGovPlaywrightScraper()
+    return _process_and_save(scraper.run(max_pages=10), "Torgi.gov.ru")
+
+
 # ──────── Группы ────────
 
 GROUPS = {
@@ -184,7 +191,7 @@ GROUPS = {
     "etp": [run_roseltorg, run_sberbank_ast, run_rts_tender, run_tektorg],
     "commercial": [run_b2b_center, run_rostender, run_tenderguru],
     "rostender": [run_rostender],
-    "auctions": [run_lot_online],
+    "auctions": [run_lot_online, run_torgi_gov_pw],
     "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
     "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
             run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
