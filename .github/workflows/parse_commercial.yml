@@ -2,7 +2,7 @@ name: Parse Commercial Platforms
 
 on:
   schedule:
-    - cron: '0 */12 * * *'  # Каждые 12 часов
+    - cron: '0 */6 * * *'  # Каждые 6 часов (чаще = больше тендеров)
   workflow_dispatch: {}
 
 defaults:

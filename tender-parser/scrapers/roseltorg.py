@@ -181,13 +181,17 @@ class RoseltorgScraper(BaseScraper):
             ))
         return tenders
 
-    def run(self, queries: list[str] | None = None, max_pages: int = 2, **kwargs) -> list[TenderCreate]:
+    def run(self, queries: list[str] | None = None, max_pages: int = 3, **kwargs) -> list[TenderCreate]:
         if queries is None:
             queries = [
-                "ремонт", "поставка оборудования", "строительство",
-                "IT услуги", "мебель", "уборка", "охрана",
+                "ремонт", "капитальный ремонт", "строительные работы",
+                "поставка оборудования", "поставка мебели",
+                "IT услуги", "техническое обслуживание",
+                "уборка", "клининг", "охрана",
                 "продукты питания", "медицинское оборудование",
-                "транспортные услуги",
+                "транспортные услуги", "проектные работы",
+                "электромонтажные работы", "благоустройство",
+                "канцтовары", "спецодежда", "лекарственные средства",
             ]
 
         all_tenders: list[TenderCreate] = []
