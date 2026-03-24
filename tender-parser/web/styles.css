@@ -701,6 +701,11 @@ select option {
   color: #fbbf24;
 }
 
+.badge-auction {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
 .badge-platform {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-secondary);

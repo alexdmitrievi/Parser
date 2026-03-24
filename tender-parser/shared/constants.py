@@ -127,6 +127,16 @@ PLATFORMS = {
     "etpgpb": {"name": "ЭТП ГПБ", "url": "https://etpgpb.ru"},
 }
 
+# Типы имущества (для аукционов банкротов)
+PROPERTY_TYPES = {
+    "real_estate": "Недвижимость",
+    "land": "Земельные участки",
+    "vehicles": "Транспортные средства",
+    "special_equipment": "Спецтехника",
+    "equipment": "Оборудование",
+    "other_assets": "Прочие активы",
+}
+
 # Способы закупки
 PURCHASE_METHODS = {
     "AE": "Электронный аукцион",

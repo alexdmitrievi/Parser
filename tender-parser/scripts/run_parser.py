@@ -166,6 +166,15 @@ def run_sberbank_ast_pw() -> int:
     return _process_and_save(scraper.run(), "Sberbank-AST PW")
 
 
+# ──────── Аукционы (банкротство) ────────
+
+def run_lot_online() -> int:
+    from scrapers.lot_online import LotOnlineScraper
+    logger.info("=== РАД (lot-online) ===")
+    scraper = LotOnlineScraper()
+    return _process_and_save(scraper.run(max_pages=5), "lot-online")
+
+
 # ──────── Группы ────────
 
 GROUPS = {
@@ -175,6 +184,7 @@ GROUPS = {
     "etp": [run_roseltorg, run_sberbank_ast, run_rts_tender, run_tektorg],
     "commercial": [run_b2b_center, run_rostender, run_tenderguru],
     "rostender": [run_rostender],
+    "auctions": [run_lot_online],
     "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
     "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
             run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
