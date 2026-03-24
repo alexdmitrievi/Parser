@@ -88,16 +88,23 @@ function methodBadge(m) {
   return `<span class="badge badge-method">${esc(names[m] || m)}</span>`;
 }
 
-function statusBadge(status) {
+function statusBadge(status, deadline) {
   if (!status) return "";
+  // Если дедлайн истёк — показываем "Завершён" вместо "Приём заявок"
+  let effectiveStatus = status;
+  if (status === "active" && deadline) {
+    try {
+      if (new Date(deadline) < new Date()) effectiveStatus = "expired";
+    } catch {}
+  }
   const map = {
     active: { cls: "badge-status-active", label: "\u041f\u0440\u0438\u0451\u043c \u0437\u0430\u044f\u0432\u043e\u043a" },
     expired: { cls: "badge-status-expired", label: "\u0417\u0430\u0432\u0435\u0440\u0448\u0451\u043d" },
     cancelled: { cls: "badge-status-cancelled", label: "\u041e\u0442\u043c\u0435\u043d\u0451\u043d" },
     completed: { cls: "badge-status-completed", label: "\u0418\u0442\u043e\u0433\u0438 \u043f\u043e\u0434\u0432\u0435\u0434\u0435\u043d\u044b" },
   };
-  const m = map[status];
-  if (!m) return `<span class="badge">${esc(status)}</span>`;
+  const m = map[effectiveStatus];
+  if (!m) return `<span class="badge">${esc(effectiveStatus)}</span>`;
   return `<span class="badge ${m.cls}">${m.label}</span>`;
 }
 
@@ -396,7 +403,7 @@ function renderCards(items) {
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${faved ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
           </button>
           <div class="tender-badges">
-            ${statusBadge(t.status)}
+            ${statusBadge(t.status, t.submission_deadline)}
             ${lawBadge(t.law_type)}
             ${platformBadge(t.source_platform)}
             ${methodBadge(t.purchase_method)}
