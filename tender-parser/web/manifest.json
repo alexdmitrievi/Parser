@@ -16,9 +16,10 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/web/logo.png",
+      "src": "/web/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
