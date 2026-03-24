@@ -129,5 +129,20 @@
   </div>
 
   <script src="/web/subscribe.js"></script>
+
+  <script>
+  // Prefetch pages on hover for instant navigation
+  document.querySelectorAll("a.nav-link").forEach(a => {
+    a.addEventListener("mouseenter", () => {
+      const href = a.getAttribute("href");
+      if (href && !document.querySelector('link[href="'+href+'"]')) {
+        const link = document.createElement("link");
+        link.rel = "prefetch";
+        link.href = href;
+        document.head.appendChild(link);
+      }
+    }, { once: true });
+  });
+  </script>
 </body>
 </html>

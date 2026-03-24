@@ -17,6 +17,10 @@
     { "src": "/api/niches", "dest": "/api/tenders.py" },
     { "src": "/api/suggest(.*)", "dest": "/api/tenders.py" },
     { "src": "/health", "dest": "/api/tenders.py" },
-    { "src": "/", "dest": "/web/index.html" }
+    { "src": "/", "dest": "/web/index.html" },
+    { "src": "/web/(.*\\.html)", "headers": { "Cache-Control": "public, max-age=60, s-maxage=300" } },
+    { "src": "/web/(.*\\.js)", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600" } },
+    { "src": "/web/(.*\\.css)", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600" } },
+    { "src": "/web/(.*\\.png)", "headers": { "Cache-Control": "public, max-age=86400, s-maxage=86400" } }
   ]
 }
