@@ -105,13 +105,30 @@ class LotOnlineScraper(BaseScraper):
         return results
 
     def _enrich_region(self, url: str) -> Optional[str]:
-        """Дозагрузить регион с детальной страницы лота."""
+        """Дозагрузить регион с детальной страницы лота (через dt/dd пары)."""
         try:
             resp = self.fetch(url)
-            text = resp.text
-            match = re.search(r'(?:Регион|Местонахождение|Субъект)[:\s]*([^\n<]{3,60})', text, re.IGNORECASE)
-            if match:
-                return match.group(1).strip()
+            soup = BeautifulSoup(resp.text, "html.parser")
+            # Ищем dt/dd пару: <dt>Регион</dt><dd>Московская обл</dd>
+            for dt in soup.find_all("dt"):
+                label = dt.get_text(strip=True).lower()
+                if label in ("регион", "местонахождение", "субъект"):
+                    dd = dt.find_next_sibling("dd")
+                    if dd:
+                        val = dd.get_text(strip=True)
+                        if val and len(val) >= 3:
+                            return val
+            # Fallback: ищем "Адрес" для извлечения региона
+            for dt in soup.find_all("dt"):
+                label = dt.get_text(strip=True).lower()
+                if "адрес" in label:
+                    dd = dt.find_next_sibling("dd")
+                    if dd:
+                        val = dd.get_text(strip=True)
+                        if val and len(val) >= 5:
+                            # Извлекаем первую часть адреса (обычно регион)
+                            parts = val.split(",")
+                            return parts[0].strip() if parts else val[:60]
         except Exception:
             pass
         return None
