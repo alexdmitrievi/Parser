@@ -75,8 +75,8 @@ class EisApiScraper(BaseScraper):
 
     platform = "eis"
     base_url = "https://zakupki.gov.ru"
-    min_delay = 4.0
-    max_delay = 8.0  # Госплощадка — уважаем rate limits
+    min_delay = 6.0
+    max_delay = 12.0  # Госплощадка — увеличенные задержки для GitHub Actions
 
     SEARCH_URL = "https://zakupki.gov.ru/epz/order/extendedsearch/results.html"
 
