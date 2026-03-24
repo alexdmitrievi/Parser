@@ -74,6 +74,7 @@ function platformBadge(p) {
     rts_tender: "\u0420\u0422\u0421", b2b_center: "B2B-Center", tektorg: "\u0422\u042d\u041a-\u0422\u043e\u0440\u0433",
     tenderguru: "TenderGuru", fabrikant: "Fabrikant", tenderpro: "TenderPro",
     etpgpb: "\u042d\u0422\u041f \u0413\u041f\u0411", etp_ets: "\u042d\u0422\u041f \u0415\u0422\u0421",
+    rostender: "\u0420\u043e\u0441\u0442\u0435\u043d\u0434\u0435\u0440",
   };
   return `<span class="badge badge-platform">${esc(names[p] || p)}</span>`;
 }

@@ -123,6 +123,7 @@ PLATFORMS = {
     "tenderpro": {"name": "TenderPro", "url": "https://tenderpro.ru"},
     "tenderguru": {"name": "TenderGuru", "url": "https://tenderguru.ru"},
     "tektorg": {"name": "ТЭК-Торг", "url": "https://tektorg.ru"},
+    "rostender": {"name": "Ростендер", "url": "https://rostender.info"},
     "etpgpb": {"name": "ЭТП ГПБ", "url": "https://etpgpb.ru"},
 }
 

@@ -136,6 +136,15 @@ def run_tenderguru() -> int:
     )
 
 
+# ──────── Агрегаторы ────────
+
+def run_rostender() -> int:
+    from scrapers.rostender import RostenderScraper
+    logger.info("=== Rostender ===")
+    scraper = RostenderScraper()
+    return _process_and_save(scraper.run(), "Rostender")
+
+
 # ──────── Playwright-парсеры ────────
 
 def run_tektorg_pw() -> int:
@@ -166,7 +175,8 @@ GROUPS = {
     "eis_api": [run_eis_api],
     "roseltorg": [run_roseltorg],
     "etp": [run_roseltorg, run_sberbank_ast, run_rts_tender, run_tektorg],
-    "commercial": [run_b2b_center, run_tenderguru],
+    "commercial": [run_b2b_center, run_rostender, run_tenderguru],
+    "rostender": [run_rostender],
     "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
     "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
             run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
