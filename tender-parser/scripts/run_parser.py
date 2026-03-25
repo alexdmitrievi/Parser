@@ -196,7 +196,7 @@ def run_mascus() -> int:
     from scrapers.mascus import MascusScraper
     logger.info("=== Mascus (CAT) ===")
     scraper = MascusScraper()
-    return _process_and_save(scraper.run(max_pages=3), "Mascus")
+    return _process_and_save(scraper.run(max_pages=10), "Mascus")
 
 
 def run_machinerytrader() -> int:
