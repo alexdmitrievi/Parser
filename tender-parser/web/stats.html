@@ -2,12 +2,23 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Аналитика — Тендер PRO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Аналитика тендеров — Тендер PRO</title>
+  <meta name="description" content="Статистика по закупкам: категории, регионы, динамика. Аналитика тендерного рынка России." />
+  <meta property="og:title" content="Аналитика тендеров — Тендер PRO" />
+  <meta property="og:description" content="Статистика по закупкам: категории, регионы, динамика" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/web/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/web/styles.css" />
   <link rel="icon" type="image/png" href="/web/icon-192.png" />
+  <link rel="manifest" href="/web/manifest.json" />
+  <meta name="theme-color" content="#0a0e17" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="/web/icon-192.png" />
 </head>
 <body>
   <!-- Navbar -->
@@ -16,6 +27,9 @@
       <img src="/web/logo.png" alt="Тендер PRO" class="logo-img" />
       <span>Тендер PRO</span>
     </div>
+    <button class="navbar-burger" id="navbar-burger" aria-label="Меню" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
         <div class="navbar-links">
       <a href="/web/" class="nav-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -104,10 +118,35 @@
     </section>
   </div>
 
+  <footer class="site-footer">
+    <a href="/web/about.html">О сервисе</a>
+    <span class="footer-sep">&middot;</span>
+    <a href="/web/subscribe.html">Подписки</a>
+    <span class="footer-sep">&middot;</span>
+    <a href="/web/stats.html">Аналитика</a>
+  </footer>
+
   <script src="/web/vendor/chart.umd.min.js"></script>
   <script src="/web/stats.js"></script>
 
   <script>
+  // Hamburger menu toggle
+  document.getElementById("navbar-burger")?.addEventListener("click", function() {
+    const links = document.querySelector(".navbar-links");
+    const open = links.classList.toggle("open");
+    this.classList.toggle("active", open);
+    this.setAttribute("aria-expanded", String(open));
+  });
+  // Close menu on outside click
+  document.addEventListener("click", function(e) {
+    const burger = document.getElementById("navbar-burger");
+    const links = document.querySelector(".navbar-links");
+    if (burger && links && !burger.contains(e.target) && !links.contains(e.target)) {
+      links.classList.remove("open");
+      burger.classList.remove("active");
+      burger.setAttribute("aria-expanded", "false");
+    }
+  });
   // Prefetch pages on hover for instant navigation
   document.querySelectorAll("a.nav-link").forEach(a => {
     a.addEventListener("mouseenter", () => {

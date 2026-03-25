@@ -66,7 +66,7 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(500)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({"error": str(e), "traceback": tb}).encode())
+            self.wfile.write(json.dumps({"error": "Internal server error"}).encode())
 
     def do_GET(self) -> None:
         self._proxy("GET")

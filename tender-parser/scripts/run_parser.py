@@ -190,6 +190,43 @@ def run_torgi_gov_pw() -> int:
     return _process_and_save(scraper.run(max_pages=10), "Torgi.gov.ru")
 
 
+# ──────── СНГ (CAT) — б/у спецтехника Caterpillar ────────
+
+def run_mascus() -> int:
+    from scrapers.mascus import MascusScraper
+    logger.info("=== Mascus (CAT) ===")
+    scraper = MascusScraper()
+    return _process_and_save(scraper.run(max_pages=3), "Mascus")
+
+
+def run_machinerytrader() -> int:
+    from scrapers.machinerytrader import MachineryTraderScraper
+    logger.info("=== MachineryTrader (CAT) ===")
+    scraper = MachineryTraderScraper()
+    return _process_and_save(scraper.run(max_pages=3), "MachineryTrader")
+
+
+def run_catused() -> int:
+    from scrapers.catused import CatUsedScraper
+    logger.info("=== CAT Used ===")
+    scraper = CatUsedScraper()
+    return _process_and_save(scraper.run(max_pages=3), "CAT Used")
+
+
+def run_avito_cat() -> int:
+    from scrapers.avito_cat import AvitoCatScraper
+    logger.info("=== Avito (CAT спецтехника) ===")
+    scraper = AvitoCatScraper()
+    return _process_and_save(scraper.run(max_pages=2), "Avito CAT")
+
+
+def run_kolesa_kz() -> int:
+    from scrapers.kolesa_kz import KolesaKzScraper
+    logger.info("=== Kolesa.kz (CAT спецтехника) ===")
+    scraper = KolesaKzScraper()
+    return _process_and_save(scraper.run(max_pages=5), "Kolesa.kz")
+
+
 # ──────── Группы ────────
 
 GROUPS = {
@@ -204,6 +241,10 @@ GROUPS = {
     "auctions_rad": [run_lot_online],
     "auctions_torgi": [run_torgi_gov_pw],
     "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
+    # СНГ (CAT) — б/у спецтехника Caterpillar
+    "cis_cat": [run_mascus, run_machinerytrader, run_catused, run_avito_cat, run_kolesa_kz],
+    "cis_cat_intl": [run_mascus, run_machinerytrader, run_catused],
+    "cis_cat_local": [run_avito_cat, run_kolesa_kz],
     "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
             run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
 }

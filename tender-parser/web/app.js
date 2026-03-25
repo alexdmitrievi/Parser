@@ -19,6 +19,15 @@ const advancedToggle = document.getElementById("advanced-toggle");
 const advancedBody = document.getElementById("advanced-body");
 const btnExportEl = document.getElementById("btn-export");
 
+/* ── Toast ── */
+
+function showToast(msg) {
+  let c = document.querySelector(".toast-container");
+  if (!c) { c = document.createElement("div"); c.className = "toast-container"; document.body.appendChild(c); }
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; c.appendChild(t);
+  setTimeout(() => { t.classList.add("fade-out"); t.addEventListener("animationend", () => t.remove()); }, 2500);
+}
+
 /* ── Helpers ── */
 
 function esc(s) {
@@ -185,7 +194,7 @@ function exportCSV(items) {
 }
 
 if (btnExportEl) {
-  btnExportEl.addEventListener("click", () => exportCSV(_lastItems));
+  btnExportEl.addEventListener("click", () => { exportCSV(_lastItems); showToast("CSV скачан"); });
 }
 
 /* ── Autocomplete ── */
@@ -481,6 +490,8 @@ function showSkeleton() {
 /* ── Search ── */
 
 async function runSearch() {
+  const btnSearch = document.getElementById("btn-search");
+  if (btnSearch) { btnSearch.disabled = true; btnSearch.classList.add("loading"); }
   setStatus("", false);
   showSkeleton();
   resultsToolbar.classList.add("hidden");
@@ -516,11 +527,15 @@ async function runSearch() {
       pagerEl.classList.remove("hidden");
     }
     setStatus("", false);
+    if (total > 0) resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (e) {
     console.error(e);
     setStatus("\u041e\u0448\u0438\u0431\u043a\u0430: " + (e.message || "\u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0441\u0435\u0442\u044c."), true);
     resultsEl.innerHTML = "";
     resultsToolbar.classList.add("hidden");
+  } finally {
+    const btnSearch = document.getElementById("btn-search");
+    if (btnSearch) { btnSearch.disabled = false; btnSearch.classList.remove("loading"); }
   }
 }
 

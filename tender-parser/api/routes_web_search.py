@@ -75,4 +75,4 @@ def search_tenders_web(
         }
     except Exception as e:
         logger.error(f"search error: {e}\n{traceback.format_exc()}")
-        raise HTTPException(500, detail=f"Ошибка поиска: {e}")
+        raise HTTPException(500, detail="Ошибка поиска. Попробуйте позже.")

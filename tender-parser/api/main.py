@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
+
+logger = logging.getLogger(__name__)
 
 from api.routes_tenders import router as tenders_router
 from api.routes_web_search import router as web_search_router
@@ -22,8 +26,9 @@ app.add_middleware(
     allow_origins=_CORS_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Accept"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 app.include_router(tenders_router, prefix="/api")
 app.include_router(web_search_router, prefix="/api")
@@ -33,6 +38,16 @@ app.include_router(suggestions_router, prefix="/api")
 _web_dir = Path(__file__).resolve().parent.parent / "web"
 if _web_dir.is_dir():
     app.mount("/web", StaticFiles(directory=str(_web_dir), html=True), name="web")
+
+
+@app.on_event("startup")
+def _validate_env() -> None:
+    """Предупреждение при отсутствии критичных переменных окружения."""
+    from shared.config import supabase_url, supabase_key
+    if not supabase_url():
+        logger.warning("SUPABASE_URL not set — DB endpoints will fail")
+    if not supabase_key():
+        logger.warning("SUPABASE_KEY not set — DB endpoints will fail")
 
 
 @app.get("/health")

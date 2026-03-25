@@ -9,6 +9,13 @@ const favCount = document.getElementById("fav-count");
 const btnExport = document.getElementById("btn-export-fav");
 const btnClear = document.getElementById("btn-clear-fav");
 
+function showToast(msg) {
+  let c = document.querySelector(".toast-container");
+  if (!c) { c = document.createElement("div"); c.className = "toast-container"; document.body.appendChild(c); }
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; c.appendChild(t);
+  setTimeout(() => { t.classList.add("fade-out"); t.addEventListener("animationend", () => t.remove()); }, 2500);
+}
+
 function esc(s) {
   const d = document.createElement("div");
   d.textContent = String(s ?? "");
@@ -118,7 +125,7 @@ function render() {
 }
 
 if (btnExport) {
-  btnExport.addEventListener("click", () => exportCSV(getFavorites()));
+  btnExport.addEventListener("click", () => { exportCSV(getFavorites()); showToast("CSV скачан"); });
 }
 if (btnClear) {
   btnClear.addEventListener("click", () => {

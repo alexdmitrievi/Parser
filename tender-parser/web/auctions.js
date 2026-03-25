@@ -1,5 +1,5 @@
 /**
- * Тендер PRO — Аукционы банкротов
+ * Тендер PRO — Аукционы банкротов + СНГ (CAT)
  */
 
 const form = document.getElementById("search-form");
@@ -16,6 +16,36 @@ const btnReset = document.getElementById("btn-reset");
 const sortSelect = document.getElementById("sort-select");
 const btnExportEl = document.getElementById("btn-export");
 
+/* ── Toast ── */
+
+function showToast(msg) {
+  let c = document.querySelector(".toast-container");
+  if (!c) { c = document.createElement("div"); c.className = "toast-container"; document.body.appendChild(c); }
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; c.appendChild(t);
+  setTimeout(() => { t.classList.add("fade-out"); t.addEventListener("animationend", () => t.remove()); }, 2500);
+}
+
+/* ── Tab state ── */
+
+let activeTab = "bankruptcy"; // "bankruptcy" | "cis_cat"
+
+const TAB_CONFIG = {
+  bankruptcy: {
+    lawType: "auction",
+    title: "Аукционы банкротов",
+    subtitle: "Имущество банкротов: земля, недвижимость, транспорт, оборудование",
+    showPropertyType: true,
+    resultLabel: "лотов",
+  },
+  cis_cat: {
+    lawType: "cis_cat",
+    title: "СНГ (CAT) — Спецтехника",
+    subtitle: "Б/у спецтехника Caterpillar: экскаваторы, бульдозеры, погрузчики по площадкам СНГ",
+    showPropertyType: false,
+    resultLabel: "объявлений",
+  },
+};
+
 /* ── Helpers ── */
 
 function esc(s) {
@@ -24,19 +54,23 @@ function esc(s) {
   return d.innerHTML;
 }
 
-function fmtMoney(n) {
+const CURRENCY_SYMBOLS = { RUB: "\u20BD", USD: "$", EUR: "\u20AC", KZT: "\u20B8" };
+
+function fmtMoney(n, currency) {
   if (n == null) return "\u2014";
-  try { return Number(n).toLocaleString("ru-RU") + " \u20BD"; }
-  catch { return String(n); }
+  try {
+    const sym = CURRENCY_SYMBOLS[currency] || currency || "\u20BD";
+    return Number(n).toLocaleString("ru-RU") + " " + sym;
+  } catch { return String(n); }
 }
 
 const PROP_NAMES = {
-  real_estate: "\u041d\u0435\u0434\u0432\u0438\u0436\u0438\u043c\u043e\u0441\u0442\u044c",
-  land: "\u0417\u0435\u043c\u043b\u044f",
-  vehicles: "\u0422\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442",
-  special_equipment: "\u0421\u043f\u0435\u0446\u0442\u0435\u0445\u043d\u0438\u043a\u0430",
-  equipment: "\u041e\u0431\u043e\u0440\u0443\u0434\u043e\u0432\u0430\u043d\u0438\u0435",
-  other_assets: "\u041f\u0440\u043e\u0447\u0435\u0435",
+  real_estate: "Недвижимость",
+  land: "Земля",
+  vehicles: "Транспорт",
+  special_equipment: "Спецтехника",
+  equipment: "Оборудование",
+  other_assets: "Прочее",
 };
 
 function propBadge(tags) {
@@ -44,16 +78,59 @@ function propBadge(tags) {
   return tags.map(t => `<span class="badge badge-auction">${esc(PROP_NAMES[t] || t)}</span>`).join("");
 }
 
+const PLATFORM_NAMES = {
+  lot_online: "РАД",
+  mascus: "Mascus",
+  machinerytrader: "Machinery Trader",
+  catused: "CAT Used",
+  avito_cat: "Avito",
+  kolesa_kz: "Kolesa.kz",
+};
+
 function platformBadge(p) {
   if (!p) return "";
-  const names = { lot_online: "\u0420\u0410\u0414" };
-  return `<span class="badge badge-platform">${esc(names[p] || p)}</span>`;
+  return `<span class="badge badge-platform">${esc(PLATFORM_NAMES[p] || p)}</span>`;
 }
 
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
   statusEl.classList.toggle("error", isError);
 }
+
+/* ── Tab switching ── */
+
+function switchTab(tab) {
+  if (activeTab === tab) return;
+  activeTab = tab;
+
+  // Update tab buttons
+  document.querySelectorAll(".auction-tab").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tab === tab);
+  });
+
+  // Update header
+  const cfg = TAB_CONFIG[tab];
+  const titleEl = document.getElementById("page-title");
+  const subtitleEl = document.getElementById("page-subtitle");
+  if (titleEl) titleEl.textContent = cfg.title;
+  if (subtitleEl) subtitleEl.textContent = cfg.subtitle;
+
+  // Show/hide property type filter
+  const propField = document.getElementById("property_type");
+  if (propField) {
+    const fieldWrap = propField.closest(".field");
+    if (fieldWrap) fieldWrap.style.display = cfg.showPropertyType ? "" : "none";
+  }
+
+  // Reset and search
+  pageInput.value = "1";
+  runSearch();
+}
+
+// Init tabs
+document.querySelectorAll(".auction-tab").forEach(btn => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
 
 /* ── Autocomplete ── */
 
@@ -88,12 +165,21 @@ let _lastItems = [];
 function exportCSV(items) {
   if (!items || !items.length) return;
   const BOM = "\uFEFF";
-  const header = "\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435;\u0422\u0438\u043f;\u0426\u0435\u043d\u0430;\u0420\u0435\u0433\u0438\u043e\u043d;\u041f\u043b\u043e\u0449\u0430\u0434\u043a\u0430;\u0421\u0441\u044b\u043b\u043a\u0430\n";
-  const rows = items.map(t => [(t.title||"").replace(/;/g,","),(t.niche_tags||[]).map(n=>PROP_NAMES[n]||n).join(","),t.nmck||"",t.customer_region||"",t.source_platform||"",t.original_url||""].join(";")).join("\n");
+  const header = "Название;Тип;Цена;Валюта;Регион;Площадка;Ссылка\n";
+  const rows = items.map(t => [
+    (t.title || "").replace(/;/g, ","),
+    (t.niche_tags || []).map(n => PROP_NAMES[n] || n).join(","),
+    t.nmck || "",
+    t.currency || "RUB",
+    t.customer_region || "",
+    PLATFORM_NAMES[t.source_platform] || t.source_platform || "",
+    t.original_url || "",
+  ].join(";")).join("\n");
+  const filename = activeTab === "cis_cat" ? "cat_equipment.csv" : "auctions.csv";
   const blob = new Blob([BOM + header + rows], { type: "text/csv;charset=utf-8" });
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "auctions.csv"; a.click();
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
 }
-if (btnExportEl) btnExportEl.addEventListener("click", () => exportCSV(_lastItems));
+if (btnExportEl) btnExportEl.addEventListener("click", () => { exportCSV(_lastItems); showToast("CSV скачан"); });
 
 /* ── Build query ── */
 
@@ -104,14 +190,21 @@ function buildQueryString() {
   if (q) params.set("q", q);
   const region = (fd.get("region") || "").trim();
   if (region) params.set("region", region);
-  const niche = (fd.get("niche") || "").trim();
-  if (niche) params.set("niche", niche);
+
+  // Property type filter only for bankruptcy tab
+  if (activeTab === "bankruptcy") {
+    const niche = (fd.get("niche") || "").trim();
+    if (niche) params.set("niche", niche);
+  }
+
   const minNmck = fd.get("min_nmck");
   if (minNmck !== "" && minNmck != null) params.set("min_nmck", String(minNmck));
   const maxNmck = fd.get("max_nmck");
   if (maxNmck !== "" && maxNmck != null) params.set("max_nmck", String(maxNmck));
 
-  params.set("law_type", "auction"); // КЛЮЧЕВОЕ ОТЛИЧИЕ от app.js
+  // law_type зависит от активного таба
+  const cfg = TAB_CONFIG[activeTab];
+  params.set("law_type", cfg.lawType);
   params.set("sort", sortSelect.value || "created_at");
   params.set("status", "active");
   params.set("page", pageInput.value || "1");
@@ -124,7 +217,7 @@ function buildQueryString() {
 function renderCards(items) {
   resultsEl.innerHTML = "";
   if (!items || items.length === 0) {
-    resultsEl.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 6 0"/></svg></div><p>\u041b\u043e\u0442\u043e\u0432 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e. \u0418\u0437\u043c\u0435\u043d\u0438\u0442\u0435 \u043a\u043b\u044e\u0447\u0435\u0432\u044b\u0435 \u0441\u043b\u043e\u0432\u0430 \u0438\u043b\u0438 \u0444\u0438\u043b\u044c\u0442\u0440\u044b.</p></div>`;
+    resultsEl.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 6 0"/></svg></div><p>Лотов не найдено. Измените ключевые слова или фильтры.</p></div>`;
     return;
   }
   _lastItems = items;
@@ -134,7 +227,7 @@ function renderCards(items) {
     div.className = "tender-card glass";
     div.innerHTML = `
       <div class="tender-card-header">
-        <div class="tender-title">${esc(t.title || "\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f")}</div>
+        <div class="tender-title">${esc(t.title || "Без названия")}</div>
         <div class="tender-badges">
           ${propBadge(t.niche_tags)}
           ${platformBadge(t.source_platform)}
@@ -143,14 +236,14 @@ function renderCards(items) {
       <div class="tender-body">
         <div class="tender-field">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          <span class="tender-nmck">${esc(fmtMoney(t.nmck))}</span>
+          <span class="tender-nmck">${esc(fmtMoney(t.nmck, t.currency))}</span>
         </div>
         <div class="tender-field">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
           ${esc(t.customer_region || "\u2014")}
         </div>
       </div>
-      ${url ? `<div class="tender-footer"><a class="tender-link" href="${esc(url)}" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg> \u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043d\u0430 \u043f\u043b\u043e\u0449\u0430\u0434\u043a\u0435</a></div>` : ""}
+      ${url ? `<div class="tender-footer"><a class="tender-link" href="${esc(url)}" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg> Открыть на площадке</a></div>` : ""}
     `;
     resultsEl.appendChild(div);
   }
@@ -164,6 +257,8 @@ function showSkeleton() {
 /* ── Search ── */
 
 async function runSearch() {
+  const btnSearch = document.getElementById("btn-search");
+  if (btnSearch) { btnSearch.disabled = true; btnSearch.classList.add("loading"); }
   setStatus("", false);
   showSkeleton();
   resultsToolbar.classList.add("hidden");
@@ -178,7 +273,8 @@ async function runSearch() {
     const page = data.page ?? 1;
     const pages = data.pages ?? 1;
 
-    resultsCountEl.innerHTML = `\u041d\u0430\u0439\u0434\u0435\u043d\u043e: <span>${total.toLocaleString("ru-RU")}</span> \u043b\u043e\u0442\u043e\u0432`;
+    const cfg = TAB_CONFIG[activeTab];
+    resultsCountEl.innerHTML = `Найдено: <span>${total.toLocaleString("ru-RU")}</span> ${cfg.resultLabel}`;
     resultsToolbar.classList.remove("hidden");
     renderCards(data.items || []);
 
@@ -189,11 +285,14 @@ async function runSearch() {
       pagerEl.classList.remove("hidden");
     }
     setStatus("", false);
+    if (total > 0) resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (e) {
     console.error(e);
-    setStatus("\u041e\u0448\u0438\u0431\u043a\u0430: " + (e.message || "\u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0441\u0435\u0442\u044c."), true);
+    setStatus("Ошибка: " + (e.message || "Проверьте сеть."), true);
     resultsEl.innerHTML = "";
     resultsToolbar.classList.add("hidden");
+  } finally {
+    if (btnSearch) { btnSearch.disabled = false; btnSearch.classList.remove("loading"); }
   }
 }
 
