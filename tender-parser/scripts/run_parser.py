@@ -200,30 +200,30 @@ def run_mascus() -> int:
 
 
 def run_machinerytrader() -> int:
-    from scrapers.machinerytrader import MachineryTraderScraper
-    logger.info("=== MachineryTrader (CAT) ===")
-    scraper = MachineryTraderScraper()
+    from scrapers.machinerytrader_pw import MachineryTraderPlaywrightScraper
+    logger.info("=== MachineryTrader (CAT, Playwright) ===")
+    scraper = MachineryTraderPlaywrightScraper()
     return _process_and_save(scraper.run(max_pages=3), "MachineryTrader")
 
 
 def run_catused() -> int:
-    from scrapers.catused import CatUsedScraper
-    logger.info("=== CAT Used ===")
-    scraper = CatUsedScraper()
+    from scrapers.catused_pw import CatUsedPlaywrightScraper
+    logger.info("=== CAT Used (Playwright) ===")
+    scraper = CatUsedPlaywrightScraper()
     return _process_and_save(scraper.run(max_pages=3), "CAT Used")
 
 
 def run_avito_cat() -> int:
-    from scrapers.avito_cat import AvitoCatScraper
-    logger.info("=== Avito (CAT спецтехника) ===")
-    scraper = AvitoCatScraper()
+    from scrapers.avito_cat_pw import AvitoCatPlaywrightScraper
+    logger.info("=== Avito (CAT, Playwright) ===")
+    scraper = AvitoCatPlaywrightScraper()
     return _process_and_save(scraper.run(max_pages=2), "Avito CAT")
 
 
 def run_kolesa_kz() -> int:
-    from scrapers.kolesa_kz import KolesaKzScraper
-    logger.info("=== Kolesa.kz (CAT спецтехника) ===")
-    scraper = KolesaKzScraper()
+    from scrapers.kolesa_kz_pw import KolesaKzPlaywrightScraper
+    logger.info("=== Kolesa.kz (CAT, Playwright) ===")
+    scraper = KolesaKzPlaywrightScraper()
     return _process_and_save(scraper.run(max_pages=5), "Kolesa.kz")
 
 
@@ -243,8 +243,8 @@ GROUPS = {
     "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
     # СНГ (CAT) — б/у спецтехника Caterpillar
     "cis_cat": [run_mascus, run_machinerytrader, run_catused, run_avito_cat, run_kolesa_kz],
-    "cis_cat_intl": [run_mascus, run_machinerytrader, run_catused],
-    "cis_cat_local": [run_avito_cat, run_kolesa_kz],
+    "cis_cat_intl": [run_mascus],  # httpx only
+    "cis_cat_local": [run_machinerytrader, run_catused, run_avito_cat, run_kolesa_kz],  # Playwright
     "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
             run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
 }

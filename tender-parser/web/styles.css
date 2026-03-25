@@ -1131,20 +1131,7 @@ select option {
     height: 28px;
   }
 
-  .navbar-links {
-    gap: 0.15rem;
-  }
-
-  .nav-link {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
-    gap: 0.3rem;
-  }
-
-  .nav-link svg {
-    width: 16px;
-    height: 16px;
-  }
+  /* navbar-links и nav-link управляются hamburger override ниже */
 
   .container {
     padding: 1rem 0.75rem 3rem;
@@ -1325,13 +1312,7 @@ select option {
     padding: 0 0.5rem;
   }
 
-  .nav-link span {
-    display: none;
-  }
-
-  .nav-link {
-    padding: 0.35rem 0.5rem;
-  }
+  /* nav-link управляется hamburger — не переопределяем здесь */
 
   .container {
     padding: 0.75rem 0.5rem 2.5rem;
@@ -1505,10 +1486,6 @@ select option {
     text-align: center;
     font-size: 0.85rem;
     padding: 0.6rem 0.75rem;
-  }
-
-  .nav-link span {
-    display: none;
   }
 }
 

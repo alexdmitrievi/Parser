@@ -217,7 +217,10 @@ function buildQueryString() {
 function renderCards(items) {
   resultsEl.innerHTML = "";
   if (!items || items.length === 0) {
-    resultsEl.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 6 0"/></svg></div><p>Лотов не найдено. Измените ключевые слова или фильтры.</p></div>`;
+    const emptyMsg = activeTab === "cis_cat"
+      ? "Объявлений CAT пока нет. Данные обновляются автоматически каждые 12 часов. Попробуйте позже или измените фильтры."
+      : "Лотов не найдено. Измените ключевые слова или фильтры.";
+    resultsEl.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 6 0"/></svg></div><p>${emptyMsg}</p></div>`;
     return;
   }
   _lastItems = items;
