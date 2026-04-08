@@ -44,21 +44,7 @@ NICHE_CONSTRUCTION = NichePreset(
     priority_regions=[],
 )
 
-NICHE_CAT_EQUIPMENT = NichePreset(
-    name="Спецтехника CAT",
-    tag="equipment",
-    keywords=[
-        "caterpillar", "cat ", "cat-", "экскаватор", "бульдозер", "погрузчик",
-        "самосвал", "грейдер", "каток", "трубоукладчик", "гусеничный",
-        "колёсный погрузчик", "мини-погрузчик", "телескопический погрузчик",
-        "excavator", "bulldozer", "loader", "dozer", "backhoe",
-        "skid steer", "wheel loader", "motor grader",
-    ],
-    okpd2_prefixes=[],
-    priority_regions=[],
-)
-
-ALL_NICHES = [NICHE_FURNITURE, NICHE_CONSTRUCTION, NICHE_CAT_EQUIPMENT]
+ALL_NICHES = [NICHE_FURNITURE, NICHE_CONSTRUCTION]
 
 
 def get_env(key: str, default: str = "") -> str:

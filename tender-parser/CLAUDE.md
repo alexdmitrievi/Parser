@@ -61,7 +61,7 @@ scripts/        → entry points для GitHub Actions
 - furniture (мебель): ОКПД2 31.x, ключевые слова в shared/config.py
 - construction (подряды): ОКПД2 41-43, 71.1, 81.1
 
-## Текущие парсеры
+## Текущие парсеры тендеров
 
 - eis_ftp.py — FTP zakupki.gov.ru (44-ФЗ, XML)
 - eis_api.py — HTTP поиск zakupki.gov.ru (44-ФЗ + 223-ФЗ)
@@ -71,3 +71,21 @@ scripts/        → entry points для GitHub Actions
 - tektorg.py — ЭТП ТЭК-Торг (223-ФЗ)
 - b2b_center.py — Коммерческие тендеры
 - tenderguru.py — Агрегатор
+
+## Парсеры программ финансирования МСП
+
+Таблица: `funding_programs` в Supabase.
+Базовый класс: `scrapers/funding_base.py:FundingBaseScraper`
+Entry point: `scrapers/scripts/run_funding.py`
+
+- funding_corpmsp.py — Корпорация МСП (corpmsp.ru): кредиты 1764, гарантии, микрозаймы, лизинг
+- funding_frprf.py — Фонд развития промышленности (frprf.ru): займы 1-5% для производства
+- funding_mspbank.py — МСП Банк (mspbank.ru): инвестиционные кредиты, гарантии, экспорт
+- funding_mybusiness.py — Мой Бизнес (mybusiness.ru): гранты старт, социалка, субсидии
+
+## Модель FundingProgramCreate
+
+Обязательные поля: source_platform, program_name, program_type, original_url
+Типы (program_type): grant, loan, microloan, subsidy, guarantee, compensation, leasing
+API: GET /api/funding, GET /api/funding/{id}, GET /api/funding/meta
+Фронтенд: /web/grants.html + /web/grants.js

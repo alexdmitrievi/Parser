@@ -17,6 +17,7 @@ from api.routes_tenders import router as tenders_router
 from api.routes_web_search import router as web_search_router
 from api.routes_web_subscribe import router as web_subscribe_router
 from api.routes_suggestions import router as suggestions_router
+from api.routes_funding import router as funding_router
 
 _CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 
@@ -34,6 +35,7 @@ app.include_router(tenders_router, prefix="/api")
 app.include_router(web_search_router, prefix="/api")
 app.include_router(web_subscribe_router, prefix="/api")
 app.include_router(suggestions_router, prefix="/api")
+app.include_router(funding_router, prefix="/api")
 
 _web_dir = Path(__file__).resolve().parent.parent / "web"
 if _web_dir.is_dir():

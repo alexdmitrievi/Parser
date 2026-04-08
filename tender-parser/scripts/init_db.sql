@@ -119,3 +119,62 @@ CREATE TABLE IF NOT EXISTS bot_state (
 -- RLS (Row Level Security) — опционально для production
 -- ALTER TABLE tenders ENABLE ROW LEVEL SECURITY;
 -- CREATE POLICY "Public read" ON tenders FOR SELECT USING (true);
+
+
+-- ============================================
+-- Программы финансирования МСП (гранты, кредиты, субсидии)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS funding_programs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    source_platform TEXT NOT NULL,           -- corpmsp, mybusiness, frprf, mspbank, regional
+    external_id TEXT,                         -- ID на исходной платформе
+    program_name TEXT NOT NULL,
+    program_type TEXT NOT NULL,               -- grant, loan, subsidy, guarantee, microloan, compensation
+    organizer_name TEXT,                      -- организатор / фонд
+    organizer_url TEXT,
+    amount_min NUMERIC(18,2),                 -- минимальная сумма финансирования, руб
+    amount_max NUMERIC(18,2),                 -- максимальная сумма финансирования, руб
+    rate NUMERIC(6,2),                        -- процентная ставка, %
+    term_months INT,                          -- срок кредита/займа в месяцах
+    regions TEXT[] DEFAULT '{}',              -- регионы действия (пустой = вся Россия)
+    industries TEXT[] DEFAULT '{}',           -- отрасли (пустой = все)
+    description TEXT,                         -- описание программы
+    requirements TEXT,                        -- требования к получателю
+    target_audience TEXT,                     -- целевая аудитория (стартапы, МСП, ИП, самозанятые)
+    deadline TIMESTAMPTZ,                     -- дата окончания приёма заявок
+    status TEXT DEFAULT 'active',             -- active, closed, announced
+    original_url TEXT NOT NULL,               -- ссылка на страницу программы
+    publish_date TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    UNIQUE(source_platform, external_id)
+);
+
+-- Индексы
+CREATE INDEX IF NOT EXISTS idx_funding_status ON funding_programs(status);
+CREATE INDEX IF NOT EXISTS idx_funding_type ON funding_programs(program_type);
+CREATE INDEX IF NOT EXISTS idx_funding_regions ON funding_programs USING GIN(regions);
+CREATE INDEX IF NOT EXISTS idx_funding_industries ON funding_programs USING GIN(industries);
+CREATE INDEX IF NOT EXISTS idx_funding_created ON funding_programs(created_at);
+CREATE INDEX IF NOT EXISTS idx_funding_platform ON funding_programs(source_platform);
+
+-- FTS
+ALTER TABLE funding_programs ADD COLUMN IF NOT EXISTS fts tsvector
+    GENERATED ALWAYS AS (
+        to_tsvector('russian',
+            coalesce(program_name,'') || ' ' ||
+            coalesce(description,'') || ' ' ||
+            coalesce(organizer_name,'') || ' ' ||
+            coalesce(requirements,'')
+        )
+    ) STORED;
+
+CREATE INDEX IF NOT EXISTS idx_funding_fts ON funding_programs USING GIN(fts);
+
+-- Автообновление updated_at
+DROP TRIGGER IF EXISTS funding_updated_at ON funding_programs;
+CREATE TRIGGER funding_updated_at
+    BEFORE UPDATE ON funding_programs
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();

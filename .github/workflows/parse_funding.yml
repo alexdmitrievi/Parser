@@ -1,0 +1,60 @@
+name: Parse Funding Programs (Grants & Loans)
+
+on:
+  schedule:
+    # Каждый день в 7:00 UTC (10:00 МСК)
+    - cron: '0 7 * * *'
+  workflow_dispatch: {}
+
+defaults:
+  run:
+    working-directory: tender-parser
+
+jobs:
+  parse-funding:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: tender-parser/requirements-parser.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-parser.txt
+
+      - name: Parse Корпорация МСП
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python scrapers/scripts/run_funding.py corpmsp
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Parse Фонд развития промышленности (ФРП)
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python scrapers/scripts/run_funding.py frprf
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Parse МСП Банк
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python scrapers/scripts/run_funding.py mspbank
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Parse Мой Бизнес
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python scrapers/scripts/run_funding.py mybusiness
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}

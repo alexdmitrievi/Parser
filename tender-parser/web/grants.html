@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Гранты и льготные кредиты для бизнеса — Тендер PRO</title>
+  <meta name="description" content="Найдите гранты, льготные кредиты и субсидии для вашего бизнеса от Корпорации МСП, ФРП, МСП Банка и Центров Мой Бизнес." />
+  <meta property="og:title" content="Финансирование бизнеса — Тендер PRO" />
+  <meta property="og:description" content="Гранты, льготные кредиты, субсидии, поручительства от федеральных и региональных фондов поддержки МСП." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/web/styles.css" />
+  <link rel="icon" type="image/png" href="/web/icon-192.png" />
+  <link rel="manifest" href="/web/manifest.json" />
+  <meta name="theme-color" content="#0a0e17" />
+  <style>
+    .grants-hero {
+      background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(59,130,246,0.08));
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .grants-hero h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .grants-hero p { color: var(--text-secondary); max-width: 560px; line-height: 1.6; }
+    .hero-counters { display: flex; gap: 1.25rem; flex-shrink: 0; }
+    .hero-counter {
+      text-align: center; padding: 1rem 1.25rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-md); border: 1px solid var(--border);
+    }
+    .hero-counter-value { font-size: 1.75rem; font-weight: 700; color: var(--accent-green); line-height: 1; }
+    .hero-counter-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+    .type-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .type-pill {
+      padding: 0.4rem 1rem; border-radius: 20px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-secondary); font-size: 0.85rem; cursor: pointer; transition: var(--transition);
+    }
+    .type-pill:hover { border-color: var(--accent-green); color: var(--text-primary); }
+    .type-pill.active { background: rgba(16,185,129,0.15); border-color: var(--accent-green); color: var(--accent-green); font-weight: 600; }
+    .grants-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; }
+    .grant-card {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 1rem;
+      transition: var(--transition); position: relative; overflow: hidden; cursor: pointer;
+    }
+    .grant-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--card-accent, var(--gradient-green));
+    }
+    .grant-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .grant-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+    .grant-type-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; flex-shrink: 0;
+    }
+    .badge-grant { background: rgba(16,185,129,0.15); color: #10b981; }
+    .badge-loan { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .badge-microloan { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .badge-subsidy { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .badge-guarantee { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .badge-compensation { background: rgba(20,184,166,0.15); color: #14b8a6; }
+    .badge-leasing { background: rgba(168,85,247,0.15); color: #a855f7; }
+    .grant-title { font-size: 1rem; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
+    .grant-organizer { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; }
+    .grant-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .grant-amount-item {
+      background: rgba(255,255,255,0.04); border-radius: var(--radius-sm);
+      padding: 0.6rem 0.75rem; text-align: center;
+    }
+    .grant-amount-value { font-size: 0.95rem; font-weight: 700; color: var(--accent-green); }
+    .grant-amount-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+    .grant-desc {
+      font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .grant-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--border);
+    }
+    .grant-platform { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; }
+    .platform-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-green); flex-shrink: 0; }
+    .btn-apply {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 1rem; border-radius: var(--radius-sm);
+      background: rgba(16,185,129,0.15); color: var(--accent-green);
+      font-size: 0.8rem; font-weight: 600; text-decoration: none; transition: var(--transition);
+      border: none; cursor: pointer;
+    }
+    .btn-apply:hover { background: rgba(16,185,129,0.25); color: var(--accent-green); }
+    .platforms-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .platform-card {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 1.25rem; text-align: center; cursor: pointer; transition: var(--transition);
+    }
+    .platform-card:hover, .platform-card.active { border-color: var(--accent-green); background: rgba(16,185,129,0.07); }
+    .platform-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
+    .platform-desc { font-size: 0.75rem; color: var(--text-muted); }
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: #141c2e; border: 1px solid var(--border-hover);
+      border-radius: var(--radius-lg); max-width: 640px; width: 100%;
+      max-height: 85vh; overflow-y: auto; padding: 2rem;
+      transform: translateY(20px); transition: transform 0.2s;
+    }
+    .modal-backdrop.open .modal-box { transform: translateY(0); }
+    .modal-close { float: right; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem; line-height: 1; padding: 0 0.5rem; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-section { margin-bottom: 1.25rem; }
+    .modal-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .modal-text { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+    .modal-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin: 1rem 0; }
+    .info-tag {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.3rem 0.75rem; background: rgba(255,255,255,0.06);
+      border-radius: 20px; font-size: 0.78rem; color: var(--text-secondary); margin: 0.2rem;
+    }
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius-lg); }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @media (max-width: 640px) {
+      .grants-hero { grid-template-columns: 1fr; }
+      .hero-counters { justify-content: center; }
+      .grants-grid { grid-template-columns: 1fr; }
+      .grant-amounts { grid-template-columns: repeat(2, 1fr); }
+      .modal-amounts { grid-template-columns: repeat(2, 1fr); }
+      .platforms-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <img src="/web/logo.png" alt="Тендер PRO" class="logo-img" />
+      <span>Тендер PRO</span>
+    </div>
+    <button class="navbar-burger" id="navbar-burger" aria-label="Меню" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="navbar-links">
+      <a href="/web/" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span>Тендеры</span>
+      </a>
+      <a href="/web/auctions.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-3.5L6 15"/><path d="M18 9l-6-3.5L6 9"/><path d="M6 15v4l6 3 6-3v-4"/></svg>
+        <span>Аукционы</span>
+      </a>
+      <a href="/web/grants.html" class="nav-link active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Финансирование</span>
+      </a>
+      <a href="/web/favorites.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        <span>Избранное</span>
+      </a>
+      <a href="/web/subscribe.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span>Подписки</span>
+      </a>
+      <a href="/web/stats.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        <span>Аналитика</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="grants-hero glass">
+      <div>
+        <h1>Финансирование бизнеса</h1>
+        <p>Гранты, льготные кредиты, субсидии и поручительства от федеральных и региональных фондов поддержки МСП — все программы в одном месте.</p>
+      </div>
+      <div class="hero-counters">
+        <div class="hero-counter">
+          <div class="hero-counter-value" id="cnt-total">—</div>
+          <div class="hero-counter-label">Программ</div>
+        </div>
+        <div class="hero-counter">
+          <div class="hero-counter-value" id="cnt-grants">—</div>
+          <div class="hero-counter-label">Грантов</div>
+        </div>
+        <div class="hero-counter">
+          <div class="hero-counter-value" id="cnt-loans">—</div>
+          <div class="hero-counter-label">Кредитов</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="platforms-row" id="platform-row">
+      <div class="platform-card active" data-platform="">
+        <div class="platform-name">Все источники</div>
+        <div class="platform-desc">Федеральные и региональные</div>
+      </div>
+      <div class="platform-card" data-platform="corpmsp">
+        <div class="platform-name">Корпорация МСП</div>
+        <div class="platform-desc">Гарантии, кредиты, лизинг</div>
+      </div>
+      <div class="platform-card" data-platform="frprf">
+        <div class="platform-name">ФРП</div>
+        <div class="platform-desc">Займы 1–5% для промышленности</div>
+      </div>
+      <div class="platform-card" data-platform="mspbank">
+        <div class="platform-name">МСП Банк</div>
+        <div class="platform-desc">Кредиты, гарантии, экспорт</div>
+      </div>
+      <div class="platform-card" data-platform="mybusiness">
+        <div class="platform-name">Мой Бизнес</div>
+        <div class="platform-desc">Гранты, субсидии, коворкинги</div>
+      </div>
+    </div>
+
+    <div class="glass form-panel" style="padding: 1.25rem 1.5rem;">
+      <div class="form-row form-row-2" style="margin-bottom: 1rem;">
+        <div class="field">
+          <label class="field-label" for="g-query">Поиск по программам</label>
+          <div class="search-input-wrap">
+            <span class="search-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </span>
+            <input type="text" id="g-query" placeholder="Название программы, тип финансирования..." autocomplete="off" />
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="g-region">Ваш регион</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="g-region" placeholder="Оставьте пустым — все регионы" autocomplete="off" />
+            <div id="region-dropdown" class="autocomplete-dropdown hidden"></div>
+          </div>
+        </div>
+      </div>
+      <div class="type-filters" id="type-filters">
+        <button class="type-pill active" data-type="">Все типы</button>
+        <button class="type-pill" data-type="grant">Гранты</button>
+        <button class="type-pill" data-type="loan">Льготные кредиты</button>
+        <button class="type-pill" data-type="microloan">Микрозаймы</button>
+        <button class="type-pill" data-type="subsidy">Субсидии</button>
+        <button class="type-pill" data-type="guarantee">Поручительства</button>
+        <button class="type-pill" data-type="leasing">Лизинг</button>
+      </div>
+    </div>
+
+    <p id="g-status" class="status-msg" role="status" aria-live="polite"></p>
+    <section id="grants-grid" class="grants-grid" aria-label="Программы финансирования"></section>
+
+    <nav id="g-pager" class="pager hidden" aria-label="Пагинация">
+      <button type="button" id="g-prev" class="btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Назад
+      </button>
+      <span id="g-page-info" class="page-info"></span>
+      <button type="button" id="g-next" class="btn">
+        Вперёд
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </nav>
+  </div>
+
+  <div class="modal-backdrop" id="detail-modal" role="dialog" aria-modal="true">
+    <div class="modal-box" id="modal-box">
+      <button class="modal-close" id="modal-close" aria-label="Закрыть">&times;</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <a href="/web/about.html">О сервисе</a>
+    <span class="footer-sep">&middot;</span>
+    <a href="/web/subscribe.html">Подписки</a>
+    <span class="footer-sep">&middot;</span>
+    <a href="/web/stats.html">Аналитика</a>
+  </footer>
+
+  <script src="/web/grants.js"></script>
+  <script>
+    document.getElementById("navbar-burger")?.addEventListener("click", function() {
+      const links = document.querySelector(".navbar-links");
+      const open = links.classList.toggle("open");
+      this.classList.toggle("active", open);
+      this.setAttribute("aria-expanded", String(open));
+    });
+    document.addEventListener("click", function(e) {
+      const burger = document.getElementById("navbar-burger");
+      const links = document.querySelector(".navbar-links");
+      if (burger && links && !burger.contains(e.target) && !links.contains(e.target)) {
+        links.classList.remove("open");
+        burger.classList.remove("active");
+        burger.setAttribute("aria-expanded", "false");
+      }
+    });
+  </script>
+</body>
+</html>

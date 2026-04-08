@@ -67,6 +67,66 @@ class SubscriptionCreate(BaseModel):
     niche_tags: list[str] = Field(default_factory=list)
 
 
+class FundingProgramCreate(BaseModel):
+    """Модель для вставки программы финансирования МСП."""
+    source_platform: str
+    external_id: Optional[str] = None
+    program_name: str
+    program_type: str  # grant, loan, subsidy, guarantee, microloan, compensation
+    organizer_name: Optional[str] = None
+    organizer_url: Optional[str] = None
+    amount_min: Optional[float] = None
+    amount_max: Optional[float] = None
+    rate: Optional[float] = None
+    term_months: Optional[int] = None
+    regions: list[str] = Field(default_factory=list)
+    industries: list[str] = Field(default_factory=list)
+    description: Optional[str] = None
+    requirements: Optional[str] = None
+    target_audience: Optional[str] = None
+    deadline: Optional[datetime] = None
+    status: str = "active"
+    original_url: str
+    publish_date: Optional[datetime] = None
+
+
+class FundingProgramResponse(BaseModel):
+    """Модель программы финансирования для ответа API."""
+    id: str
+    source_platform: str
+    external_id: Optional[str] = None
+    program_name: str
+    program_type: str
+    organizer_name: Optional[str] = None
+    organizer_url: Optional[str] = None
+    amount_min: Optional[float] = None
+    amount_max: Optional[float] = None
+    rate: Optional[float] = None
+    term_months: Optional[int] = None
+    regions: list[str] = Field(default_factory=list)
+    industries: list[str] = Field(default_factory=list)
+    description: Optional[str] = None
+    requirements: Optional[str] = None
+    target_audience: Optional[str] = None
+    deadline: Optional[str] = None
+    status: str = "active"
+    original_url: str
+    publish_date: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class FundingSearchFilters(BaseModel):
+    """Фильтры поиска программ финансирования."""
+    query: Optional[str] = None
+    region: Optional[str] = None
+    program_type: Optional[str] = None
+    industry: Optional[str] = None
+    amount_max: Optional[float] = None
+    status: str = "active"
+    page: int = 1
+    per_page: int = 12
+
+
 class SearchFilters(BaseModel):
     """Фильтры поиска тендеров."""
     query: Optional[str] = None
