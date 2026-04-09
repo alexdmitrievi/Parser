@@ -1,10 +1,11 @@
-"""Entry point для GitHub Actions: запуск парсеров.
+"""Entry point для GitHub Actions: параллельный запуск парсеров.
 
 Использование:
     python scripts/run_parser.py --source eis_ftp
     python scripts/run_parser.py --source eis_api
     python scripts/run_parser.py --source commercial
     python scripts/run_parser.py --source etp
+    python scripts/run_parser.py --source corporate
     python scripts/run_parser.py --source all
 """
 
@@ -12,8 +13,12 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
 import os
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+from typing import Callable
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -27,6 +32,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger("parser")
 
+
+# ─── Результат прогона одного скрапера ───────────────────────────────────────
+
+@dataclass
+class RunResult:
+    name: str
+    count: int = 0
+    elapsed: float = 0.0
+    error: str = ""
+
+    @property
+    def ok(self) -> bool:
+        return not self.error
+
+
+# ─── Сохранение ──────────────────────────────────────────────────────────────
 
 def _process_and_save(tenders, source_name: str) -> int:
     """Нормализовать, протегировать и сохранить тендеры."""
@@ -47,7 +68,7 @@ def _process_and_save(tenders, source_name: str) -> int:
     return count
 
 
-# ──────── ЕИС ────────
+# ─── Скраперы: ЕИС ───────────────────────────────────────────────────────────
 
 def run_eis_ftp() -> int:
     from scrapers.eis_ftp import EisFtpScraper
@@ -63,7 +84,6 @@ def run_eis_api() -> int:
     return _process_and_save(
         scraper.run(
             queries=[
-                # Группа 1: самые востребованные (10 запросов × 2 стр = 20 запросов)
                 "ремонт помещений", "строительные работы", "поставка оборудования",
                 "мебель", "IT услуги", "транспортные услуги",
                 "мазут", "печное топливо", "дизельное топливо",
@@ -96,7 +116,7 @@ def run_eis_api_extra() -> int:
     )
 
 
-# ──────── Федеральные ЭТП ────────
+# ─── Скраперы: Федеральные ЭТП ──────────────────────────────────────────────
 
 def run_roseltorg() -> int:
     from scrapers.roseltorg import RoseltorgScraper
@@ -126,7 +146,7 @@ def run_tektorg() -> int:
     return _process_and_save(scraper.run(), "TekTorg")
 
 
-# ──────── Коммерческие ────────
+# ─── Скраперы: Коммерческие ──────────────────────────────────────────────────
 
 def run_b2b_center() -> int:
     from scrapers.b2b_center import B2BCenterScraper
@@ -149,7 +169,7 @@ def run_tenderguru() -> int:
     )
 
 
-# ──────── Корпоративные площадки ────────
+# ─── Скраперы: Корпоративные площадки ───────────────────────────────────────
 
 def run_sberb2b() -> int:
     from scrapers.sberb2b import SberB2BScraper
@@ -221,7 +241,7 @@ def run_magnit() -> int:
     return _process_and_save(scraper.run(), "Magnit")
 
 
-# ──────── Агрегаторы ────────
+# ─── Скраперы: Агрегаторы ────────────────────────────────────────────────────
 
 def run_rostender() -> int:
     from scrapers.rostender import RostenderScraper
@@ -230,7 +250,7 @@ def run_rostender() -> int:
     return _process_and_save(scraper.run(), "Rostender")
 
 
-# ──────── Playwright-парсеры ────────
+# ─── Скраперы: Playwright ────────────────────────────────────────────────────
 
 def run_tektorg_pw() -> int:
     from scrapers.tektorg_pw import TekTorgPlaywrightScraper
@@ -253,7 +273,7 @@ def run_sberbank_ast_pw() -> int:
     return _process_and_save(scraper.run(), "Sberbank-AST PW")
 
 
-# ──────── Аукционы (банкротство) ────────
+# ─── Скраперы: Аукционы ──────────────────────────────────────────────────────
 
 def run_lot_online() -> int:
     from scrapers.lot_online import LotOnlineScraper
@@ -269,46 +289,9 @@ def run_torgi_gov_pw() -> int:
     return _process_and_save(scraper.run(max_pages=10), "Torgi.gov.ru")
 
 
-# ──────── СНГ (CAT) — б/у спецтехника Caterpillar ────────
+# ─── Группы скраперов ────────────────────────────────────────────────────────
 
-def run_mascus() -> int:
-    from scrapers.mascus import MascusScraper
-    logger.info("=== Mascus (CAT) ===")
-    scraper = MascusScraper()
-    return _process_and_save(scraper.run(max_pages=10), "Mascus")
-
-
-def run_machinerytrader() -> int:
-    from scrapers.machinerytrader_pw import MachineryTraderPlaywrightScraper
-    logger.info("=== MachineryTrader (CAT, Playwright) ===")
-    scraper = MachineryTraderPlaywrightScraper()
-    return _process_and_save(scraper.run(max_pages=3), "MachineryTrader")
-
-
-def run_catused() -> int:
-    from scrapers.catused_pw import CatUsedPlaywrightScraper
-    logger.info("=== CAT Used (Playwright) ===")
-    scraper = CatUsedPlaywrightScraper()
-    return _process_and_save(scraper.run(max_pages=3), "CAT Used")
-
-
-def run_avito_cat() -> int:
-    from scrapers.avito_cat_pw import AvitoCatPlaywrightScraper
-    logger.info("=== Avito (CAT, Playwright) ===")
-    scraper = AvitoCatPlaywrightScraper()
-    return _process_and_save(scraper.run(max_pages=2), "Avito CAT")
-
-
-def run_kolesa_kz() -> int:
-    from scrapers.kolesa_kz_pw import KolesaKzPlaywrightScraper
-    logger.info("=== Kolesa.kz (CAT, Playwright) ===")
-    scraper = KolesaKzPlaywrightScraper()
-    return _process_and_save(scraper.run(max_pages=5), "Kolesa.kz")
-
-
-# ──────── Группы ────────
-
-GROUPS = {
+GROUPS: dict[str, list[Callable[[], int]]] = {
     "eis_ftp": [run_eis_ftp],
     "eis_api": [run_eis_api],
     "eis_api_extra": [run_eis_api_extra],
@@ -323,6 +306,7 @@ GROUPS = {
     "corporate_energy": [run_rosatom, run_rosneft, run_gazprom, run_lukoil, run_nornickel],
     "corporate_telecom": [run_mts_tenders, run_rostelecom],
     "corporate_retail": [run_x5group, run_magnit],
+    # Индивидуальные
     "sberb2b": [run_sberb2b],
     "rosatom": [run_rosatom],
     "rosneft": [run_rosneft],
@@ -338,10 +322,6 @@ GROUPS = {
     "auctions_rad": [run_lot_online],
     "auctions_torgi": [run_torgi_gov_pw],
     "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
-    # СНГ (CAT) — б/у спецтехника Caterpillar
-    "cis_cat": [run_mascus, run_machinerytrader, run_catused, run_avito_cat, run_kolesa_kz],
-    "cis_cat_intl": [run_mascus],  # httpx only
-    "cis_cat_local": [run_machinerytrader, run_catused, run_avito_cat, run_kolesa_kz],  # Playwright
     "all": [
         run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
         run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru,
@@ -351,27 +331,86 @@ GROUPS = {
 }
 
 
-def main():
+# ─── Параллельный runner ─────────────────────────────────────────────────────
+
+def _run_one(runner: Callable[[], int]) -> RunResult:
+    """Запустить один скрапер, захватить результат и исключения."""
+    name = runner.__name__
+    t0 = time.time()
+    try:
+        count = runner()
+        return RunResult(name=name, count=count, elapsed=time.time() - t0)
+    except Exception as e:
+        logger.error(f"Runner {name} failed: {e}", exc_info=True)
+        return RunResult(name=name, elapsed=time.time() - t0, error=str(e))
+
+
+def run_parallel(
+    runners: list[Callable[[], int]], max_workers: int = 3
+) -> list[RunResult]:
+    """Запустить скраперы параллельно через ThreadPoolExecutor."""
+    if len(runners) == 1:
+        result = _run_one(runners[0])
+        status = "✓" if result.ok else "✗"
+        logger.info(f"{status} {result.name}: {result.count} тендеров ({result.elapsed:.1f}s)")
+        return [result]
+
+    results: list[RunResult] = []
+    with ThreadPoolExecutor(max_workers=min(max_workers, len(runners))) as pool:
+        future_to_name = {pool.submit(_run_one, r): r.__name__ for r in runners}
+        for future in as_completed(future_to_name):
+            result = future.result()
+            results.append(result)
+            status = "✓" if result.ok else "✗"
+            msg = f"{result.count} тендеров" if result.ok else result.error
+            logger.info(f"{status} {result.name}: {msg} ({result.elapsed:.1f}s)")
+    return results
+
+
+def _print_summary(results: list[RunResult], total_elapsed: float) -> None:
+    total = sum(r.count for r in results)
+    failed = [r for r in results if not r.ok]
+    lines = ["", "─" * 60, "  ИТОГ ПАРСИНГА", "─" * 60]
+    for r in sorted(results, key=lambda x: -x.count):
+        status = "OK " if r.ok else "ERR"
+        lines.append(f"  [{status}] {r.name:<30} {r.count:>5} тенд.  {r.elapsed:>6.1f}s")
+    lines += [
+        "─" * 60,
+        f"  Итого: {total} тендеров за {total_elapsed:.1f}s",
+    ]
+    if failed:
+        lines.append(f"  Ошибки ({len(failed)}): {', '.join(r.name for r in failed)}")
+    lines.append("─" * 60)
+    logger.info("\n".join(lines))
+
+
+# ─── Main ─────────────────────────────────────────────────────────────────────
+
+def main() -> int:
     parser = argparse.ArgumentParser(description="Tender Parser Runner")
     parser.add_argument(
         "--source",
         choices=list(GROUPS.keys()),
         default="all",
-        help="Parser group to run",
+        help="Группа парсеров для запуска",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=3,
+        help="Число параллельных потоков (default: 3)",
     )
     args = parser.parse_args()
 
-    total = 0
     runners = GROUPS[args.source]
+    logger.info(
+        f"Starting {len(runners)} scraper(s) for source='{args.source}' "
+        f"workers={args.workers}"
+    )
 
-    for runner in runners:
-        try:
-            total += runner()
-        except Exception as e:
-            logger.error(f"Runner {runner.__name__} failed: {e}", exc_info=True)
-            continue
-
-    logger.info(f"=== DONE. Total tenders: {total} ===")
+    t_start = time.time()
+    results = run_parallel(runners, max_workers=args.workers)
+    _print_summary(results, time.time() - t_start)
     return 0
 
 

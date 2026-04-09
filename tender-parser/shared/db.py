@@ -3,27 +3,44 @@
 from __future__ import annotations
 
 import logging
+import threading
+import time
 from datetime import datetime
 from typing import Any, Optional
 
 from supabase import create_client, Client
 
-from shared.config import get_config
+from shared.config import get_config, supabase_url, supabase_key
 from shared.models import TenderCreate, SubscriptionCreate, SearchFilters
 
 logger = logging.getLogger(__name__)
 
+# ─── Singleton клиент (создаётся один раз, thread-safe) ──────────────────────
+_db_client: Optional[Client] = None
+_db_lock = threading.Lock()
+
 
 def get_db() -> Client:
-    """Получить Supabase клиент. Raises RuntimeError если secrets не настроены."""
-    cfg = get_config()
-    url = cfg["supabase_url"]
-    key = cfg["supabase_key"]
-    if not url or not key:
-        raise RuntimeError(
-            "Supabase не настроен: задайте SUPABASE_URL и SUPABASE_KEY в secrets GitHub Actions."
-        )
-    return create_client(url, key)
+    """Получить Supabase клиент (singleton).
+
+    Raises:
+        RuntimeError: если SUPABASE_URL / SUPABASE_KEY не заданы.
+    """
+    global _db_client
+    if _db_client is not None:
+        return _db_client
+    with _db_lock:
+        if _db_client is None:
+            url = supabase_url()
+            key = supabase_key()
+            if not url or not key:
+                raise RuntimeError(
+                    "Supabase не настроен: задайте SUPABASE_URL и SUPABASE_KEY "
+                    "в secrets GitHub Actions."
+                )
+            _db_client = create_client(url, key)
+            logger.info("Supabase client initialized")
+    return _db_client
 
 
 # ──────────────────────── Тендеры ────────────────────────
@@ -59,16 +76,28 @@ def insert_tenders(tenders: list[TenderCreate]) -> int:
     batch_size = 200
     for i in range(0, len(rows), batch_size):
         batch = rows[i:i + batch_size]
-        try:
-            result = (
-                db.table("tenders")
-                .upsert(batch, on_conflict="source_platform,registry_number")
-                .execute()
-            )
-            count = len(result.data) if result.data else 0
-            total += count
-        except Exception as e:
-            logger.error(f"Error inserting batch {i//batch_size}: {e}")
+        batch_idx = i // batch_size
+        # Retry с экспоненциальным backoff для transient-ошибок (504, connection reset)
+        for attempt in range(3):
+            try:
+                result = (
+                    db.table("tenders")
+                    .upsert(batch, on_conflict="source_platform,registry_number")
+                    .execute()
+                )
+                count = len(result.data) if result.data else 0
+                total += count
+                break
+            except Exception as e:
+                if attempt < 2:
+                    wait = 2 ** (attempt + 1)
+                    logger.warning(
+                        f"Batch {batch_idx} insert attempt {attempt+1} failed: {e} "
+                        f"— retry in {wait}s"
+                    )
+                    time.sleep(wait)
+                else:
+                    logger.error(f"Batch {batch_idx} failed after 3 attempts: {e}")
 
     logger.info(f"Upserted {total} tenders (from {len(rows)} unique)")
     return total
