@@ -15,6 +15,211 @@
   <link rel="manifest" href="/web/manifest.json" />
   <meta name="theme-color" content="#0a0e17" />
   <style>
+    /* ── Социальный контракт ── */
+    .soc-contract {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg, rgba(16,185,129,0.10) 0%, rgba(245,158,11,0.08) 60%, rgba(59,130,246,0.06) 100%);
+      border: 1px solid rgba(16,185,129,0.28);
+      border-radius: var(--radius-lg);
+      padding: 2rem 2rem 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .soc-contract::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #10b981, #f59e0b, #3b82f6);
+    }
+    .soc-contract-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+    }
+    .soc-contract-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3);
+      color: #f59e0b; font-size: 0.72rem; font-weight: 700;
+      padding: 0.3rem 0.85rem; border-radius: 20px;
+      letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.6rem;
+    }
+    .soc-contract-title {
+      font-size: 1.55rem; font-weight: 700; line-height: 1.25;
+      color: var(--text-primary); margin-bottom: 0.5rem;
+    }
+    .soc-contract-title span { color: #10b981; }
+    .soc-contract-subtitle { font-size: 0.9rem; color: var(--text-secondary); max-width: 560px; line-height: 1.6; }
+    .soc-amount-pill {
+      flex-shrink: 0; text-align: center;
+      background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
+      border-radius: var(--radius-md); padding: 1.1rem 1.75rem;
+      white-space: nowrap;
+    }
+    .soc-amount-value { font-size: 2.2rem; font-weight: 800; color: #10b981; line-height: 1; }
+    .soc-amount-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+    .soc-amount-note { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* Факты */
+    .soc-facts {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .soc-fact {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 0.9rem 1rem;
+    }
+    .soc-fact-icon {
+      font-size: 1.25rem; margin-bottom: 0.4rem; display: block; line-height: 1;
+    }
+    .soc-fact-title { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.2rem; }
+    .soc-fact-text { font-size: 0.72rem; color: var(--text-muted); line-height: 1.45; }
+
+    /* Шаги */
+    .soc-steps-title {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--text-muted); margin-bottom: 0.85rem; font-weight: 600;
+    }
+    .soc-steps {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+      margin-bottom: 1.5rem; position: relative;
+    }
+    .soc-steps::before {
+      content: ""; position: absolute; top: 1.35rem; left: calc(10% + 0.5rem);
+      right: calc(10% + 0.5rem); height: 2px;
+      background: linear-gradient(90deg, rgba(16,185,129,0.4), rgba(245,158,11,0.4), rgba(59,130,246,0.4));
+      z-index: 0;
+    }
+    .soc-step {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 0 0.5rem; position: relative; z-index: 1;
+    }
+    .soc-step-num {
+      width: 2.75rem; height: 2.75rem; border-radius: 50%;
+      background: var(--bg-secondary); border: 2px solid rgba(16,185,129,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem; color: #10b981;
+      margin-bottom: 0.6rem; flex-shrink: 0;
+    }
+    .soc-step:nth-child(2) .soc-step-num { border-color: rgba(59,130,246,0.4); color: #3b82f6; }
+    .soc-step:nth-child(3) .soc-step-num { border-color: rgba(139,92,246,0.4); color: #8b5cf6; }
+    .soc-step:nth-child(4) .soc-step-num { border-color: rgba(245,158,11,0.4); color: #f59e0b; }
+    .soc-step:nth-child(5) .soc-step-num { border-color: rgba(16,185,129,0.6); color: #10b981; background: rgba(16,185,129,0.1); }
+    .soc-step-label { font-size: 0.72rem; color: var(--text-secondary); line-height: 1.35; }
+
+    /* Условия */
+    .soc-conditions {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .soc-cond-group { }
+    .soc-cond-title {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--text-muted); font-weight: 600; margin-bottom: 0.6rem;
+    }
+    .soc-cond-list {
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .soc-cond-item {
+      display: flex; align-items: flex-start; gap: 0.5rem;
+      font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;
+    }
+    .soc-cond-item-icon { flex-shrink: 0; margin-top: 0.1rem; }
+    .icon-ok { color: #10b981; }
+    .icon-no { color: #ef4444; }
+
+    /* CTA */
+    .soc-cta {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1.25rem; flex-wrap: wrap;
+      padding: 1.25rem 1.5rem;
+      background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2);
+      border-radius: var(--radius-md);
+    }
+    .soc-cta-text { }
+    .soc-cta-heading { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .soc-cta-desc { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45; }
+    .btn-soc-cta {
+      flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1.75rem; border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff; font-size: 0.9rem; font-weight: 600;
+      border: none; cursor: pointer; transition: var(--transition);
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+      text-decoration: none;
+    }
+    .btn-soc-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(16,185,129,0.45);
+      color: #fff;
+    }
+
+    /* Контактное модальное окно */
+    .contact-modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      z-index: 300; display: flex; align-items: center; justify-content: center;
+      padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .contact-modal-backdrop.open { opacity: 1; pointer-events: all; }
+    .contact-modal-box {
+      background: #141c2e; border: 1px solid rgba(16,185,129,0.25);
+      border-radius: var(--radius-lg); max-width: 480px; width: 100%;
+      padding: 2rem; transform: translateY(20px); transition: transform 0.2s;
+      position: relative;
+    }
+    .contact-modal-backdrop.open .contact-modal-box { transform: translateY(0); }
+    .contact-modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 0.2rem 0.4rem;
+    }
+    .contact-modal-close:hover { color: var(--text-primary); }
+    .contact-modal-header { margin-bottom: 1.25rem; }
+    .contact-modal-badge {
+      display: inline-block; font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 0.25rem 0.75rem; border-radius: 20px;
+      background: rgba(16,185,129,0.15); color: #10b981;
+      border: 1px solid rgba(16,185,129,0.25); margin-bottom: 0.6rem;
+    }
+    .contact-modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem; }
+    .contact-modal-sub { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+    .contact-items { display: flex; flex-direction: column; gap: 0.75rem; margin: 1.25rem 0; }
+    .contact-item {
+      display: flex; align-items: center; gap: 0.85rem;
+      padding: 0.85rem 1rem;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: var(--radius-md); transition: var(--transition);
+      text-decoration: none; color: inherit;
+    }
+    .contact-item:hover { border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.06); color: inherit; }
+    .contact-item-icon {
+      width: 2.4rem; height: 2.4rem; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .ci-phone .contact-item-icon { background: rgba(16,185,129,0.12); }
+    .ci-email .contact-item-icon { background: rgba(59,130,246,0.12); }
+    .ci-tg .contact-item-icon { background: rgba(0,136,204,0.12); }
+    .contact-item-label { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.15rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .contact-item-value { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
+    .contact-modal-note {
+      font-size: 0.78rem; color: var(--text-muted); text-align: center;
+      padding-top: 0.75rem; border-top: 1px solid var(--border); line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .soc-facts { grid-template-columns: repeat(2, 1fr); }
+      .soc-steps { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+      .soc-steps::before { display: none; }
+    }
+    @media (max-width: 640px) {
+      .soc-contract { padding: 1.25rem; }
+      .soc-contract-top { flex-direction: column; }
+      .soc-amount-pill { width: 100%; }
+      .soc-facts { grid-template-columns: 1fr 1fr; }
+      .soc-steps { grid-template-columns: 1fr; }
+      .soc-conditions { grid-template-columns: 1fr; }
+      .soc-cta { flex-direction: column; align-items: flex-start; }
+      .btn-soc-cta { width: 100%; justify-content: center; }
+    }
+
     .grants-hero {
       background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(59,130,246,0.08));
       border: 1px solid rgba(16,185,129,0.2);
@@ -198,6 +403,149 @@
       </div>
     </div>
 
+    <!-- ══════════ СОЦИАЛЬНЫЙ КОНТРАКТ ══════════ -->
+    <section class="soc-contract" aria-label="Социальный контракт 350 000 рублей">
+      <div class="soc-contract-top">
+        <div>
+          <div class="soc-contract-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Государственный грант
+          </div>
+          <h2 class="soc-contract-title">Социальный контракт — до <span>350 000 ₽</span><br>на открытие своего дела</h2>
+          <p class="soc-contract-subtitle">Государство даёт деньги на бизнес безвозвратно. Не кредит, не займ — <strong style="color:var(--text-primary)">грант, который не нужно возвращать</strong>. Мы поможем пройти весь путь: от консультации до получения средств.</p>
+        </div>
+        <div class="soc-amount-pill">
+          <div class="soc-amount-value">350 000</div>
+          <div class="soc-amount-label">рублей из бюджета</div>
+          <div class="soc-amount-note">не нужно возвращать</div>
+        </div>
+      </div>
+
+      <!-- Ключевые факты -->
+      <div class="soc-facts">
+        <div class="soc-fact">
+          <span class="soc-fact-icon">🏦</span>
+          <div class="soc-fact-title">До 350 000 ₽</div>
+          <div class="soc-fact-text">Безвозмездный грант из федерального и регионального бюджета. Некоторые регионы дают больше.</div>
+        </div>
+        <div class="soc-fact">
+          <span class="soc-fact-icon">📋</span>
+          <div class="soc-fact-title">Нужен бизнес-план</div>
+          <div class="soc-fact-text">Главное требование — защитить бизнес-план перед комиссией. Мы разработаем его за вас.</div>
+        </div>
+        <div class="soc-fact">
+          <span class="soc-fact-icon">✅</span>
+          <div class="soc-fact-title">Доход ниже прожиточного</div>
+          <div class="soc-fact-text">Программа для граждан РФ с доходом ниже 2-х прожиточных минимумов на члена семьи.</div>
+        </div>
+        <div class="soc-fact">
+          <span class="soc-fact-icon">⏱</span>
+          <div class="soc-fact-title">3–6 месяцев</div>
+          <div class="soc-fact-text">Средний срок от подачи заявки до получения денег. С нашей помощью — быстрее и без отказа.</div>
+        </div>
+      </div>
+
+      <!-- Шаги: что мы делаем -->
+      <div class="soc-steps-title">Как мы помогаем — услуга «под ключ»</div>
+      <div class="soc-steps">
+        <div class="soc-step">
+          <div class="soc-step-num">1</div>
+          <div class="soc-step-label">Бесплатная консультация и оценка шансов</div>
+        </div>
+        <div class="soc-step">
+          <div class="soc-step-num">2</div>
+          <div class="soc-step-label">Сбор документов и регистрация в органах соцзащиты</div>
+        </div>
+        <div class="soc-step">
+          <div class="soc-step-num">3</div>
+          <div class="soc-step-label">Разработка бизнес-плана под вашу идею</div>
+        </div>
+        <div class="soc-step">
+          <div class="soc-step-num">4</div>
+          <div class="soc-step-label">Защита перед комиссией — юридическое сопровождение</div>
+        </div>
+        <div class="soc-step">
+          <div class="soc-step-num">5</div>
+          <div class="soc-step-label">Получение денег и помощь с отчётностью</div>
+        </div>
+      </div>
+
+      <!-- Кому подходит / куда потратить -->
+      <div class="soc-conditions">
+        <div class="soc-cond-group">
+          <div class="soc-cond-title">Кто может получить</div>
+          <div class="soc-cond-list">
+            <div class="soc-cond-item">
+              <span class="soc-cond-item-icon icon-ok">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span>Граждане РФ, зарегистрированные по месту жительства</span>
+            </div>
+            <div class="soc-cond-item">
+              <span class="soc-cond-item-icon icon-ok">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span>Безработные, самозанятые, малоимущие граждане</span>
+            </div>
+            <div class="soc-cond-item">
+              <span class="soc-cond-item-icon icon-ok">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span>Доход на члена семьи ниже 2-х прожиточных минимумов</span>
+            </div>
+            <div class="soc-cond-item">
+              <span class="soc-cond-item-icon icon-ok">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span>Нет действующего ИП или ООО (для открытия нового дела)</span>
+            </div>
+          </div>
+        </div>
+        <div class="soc-cond-group">
+          <div class="soc-cond-title">На что можно потратить деньги</div>
+          <div class="soc-cond-list">
+            <div class="soc-cond-item">
+              <span class="soc-cond-item-icon icon-ok">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span>Оборудование, инструменты, техника</span>
+            </div>
+            <div class="soc-cond-item">
+              <span class="soc-cond-item-icon icon-ok">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span>Сырьё, материалы, товары для перепродажи</span>
+            </div>
+            <div class="soc-cond-item">
+              <span class="soc-cond-item-icon icon-ok">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span>Регистрация ИП/ООО, аренда, реклама</span>
+            </div>
+            <div class="soc-cond-item">
+              <span class="soc-cond-item-icon icon-no">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+              <span>Нельзя: погашение долгов, личные расходы, недвижимость</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="soc-cta">
+        <div class="soc-cta-text">
+          <div class="soc-cta-heading">Помогаем получить деньги «под ключ» — от консультации до зачисления средств</div>
+          <div class="soc-cta-desc">Разработаем бизнес-план, подготовим документы, защитим перед комиссией. Первая консультация — бесплатно.</div>
+        </div>
+        <button class="btn-soc-cta" id="btn-soc-consult" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9.3 19.79 19.79 0 0 1 1.54 .64a2 2 0 0 1 1.95-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Получить консультацию
+        </button>
+      </div>
+    </section>
+    <!-- ══════════ / СОЦИАЛЬНЫЙ КОНТРАКТ ══════════ -->
+
     <div class="platforms-row" id="platform-row">
       <div class="platform-card active" data-platform="">
         <div class="platform-name">Все источники</div>
@@ -267,6 +615,48 @@
     </nav>
   </div>
 
+  <!-- Контактное модальное окно (социальный контракт) -->
+  <div class="contact-modal-backdrop" id="contact-modal" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
+    <div class="contact-modal-box">
+      <button class="contact-modal-close" id="contact-modal-close" aria-label="Закрыть">&times;</button>
+      <div class="contact-modal-header">
+        <div class="contact-modal-badge">Социальный контракт</div>
+        <div class="contact-modal-title" id="contact-modal-title">Свяжитесь с нами</div>
+        <div class="contact-modal-sub">Ответим на все вопросы, оценим шансы на получение гранта и расскажем, что нужно для вашего региона.</div>
+      </div>
+      <div class="contact-items">
+        <a href="tel:+79620546601" class="contact-item ci-phone">
+          <div class="contact-item-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9.3 19.79 19.79 0 0 1 1.54 .64a2 2 0 0 1 1.95-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+          <div>
+            <div class="contact-item-label">Телефон</div>
+            <div class="contact-item-value">+7 (962) 054-66-01</div>
+          </div>
+        </a>
+        <a href="mailto:ipzhbankov@yandex.ru" class="contact-item ci-email">
+          <div class="contact-item-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </div>
+          <div>
+            <div class="contact-item-label">Email</div>
+            <div class="contact-item-value">ipzhbankov@yandex.ru</div>
+          </div>
+        </a>
+        <a href="https://t.me/zhbankov_alex" target="_blank" rel="noopener" class="contact-item ci-tg">
+          <div class="contact-item-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0088cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 3-8.646 19.26a.96.96 0 0 1-1.746-.068L8.5 13.5l-5.757-2.257a.96.96 0 0 1 .054-1.804L21.048 2.1A.96.96 0 0 1 22 3z"/></svg>
+          </div>
+          <div>
+            <div class="contact-item-label">Telegram</div>
+            <div class="contact-item-value">@zhbankov_alex</div>
+          </div>
+        </a>
+      </div>
+      <div class="contact-modal-note">Первая консультация бесплатно&nbsp;· Работаем по всей России&nbsp;· Сопровождение до получения денег</div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="detail-modal" role="dialog" aria-modal="true">
     <div class="modal-box" id="modal-box">
       <button class="modal-close" id="modal-close" aria-label="Закрыть">&times;</button>
@@ -284,6 +674,33 @@
 
   <script src="/web/grants.js"></script>
   <script>
+    // ── Контактное модальное окно (социальный контракт) ──
+    (function () {
+      const modal = document.getElementById("contact-modal");
+      const btnOpen = document.getElementById("btn-soc-consult");
+      const btnClose = document.getElementById("contact-modal-close");
+
+      function openModal() {
+        modal.classList.add("open");
+        document.body.style.overflow = "hidden";
+        btnClose.focus();
+      }
+      function closeModal() {
+        modal.classList.remove("open");
+        document.body.style.overflow = "";
+        btnOpen.focus();
+      }
+
+      btnOpen?.addEventListener("click", openModal);
+      btnClose?.addEventListener("click", closeModal);
+      modal?.addEventListener("click", function (e) {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && modal?.classList.contains("open")) closeModal();
+      });
+    })();
+
     document.getElementById("navbar-burger")?.addEventListener("click", function() {
       const links = document.querySelector(".navbar-links");
       const open = links.classList.toggle("open");
