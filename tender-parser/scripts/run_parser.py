@@ -142,6 +142,78 @@ def run_tenderguru() -> int:
     )
 
 
+# ──────── Корпоративные площадки ────────
+
+def run_sberb2b() -> int:
+    from scrapers.sberb2b import SberB2BScraper
+    logger.info("=== SberB2B ===")
+    scraper = SberB2BScraper()
+    return _process_and_save(scraper.run(), "SberB2B")
+
+
+def run_rosatom() -> int:
+    from scrapers.rosatom import RosatomScraper
+    logger.info("=== Rosatom ===")
+    scraper = RosatomScraper()
+    return _process_and_save(scraper.run(), "Rosatom")
+
+
+def run_rosneft() -> int:
+    from scrapers.rosneft import RosneftScraper
+    logger.info("=== Rosneft ===")
+    scraper = RosneftScraper()
+    return _process_and_save(scraper.run(), "Rosneft")
+
+
+def run_gazprom() -> int:
+    from scrapers.gazprom import GazpromScraper
+    logger.info("=== Gazprom ===")
+    scraper = GazpromScraper()
+    return _process_and_save(scraper.run(), "Gazprom")
+
+
+def run_lukoil() -> int:
+    from scrapers.lukoil import LukoilScraper
+    logger.info("=== Lukoil ===")
+    scraper = LukoilScraper()
+    return _process_and_save(scraper.run(), "Lukoil")
+
+
+def run_nornickel() -> int:
+    from scrapers.nornickel import NornickelScraper
+    logger.info("=== Nornickel ===")
+    scraper = NornickelScraper()
+    return _process_and_save(scraper.run(), "Nornickel")
+
+
+def run_mts_tenders() -> int:
+    from scrapers.mts_tenders import MtsTendersScraper
+    logger.info("=== MTS Tenders ===")
+    scraper = MtsTendersScraper()
+    return _process_and_save(scraper.run(), "MTS")
+
+
+def run_rostelecom() -> int:
+    from scrapers.rostelecom import RostelecomScraper
+    logger.info("=== Rostelecom ===")
+    scraper = RostelecomScraper()
+    return _process_and_save(scraper.run(), "Rostelecom")
+
+
+def run_x5group() -> int:
+    from scrapers.x5group import X5GroupScraper
+    logger.info("=== X5 Group ===")
+    scraper = X5GroupScraper()
+    return _process_and_save(scraper.run(), "X5Group")
+
+
+def run_magnit() -> int:
+    from scrapers.magnit import MagnitScraper
+    logger.info("=== Magnit ===")
+    scraper = MagnitScraper()
+    return _process_and_save(scraper.run(), "Magnit")
+
+
 # ──────── Агрегаторы ────────
 
 def run_rostender() -> int:
@@ -236,6 +308,24 @@ GROUPS = {
     "roseltorg": [run_roseltorg],
     "etp": [run_roseltorg, run_sberbank_ast, run_rts_tender, run_tektorg],
     "commercial": [run_b2b_center, run_rostender, run_tenderguru],
+    # Корпоративные площадки (223-ФЗ / коммерческие)
+    "corporate": [
+        run_sberb2b, run_rosatom, run_rosneft, run_gazprom, run_lukoil,
+        run_nornickel, run_mts_tenders, run_rostelecom, run_x5group, run_magnit,
+    ],
+    "corporate_energy": [run_rosatom, run_rosneft, run_gazprom, run_lukoil, run_nornickel],
+    "corporate_telecom": [run_mts_tenders, run_rostelecom],
+    "corporate_retail": [run_x5group, run_magnit],
+    "sberb2b": [run_sberb2b],
+    "rosatom": [run_rosatom],
+    "rosneft": [run_rosneft],
+    "gazprom": [run_gazprom],
+    "lukoil": [run_lukoil],
+    "nornickel": [run_nornickel],
+    "mts_tenders": [run_mts_tenders],
+    "rostelecom": [run_rostelecom],
+    "x5group": [run_x5group],
+    "magnit": [run_magnit],
     "rostender": [run_rostender],
     "auctions": [run_lot_online, run_torgi_gov_pw],
     "auctions_rad": [run_lot_online],
@@ -245,8 +335,12 @@ GROUPS = {
     "cis_cat": [run_mascus, run_machinerytrader, run_catused, run_avito_cat, run_kolesa_kz],
     "cis_cat_intl": [run_mascus],  # httpx only
     "cis_cat_local": [run_machinerytrader, run_catused, run_avito_cat, run_kolesa_kz],  # Playwright
-    "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
-            run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
+    "all": [
+        run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
+        run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru,
+        run_sberb2b, run_rosatom, run_rosneft, run_gazprom, run_lukoil,
+        run_nornickel, run_mts_tenders, run_rostelecom, run_x5group, run_magnit,
+    ],
 }
 
 
