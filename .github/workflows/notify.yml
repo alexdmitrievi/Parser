@@ -27,7 +27,9 @@ jobs:
         run: pip install -r requirements-parser.txt
 
       - name: Send notifications
-        run: python scripts/run_notifier.py --since 65
+        continue-on-error: true
+        timeout-minutes: 8
+        run: python scripts/run_notifier.py
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}

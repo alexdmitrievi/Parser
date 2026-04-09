@@ -15,9 +15,15 @@ logger = logging.getLogger(__name__)
 
 
 def get_db() -> Client:
-    """Получить Supabase клиент."""
+    """Получить Supabase клиент. Raises RuntimeError если secrets не настроены."""
     cfg = get_config()
-    return create_client(cfg["supabase_url"], cfg["supabase_key"])
+    url = cfg["supabase_url"]
+    key = cfg["supabase_key"]
+    if not url or not key:
+        raise RuntimeError(
+            "Supabase не настроен: задайте SUPABASE_URL и SUPABASE_KEY в secrets GitHub Actions."
+        )
+    return create_client(url, key)
 
 
 # ──────────────────────── Тендеры ────────────────────────

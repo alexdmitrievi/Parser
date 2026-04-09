@@ -24,12 +24,16 @@ jobs:
       - run: pip install -r requirements-parser.txt
 
       - name: Parse Federal ETPs (Roseltorg, Sberbank-AST, RTS, TekTorg)
+        continue-on-error: true
+        timeout-minutes: 25
         run: python scripts/run_parser.py --source etp
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
       - name: Send notifications
+        continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/run_notifier.py
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

@@ -100,18 +100,25 @@ def send_telegram_message(chat_id: int, text: str, parse_mode: str = "HTML") -> 
 
 def run_notifications(since_minutes: int = 65) -> dict:
     """Основной цикл рассылки уведомлений.
-    
+
     1. Получить новые тендеры за последний час
     2. Для каждой активной подписки: матчинг
     3. Отправить уведомления, залогировать
-    
+
     Returns:
         Статистика: {tenders_checked, subscriptions_checked, notifications_sent}
     """
     stats = {"tenders_checked": 0, "subscriptions_checked": 0, "notifications_sent": 0}
 
     # Получить новые тендеры
-    new_tenders = get_new_tenders_since(since_minutes)
+    try:
+        new_tenders = get_new_tenders_since(since_minutes)
+    except RuntimeError as e:
+        logger.error(f"Supabase не настроен, уведомления пропущены: {e}")
+        return stats
+    except Exception as e:
+        logger.error(f"Ошибка подключения к БД: {e}")
+        return stats
     stats["tenders_checked"] = len(new_tenders)
 
     if not new_tenders:

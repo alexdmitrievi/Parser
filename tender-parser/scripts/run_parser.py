@@ -35,7 +35,14 @@ def _process_and_save(tenders, source_name: str) -> int:
         return 0
     tenders = normalize_batch(tenders)
     tenders = tag_tenders_batch(tenders)
-    count = insert_tenders(tenders)
+    try:
+        count = insert_tenders(tenders)
+    except RuntimeError as e:
+        logger.error(f"{source_name}: Supabase не настроен — {e}")
+        return 0
+    except Exception as e:
+        logger.error(f"{source_name}: ошибка сохранения в БД — {e}")
+        return 0
     logger.info(f"{source_name}: saved {count} tenders")
     return count
 
