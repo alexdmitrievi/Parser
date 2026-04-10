@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Социальный контракт — до 350 000 ₽ на бизнес | Тендер PRO</title>
+  <meta name="description" content="Бесплатная консультация по получению социального контракта до 350 000 рублей на развитие предпринимательства. Требования, документы, помощь с бизнес-планом." />
+  <meta property="og:title" content="Социальный контракт — до 350 000 ₽ на бизнес | Тендер PRO" />
+  <meta property="og:description" content="Получите до 350 000 рублей на открытие или развитие бизнеса по программе социального контракта. Бесплатная консультация." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/web/styles.css" />
+  <link rel="icon" type="image/png" href="/web/icon-192.png" />
+  <link rel="manifest" href="/web/manifest.json" />
+  <meta name="theme-color" content="#0a0e17" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="/web/icon-192.png" />
+  <style>
+    .sc-hero {
+      background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(16,185,129,0.08));
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .sc-hero h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .sc-hero .sc-amount {
+      font-size: 2.5rem; font-weight: 700;
+      background: linear-gradient(135deg, #f59e0b, #10b981);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin: 0.75rem 0;
+    }
+    .sc-hero p { color: var(--text-secondary); max-width: 640px; margin: 0 auto; line-height: 1.7; }
+    .sc-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+      background: rgba(16,185,129,0.15); color: #10b981; margin-bottom: 1rem;
+    }
+
+    .sc-section { margin-bottom: 2rem; }
+    .sc-section h2 {
+      font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .sc-section h2 svg { color: var(--accent-amber); flex-shrink: 0; }
+
+    .sc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; }
+    .sc-card {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.5rem;
+      transition: var(--transition); position: relative; overflow: hidden;
+    }
+    .sc-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(135deg, #f59e0b, #10b981);
+    }
+    .sc-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .sc-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .sc-card ul {
+      list-style: none; padding: 0; margin: 0;
+    }
+    .sc-card li {
+      color: var(--text-secondary); font-size: 0.88rem; line-height: 1.7;
+      padding-left: 1.5rem; position: relative;
+    }
+    .sc-card li::before {
+      content: ""; position: absolute; left: 0; top: 0.55em;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(245,158,11,0.4); border: 2px solid #f59e0b;
+    }
+
+    .sc-steps {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;
+      counter-reset: step;
+    }
+    .sc-step {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.5rem;
+      text-align: center; counter-increment: step; transition: var(--transition);
+    }
+    .sc-step:hover { border-color: var(--border-hover); }
+    .sc-step::before {
+      content: counter(step);
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 0.75rem;
+      background: rgba(245,158,11,0.15); color: #f59e0b;
+      font-size: 1.1rem; font-weight: 700;
+    }
+    .sc-step-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .sc-step-desc { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+
+    .sc-docs-list {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;
+    }
+    .sc-doc-item {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      background: rgba(255,255,255,0.03); border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+    }
+    .sc-doc-icon {
+      flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(59,130,246,0.12); color: var(--accent-blue);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sc-doc-text { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.4; }
+
+    .sc-spend-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;
+    }
+    .sc-spend-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      background: rgba(255,255,255,0.03); border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem; font-size: 0.88rem; color: var(--text-secondary);
+    }
+    .sc-spend-icon {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 6px;
+      background: rgba(16,185,129,0.12); color: var(--accent-green);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .sc-cta {
+      background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(16,185,129,0.08));
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem; text-align: center; margin-top: 2rem;
+    }
+    .sc-cta h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .sc-cta p { color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 560px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+    .btn-order-bp {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.85rem 2rem; border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff; font-size: 1rem; font-weight: 700;
+      border: none; cursor: pointer; transition: var(--transition);
+      text-decoration: none; box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+    }
+    .btn-order-bp:hover {
+      transform: translateY(-2px); box-shadow: 0 6px 24px rgba(245,158,11,0.4);
+      color: #fff;
+    }
+
+    .sc-contacts-modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .sc-contacts-modal.open { opacity: 1; pointer-events: all; }
+    .sc-contacts-box {
+      background: #141c2e; border: 1px solid var(--border-hover);
+      border-radius: var(--radius-lg); max-width: 480px; width: 100%;
+      padding: 2rem; transform: translateY(20px); transition: transform 0.2s;
+    }
+    .sc-contacts-modal.open .sc-contacts-box { transform: translateY(0); }
+    .sc-contacts-close {
+      float: right; background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 1.5rem; line-height: 1; padding: 0 0.5rem;
+    }
+    .sc-contacts-close:hover { color: var(--text-primary); }
+    .sc-contacts-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem; }
+    .sc-contact-row {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem; margin-bottom: 0.75rem;
+      background: rgba(255,255,255,0.04); border-radius: var(--radius-md);
+      border: 1px solid var(--border); transition: var(--transition);
+    }
+    .sc-contact-row:hover { border-color: var(--border-hover); background: rgba(255,255,255,0.06); }
+    .sc-contact-icon {
+      flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sc-contact-icon.phone { background: rgba(16,185,129,0.15); color: #10b981; }
+    .sc-contact-icon.tg { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .sc-contact-icon.email { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .sc-contact-info { flex: 1; }
+    .sc-contact-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .sc-contact-value { font-size: 1rem; font-weight: 600; }
+    .sc-contact-value a { color: var(--text-primary); }
+    .sc-contact-value a:hover { color: var(--accent-blue); }
+
+    .sc-important-note {
+      background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);
+      border-radius: var(--radius-md); padding: 1.25rem; margin-top: 1.5rem;
+      display: flex; gap: 0.75rem; align-items: flex-start;
+    }
+    .sc-important-note svg { flex-shrink: 0; color: #f59e0b; margin-top: 2px; }
+    .sc-important-note p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; }
+
+    @media (max-width: 640px) {
+      .sc-hero { padding: 1.5rem; }
+      .sc-hero h1 { font-size: 1.5rem; }
+      .sc-hero .sc-amount { font-size: 2rem; }
+      .sc-grid { grid-template-columns: 1fr; }
+      .sc-steps { grid-template-columns: 1fr 1fr; }
+      .sc-docs-list { grid-template-columns: 1fr; }
+      .sc-spend-grid { grid-template-columns: 1fr; }
+      .sc-cta { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <img src="/web/logo.png" alt="Тендер PRO" class="logo-img" />
+      <span>Тендер PRO</span>
+    </div>
+    <button class="navbar-burger" id="navbar-burger" aria-label="Меню" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="navbar-links">
+      <a href="/web/" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span>Тендеры</span>
+      </a>
+      <a href="/web/auctions.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-3.5L6 15"/><path d="M18 9l-6-3.5L6 9"/><path d="M6 15v4l6 3 6-3v-4"/></svg>
+        <span>Аукционы</span>
+      </a>
+      <a href="/web/grants.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Финансирование</span>
+      </a>
+      <a href="/web/social-contract.html" class="nav-link active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Соц. контракт</span>
+      </a>
+      <a href="/web/favorites.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        <span>Избранное</span>
+      </a>
+      <a href="/web/subscribe.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span>Подписки</span>
+      </a>
+      <a href="/web/stats.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        <span>Аналитика</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Hero -->
+    <div class="sc-hero glass">
+      <span class="sc-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+        Государственная программа поддержки
+      </span>
+      <h1>Социальный контракт</h1>
+      <div class="sc-amount">до 350 000 ₽</div>
+      <p>Получите безвозмездную финансовую помощь от государства на открытие или развитие собственного дела. Мы предоставляем бесплатную консультацию и помощь в подготовке бизнес-плана.</p>
+    </div>
+
+    <!-- Что такое социальный контракт -->
+    <section class="sc-section">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        Что такое социальный контракт?
+      </h2>
+      <div class="glass form-panel" style="padding: 1.5rem;">
+        <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.8; margin-bottom: 1rem;">
+          <strong style="color: var(--text-primary);">Социальный контракт</strong> — это соглашение между гражданином и органом социальной защиты населения, по которому государство предоставляет безвозмездную финансовую помощь на открытие или развитие предпринимательской деятельности. Программа действует на основании Федерального закона № 178-ФЗ «О государственной социальной помощи».
+        </p>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.8; margin-bottom: 1rem;">
+          Максимальная сумма выплаты по направлению «Осуществление индивидуальной предпринимательской деятельности» составляет <strong style="color: var(--accent-amber);">до 350 000 рублей</strong>. Средства можно направить на закупку оборудования, расходных материалов, аренду помещения и другие расходы, связанные с запуском бизнеса.
+        </p>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.8;">
+          Деньги предоставляются <strong style="color: var(--accent-green);">безвозмездно</strong> — возвращать их не нужно, при условии выполнения условий контракта (ведение бизнеса в течение срока действия контракта, обычно 12 месяцев).
+        </p>
+      </div>
+    </section>
+
+    <!-- Кто может получить -->
+    <section class="sc-section">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Требования к получателю
+      </h2>
+      <div class="sc-grid">
+        <div class="sc-card">
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Основные требования
+          </h3>
+          <ul>
+            <li>Гражданство Российской Федерации</li>
+            <li>Возраст от 18 лет</li>
+            <li>Регистрация по месту жительства или пребывания</li>
+            <li>Среднедушевой доход семьи ниже прожиточного минимума в регионе</li>
+            <li>Отсутствие действующего статуса ИП или самозанятого на момент подачи (в большинстве регионов)</li>
+          </ul>
+        </div>
+        <div class="sc-card">
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            Кому одобряют чаще
+          </h3>
+          <ul>
+            <li>Малоимущие граждане и семьи</li>
+            <li>Безработные, состоящие на учёте в ЦЗН</li>
+            <li>Граждане в трудной жизненной ситуации</li>
+            <li>Одинокие родители с детьми</li>
+            <li>Многодетные семьи</li>
+            <li>Инвалиды и семьи с детьми-инвалидами</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- На что можно потратить -->
+    <section class="sc-section">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+        На что можно потратить средства
+      </h2>
+      <div class="sc-spend-grid">
+        <div class="sc-spend-item">
+          <div class="sc-spend-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+          </div>
+          Оборудование и инструменты
+        </div>
+        <div class="sc-spend-item">
+          <div class="sc-spend-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          </div>
+          Сырьё и расходные материалы
+        </div>
+        <div class="sc-spend-item">
+          <div class="sc-spend-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          Аренда помещения
+        </div>
+        <div class="sc-spend-item">
+          <div class="sc-spend-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="21" y2="9"/></svg>
+          </div>
+          Программное обеспечение
+        </div>
+        <div class="sc-spend-item">
+          <div class="sc-spend-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+          </div>
+          Обучение и повышение квалификации
+        </div>
+        <div class="sc-spend-item">
+          <div class="sc-spend-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          Регистрация ИП / самозанятости
+        </div>
+      </div>
+    </section>
+
+    <!-- Какие документы нужны -->
+    <section class="sc-section">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        Необходимые документы
+      </h2>
+      <div class="sc-docs-list">
+        <div class="sc-doc-item">
+          <div class="sc-doc-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+          </div>
+          <div class="sc-doc-text">Паспорт гражданина РФ</div>
+        </div>
+        <div class="sc-doc-item">
+          <div class="sc-doc-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+          </div>
+          <div class="sc-doc-text">Заявление на получение социального контракта</div>
+        </div>
+        <div class="sc-doc-item">
+          <div class="sc-doc-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+          </div>
+          <div class="sc-doc-text">Справки о доходах всех членов семьи за 3 месяца</div>
+        </div>
+        <div class="sc-doc-item">
+          <div class="sc-doc-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+          </div>
+          <div class="sc-doc-text">Бизнес-план (смета расходов)</div>
+        </div>
+        <div class="sc-doc-item">
+          <div class="sc-doc-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+          </div>
+          <div class="sc-doc-text">СНИЛС и ИНН</div>
+        </div>
+        <div class="sc-doc-item">
+          <div class="sc-doc-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+          </div>
+          <div class="sc-doc-text">Справка о составе семьи</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Как получить (шаги) -->
+    <section class="sc-section">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+        Как получить социальный контракт
+      </h2>
+      <div class="sc-steps">
+        <div class="sc-step">
+          <div class="sc-step-title">Консультация</div>
+          <div class="sc-step-desc">Свяжитесь с нами для бесплатной оценки ваших шансов на получение контракта</div>
+        </div>
+        <div class="sc-step">
+          <div class="sc-step-title">Бизнес-план</div>
+          <div class="sc-step-desc">Мы подготовим профессиональный бизнес-план, соответствующий требованиям соцзащиты</div>
+        </div>
+        <div class="sc-step">
+          <div class="sc-step-title">Подача документов</div>
+          <div class="sc-step-desc">Соберите пакет документов и подайте заявление в МФЦ или соцзащиту вашего района</div>
+        </div>
+        <div class="sc-step">
+          <div class="sc-step-title">Получение средств</div>
+          <div class="sc-step-desc">После одобрения (10–30 дней) средства поступят на ваш расчётный счёт</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Важная информация -->
+    <section class="sc-section">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        Важно знать
+      </h2>
+      <div class="glass form-panel" style="padding: 1.5rem;">
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.8; padding: 0.5rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 0.6rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 3px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            Срок действия контракта — от 3 до 12 месяцев (устанавливается регионом)
+          </li>
+          <li style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.8; padding: 0.5rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 0.6rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 3px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            Необходимо вести предпринимательскую деятельность не менее 12 месяцев после получения выплаты
+          </li>
+          <li style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.8; padding: 0.5rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 0.6rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 3px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            Потратить деньги нужно строго по бизнес-плану с сохранением чеков и договоров
+          </li>
+          <li style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.8; padding: 0.5rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 0.6rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 3px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            При нарушении условий контракта средства подлежат возврату
+          </li>
+          <li style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.8; padding: 0.5rem 0; display: flex; align-items: flex-start; gap: 0.6rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 3px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            Сумма и условия могут отличаться в зависимости от региона (от 250 000 до 350 000 ₽)
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="sc-cta">
+      <h2>Бесплатная консультация</h2>
+      <p>Мы поможем оценить ваши шансы на получение социального контракта и подготовим профессиональный бизнес-план для одобрения заявки.</p>
+      <button type="button" class="btn-order-bp" id="btn-order-bp">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        Заказать бизнес-план
+      </button>
+
+      <div class="sc-important-note">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <p>Консультация бесплатная. Мы расскажем обо всех нюансах программы, поможем собрать документы и подготовим бизнес-план, который повысит шансы на одобрение вашей заявки.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contacts Modal -->
+  <div class="sc-contacts-modal" id="contacts-modal">
+    <div class="sc-contacts-box">
+      <button class="sc-contacts-close" id="contacts-close" aria-label="Закрыть">&times;</button>
+      <div class="sc-contacts-title">Связаться с нами</div>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
+        Выберите удобный способ связи для бесплатной консультации по социальному контракту и заказа бизнес-плана:
+      </p>
+
+      <a href="tel:+79620546601" class="sc-contact-row" style="text-decoration: none;">
+        <div class="sc-contact-icon phone">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+        </div>
+        <div class="sc-contact-info">
+          <div class="sc-contact-label">Телефон / MAX (мессенджер)</div>
+          <div class="sc-contact-value">+7-962-054-6601</div>
+        </div>
+      </a>
+
+      <a href="https://t.me/zhbankov_alex" target="_blank" rel="noopener noreferrer" class="sc-contact-row" style="text-decoration: none;">
+        <div class="sc-contact-icon tg">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        </div>
+        <div class="sc-contact-info">
+          <div class="sc-contact-label">Telegram</div>
+          <div class="sc-contact-value">@zhbankov_alex</div>
+        </div>
+      </a>
+
+      <a href="mailto:ipzhbankov@yandex.ru" class="sc-contact-row" style="text-decoration: none;">
+        <div class="sc-contact-icon email">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </div>
+        <div class="sc-contact-info">
+          <div class="sc-contact-label">Email</div>
+          <div class="sc-contact-value">ipzhbankov@yandex.ru</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <a href="/web/about.html">О сервисе</a>
+    <span class="footer-sep">&middot;</span>
+    <a href="/web/social-contract.html">Соц. контракт</a>
+    <span class="footer-sep">&middot;</span>
+    <a href="/web/subscribe.html">Подписки</a>
+    <span class="footer-sep">&middot;</span>
+    <a href="/web/stats.html">Аналитика</a>
+  </footer>
+
+  <script>
+    // Contacts modal
+    const btnOrder = document.getElementById('btn-order-bp');
+    const modal = document.getElementById('contacts-modal');
+    const closeBtn = document.getElementById('contacts-close');
+
+    btnOrder.addEventListener('click', () => modal.classList.add('open'));
+    closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('open');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') modal.classList.remove('open');
+    });
+
+    // Burger menu
+    document.getElementById("navbar-burger")?.addEventListener("click", function() {
+      const links = document.querySelector(".navbar-links");
+      const open = links.classList.toggle("open");
+      this.classList.toggle("active", open);
+      this.setAttribute("aria-expanded", String(open));
+    });
+    document.addEventListener("click", function(e) {
+      const burger = document.getElementById("navbar-burger");
+      const links = document.querySelector(".navbar-links");
+      if (burger && links && !burger.contains(e.target) && !links.contains(e.target)) {
+        links.classList.remove("open");
+        burger.classList.remove("active");
+        burger.setAttribute("aria-expanded", "false");
+      }
+    });
+  </script>
+</body>
+</html>
