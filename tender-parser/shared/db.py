@@ -101,9 +101,11 @@ def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
                 f"title.ilike.%{stem}%,description.ilike.%{stem}%,customer_name.ilike.%{stem}%"
             )
     if filters.region:
-        # Ищем регион в customer_region, customer_name, title и description
+        # Ищем только в customer_region (нормализованное поле).
+        # НЕ ищем в title/description — это давало ложные срабатывания
+        # (например "Омск" матчился внутри "Костромская").
         r = filters.region
-        query = query.or_(f"customer_region.ilike.%{r}%,customer_name.ilike.%{r}%,title.ilike.%{r}%,description.ilike.%{r}%")
+        query = query.ilike("customer_region", f"%{r}%")
     if filters.min_nmck is not None:
         query = query.gte("nmck", filters.min_nmck)
     if filters.max_nmck is not None:

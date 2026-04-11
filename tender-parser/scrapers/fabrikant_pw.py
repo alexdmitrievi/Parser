@@ -53,40 +53,52 @@ class FabrikantPlaywrightScraper(PlaywrightScraper):
         soup = BeautifulSoup(html, "html.parser")
         results = []
 
+        # Паттерн для ссылок на конкретные тендеры (содержат числовой ID в пути)
+        _trade_link = re.compile(r"/trades/[^?#]*\d+")
+        # Ключевые слова нетендерного контента
+        _skip_titles = re.compile(
+            r"политик|персональных данных|cookie|куки|оферт|пользовательское соглашение",
+            re.IGNORECASE,
+        )
+
         # Fabrikant: карточки тендеров с data-id или внутри card-like div
         blocks = soup.select("div[data-id], div[data-slot='card'], div[class*='card']")
 
         if not blocks:
-            # Fallback: ссылки на тендеры
-            links = soup.find_all("a", href=lambda h: h and "/trades/" in h)
+            # Fallback: только ссылки на конкретные тендеры (с числовым ID в пути)
+            links = soup.find_all("a", href=lambda h: h and bool(_trade_link.search(h)))
+            seen_parents: list = []
             for link in links:
                 parent = link.find_parent("div", recursive=True)
-                if parent and parent not in blocks:
+                if parent and parent not in seen_parents:
+                    seen_parents.append(parent)
                     blocks.append(parent)
 
         for block in blocks:
             item = {}
             data_id = block.get("data-id")
 
-            # Ссылка и заголовок
-            link = block.find("a", href=lambda h: h and "/trades/" in h)
+            # Ссылка на конкретный тендер (требуем числовой ID в пути)
+            link = block.find("a", href=lambda h: h and bool(_trade_link.search(h)))
             if not link:
-                link = block.find("a", href=True)
-            if link:
-                title = link.get_text(strip=True)
-                if title and len(title) > 5:
-                    # Очистка от номера в начале
-                    item["title"] = title
-                    href = link.get("href", "")
-                    if href and not href.startswith("http"):
-                        href = self.base_url + href
-                    item["url"] = href
-                    if data_id:
-                        item["registry_number"] = str(data_id)
-                    else:
-                        num_match = re.search(r"id=(\d+)", href)
-                        if num_match:
-                            item["registry_number"] = num_match.group(1)
+                continue
+            title = link.get_text(strip=True)
+            if not title or len(title) <= 5:
+                continue
+            # Пропускаем нетендерный контент (политики, оферты и т.д.)
+            if _skip_titles.search(title):
+                continue
+            item["title"] = title
+            href = link.get("href", "")
+            if href and not href.startswith("http"):
+                href = self.base_url + href
+            item["url"] = href
+            if data_id:
+                item["registry_number"] = str(data_id)
+            else:
+                num_match = re.search(r"(\d+)", href.split("?")[0].rstrip("/").split("/")[-1])
+                if num_match:
+                    item["registry_number"] = num_match.group(1)
 
             if not item.get("title"):
                 continue
@@ -133,9 +145,9 @@ class FabrikantPlaywrightScraper(PlaywrightScraper):
             for query in queries:
                 logger.info(f"[Fabrikant PW] Searching: {query}")
                 for page in range(1, max_pages + 1):
-                    url = f"{self.base_url}/trades/procedure/search/?query={query}&page={page}"
+                    url = f"{self.base_url}/trades/procedure/search/?SearchString={query}&page={page}"
                     try:
-                        html = self.goto(url, wait_selector="div[data-slot='card'], a[href*='/trades/']")
+                        html = self.goto(url, wait_selector="div[data-slot='card'], div[data-id], a[href*='/trades/procedure/']")
                         items = self._parse_page(html)
                         if not items:
                             logger.info(f"  Page {page}: no results, stopping")
