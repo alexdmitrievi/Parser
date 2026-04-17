@@ -51,42 +51,62 @@ def run_eis_ftp() -> int:
 
 def run_eis_api() -> int:
     from scrapers.eis_api import EisApiScraper
+    from shared.constants import POPULAR_REGIONS
     logger.info("=== EIS API ===")
     scraper = EisApiScraper()
-    return _process_and_save(
-        scraper.run(
-            queries=[
-                # Группа 1: самые востребованные (10 запросов × 2 стр = 20 запросов)
-                "ремонт помещений", "строительные работы", "поставка оборудования",
-                "мебель", "IT услуги", "транспортные услуги",
-                "мазут", "печное топливо", "дизельное топливо",
-                "медицинское оборудование",
-            ],
-            max_pages=2,
-        ),
-        "EIS API",
+    total = 0
+
+    # 1. Запросы с фильтром по популярным регионам (гарантирует точные результаты)
+    queries_main = [
+        "ремонт помещений", "строительные работы", "поставка оборудования",
+        "мебель", "дизельное топливо", "медицинское оборудование",
+    ]
+    for region in POPULAR_REGIONS:
+        total += _process_and_save(
+            scraper.run(queries=queries_main, max_pages=1, region=region),
+            f"EIS API [{region}]",
+        )
+
+    # 2. Широкие запросы без региона (для покрытия)
+    queries_wide = [
+        "IT услуги", "транспортные услуги", "мазут", "печное топливо",
+    ]
+    total += _process_and_save(
+        scraper.run(queries=queries_wide, max_pages=2),
+        "EIS API [all regions]",
     )
+    return total
 
 
 def run_eis_api_extra() -> int:
     """Дополнительные запросы ЕИС — менее частые ниши."""
     from scrapers.eis_api import EisApiScraper
+    from shared.constants import POPULAR_REGIONS
     logger.info("=== EIS API (extra) ===")
     scraper = EisApiScraper()
-    return _process_and_save(
-        scraper.run(
-            queries=[
-                "капитальный ремонт", "благоустройство", "реконструкция",
-                "поставка продуктов", "поставка спецодежды",
-                "ГСМ", "нефтепродукты", "уголь",
-                "охранные услуги", "клининг", "проектные работы",
-                "канцтовары", "спецтехника", "вывоз мусора",
-                "страхование", "аудит",
-            ],
-            max_pages=1,
-        ),
-        "EIS API extra",
+    total = 0
+
+    queries_extra = [
+        "капитальный ремонт", "благоустройство", "реконструкция",
+        "поставка продуктов", "поставка спецодежды",
+        "ГСМ", "нефтепродукты", "уголь",
+        "охранные услуги", "клининг", "проектные работы",
+        "канцтовары", "спецтехника", "вывоз мусора",
+        "страхование", "аудит",
+    ]
+    # С фильтром по популярным регионам
+    for region in POPULAR_REGIONS:
+        total += _process_and_save(
+            scraper.run(queries=queries_extra[:6], max_pages=1, region=region),
+            f"EIS API extra [{region}]",
+        )
+
+    # Широкие запросы без региона
+    total += _process_and_save(
+        scraper.run(queries=queries_extra, max_pages=1),
+        "EIS API extra [all regions]",
     )
+    return total
 
 
 # ──────── Федеральные ЭТП ────────

@@ -16,7 +16,7 @@ from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 
 from shared.models import TenderCreate
-from shared.constants import RUSSIAN_REGIONS
+from shared.constants import RUSSIAN_REGIONS, EIS_REGION_IDS
 from scrapers.base import BaseScraper
 
 logger = logging.getLogger(__name__)
@@ -137,6 +137,11 @@ class EisApiScraper(BaseScraper):
         if okpd2:
             params["okpd2Ids"] = okpd2
 
+        if region:
+            eis_id = EIS_REGION_IDS.get(region)
+            if eis_id:
+                params["regions"] = eis_id
+
         return params
 
     def _parse_search_page(self, html: str) -> list[dict]:
@@ -211,11 +216,11 @@ class EisApiScraper(BaseScraper):
                 continue
         return None
 
-    def parse_tenders(self, raw_items: list[dict]) -> list[TenderCreate]:
+    def parse_tenders(self, raw_items: list[dict], forced_region: str = "") -> list[TenderCreate]:
         tenders = []
         for item in raw_items:
             customer = item.get("customer", "")
-            region = _detect_region(customer)
+            region = _detect_region(customer) or forced_region or None
             tenders.append(TenderCreate(
                 source_platform=self.platform,
                 registry_number=item.get("registry_number"),
@@ -235,6 +240,7 @@ class EisApiScraper(BaseScraper):
         queries: list[str] | None = None,
         max_pages: int = 3,
         law_type: str = "",
+        region: str = "",
         price_from: float | None = None,
         price_to: float | None = None,
         **kwargs,
@@ -246,11 +252,11 @@ class EisApiScraper(BaseScraper):
 
         with self:
             for query in queries:
-                logger.info(f"[EIS API] Searching: {query}")
+                logger.info(f"[EIS API] Searching: {query}" + (f" | region={region}" if region else ""))
 
                 for page in range(1, max_pages + 1):
                     params = self._build_search_params(
-                        query=query, law_type=law_type,
+                        query=query, law_type=law_type, region=region,
                         price_from=price_from, price_to=price_to, page=page,
                     )
                     url = f"{self.SEARCH_URL}?{urlencode(params)}"
@@ -262,7 +268,7 @@ class EisApiScraper(BaseScraper):
                         if not items:
                             break
 
-                        tenders = self.parse_tenders(items)
+                        tenders = self.parse_tenders(items, forced_region=region)
                         all_tenders.extend(tenders)
                         logger.info(f"  Page {page}: {len(tenders)} tenders")
 
