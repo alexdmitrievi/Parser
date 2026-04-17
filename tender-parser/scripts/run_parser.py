@@ -31,7 +31,7 @@ logger = logging.getLogger("parser")
 def _process_and_save(tenders, source_name: str) -> int:
     """Нормализовать, протегировать и сохранить тендеры."""
     if not tenders:
-        logger.info(f"{source_name}: no tenders found")
+        logger.warning(f"{source_name}: 0 tenders — possible scraper breakage!")
         return 0
     tenders = normalize_batch(tenders)
     tenders = tag_tenders_batch(tenders)

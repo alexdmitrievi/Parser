@@ -75,5 +75,13 @@ def get_config() -> dict:
         "scraping_bee_api_key": get_env("SCRAPING_BEE_API_KEY"),
         "log_level": get_env("LOG_LEVEL", "INFO"),
         "bot_webhook_secret": get_env("BOT_WEBHOOK_SECRET", ""),
-        "max_free_subscriptions": int(get_env("MAX_FREE_SUBSCRIPTIONS", "3")),
+        "max_free_subscriptions": _safe_int(get_env("MAX_FREE_SUBSCRIPTIONS", "3"), 3),
     }
+
+
+def _safe_int(val: str, default: int) -> int:
+    """Безопасное преобразование строки в int."""
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return default

@@ -24,6 +24,16 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         try:
+            from shared.config import get_config
+            secret = get_config()["bot_webhook_secret"]
+            if secret:
+                token = self.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+                if token != secret:
+                    self.send_response(403)
+                    self.end_headers()
+                    self.wfile.write(b"Forbidden")
+                    return
+
             length = int(self.headers.get("Content-Length", 0))
             raw = self.rfile.read(length)
             data = json.loads(raw.decode("utf-8"))

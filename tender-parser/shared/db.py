@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
+import re
 from datetime import datetime
 from typing import Any, Optional
 
@@ -13,11 +15,20 @@ from shared.models import TenderCreate, SubscriptionCreate, SearchFilters
 
 logger = logging.getLogger(__name__)
 
+_db_client: Client | None = None
+_db_url: str = ""
+
 
 def get_db() -> Client:
-    """Получить Supabase клиент."""
+    """Получить кешированный Supabase клиент (singleton)."""
+    global _db_client, _db_url
     cfg = get_config()
-    return create_client(cfg["supabase_url"], cfg["supabase_key"])
+    url = cfg["supabase_url"]
+    key = cfg["supabase_key"]
+    if _db_client is None or url != _db_url:
+        _db_client = create_client(url, key)
+        _db_url = url
+    return _db_client
 
 
 # ──────────────────────── Тендеры ────────────────────────
@@ -36,7 +47,16 @@ def insert_tenders(tenders: list[TenderCreate]) -> int:
     seen: set[tuple[str, str]] = set()
     rows = []
     for t in tenders:
-        key = (t.source_platform, t.registry_number or "")
+        reg = t.registry_number
+        # Генерируем fallback ID для тендеров без registry_number,
+        # чтобы избежать коллизий при upsert
+        if not reg:
+            fallback = hashlib.sha256(
+                f"{t.source_platform}|{t.title}|{t.customer_name or ''}".encode()
+            ).hexdigest()[:16]
+            reg = f"_gen_{fallback}"
+            t.registry_number = reg
+        key = (t.source_platform, reg)
         if key in seen:
             continue
         seen.add(key)
@@ -50,6 +70,7 @@ def insert_tenders(tenders: list[TenderCreate]) -> int:
         rows.append(data)
 
     total = 0
+    errors = 0
     batch_size = 200
     for i in range(0, len(rows), batch_size):
         batch = rows[i:i + batch_size]
@@ -62,9 +83,12 @@ def insert_tenders(tenders: list[TenderCreate]) -> int:
             count = len(result.data) if result.data else 0
             total += count
         except Exception as e:
+            errors += 1
             logger.error(f"Error inserting batch {i//batch_size}: {e}")
 
-    logger.info(f"Upserted {total} tenders (from {len(rows)} unique)")
+    logger.info(f"Upserted {total} tenders (from {len(rows)} unique, {errors} batch errors)")
+    if errors > 0 and total == 0:
+        raise RuntimeError(f"All {errors} insert batches failed — check DB connection")
     return total
 
 
@@ -88,15 +112,22 @@ def _stem_russian(word: str) -> str:
     return word
 
 
+def _sanitize_postgrest(value: str) -> str:
+    """Удалить спецсимволы PostgREST из пользовательского ввода."""
+    return re.sub(r"[,.()\[\]{}]", " ", value).strip()
+
+
 def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
     """Применить общие фильтры к запросу (используется в search и count)."""
     if filters.query:
         # Ищем каждое слово запроса (обрезанное до корня) в title, description, customer_name
         words = filters.query.strip().split()
         for word in words:
-            stem = _stem_russian(word)
+            stem = _sanitize_postgrest(_stem_russian(word))
             if len(stem) < 2:
-                stem = word.lower()
+                stem = _sanitize_postgrest(word.lower())
+            if not stem:
+                continue
             query = query.or_(
                 f"title.ilike.%{stem}%,description.ilike.%{stem}%,customer_name.ilike.%{stem}%"
             )
@@ -104,8 +135,9 @@ def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
         # Ищем только в customer_region (нормализованное поле).
         # НЕ ищем в title/description — это давало ложные срабатывания
         # (например "Омск" матчился внутри "Костромская").
-        r = filters.region
-        query = query.ilike("customer_region", f"%{r}%")
+        r = _sanitize_postgrest(filters.region)
+        if r:
+            query = query.ilike("customer_region", f"%{r}%")
     if filters.min_nmck is not None:
         query = query.gte("nmck", filters.min_nmck)
     if filters.max_nmck is not None:

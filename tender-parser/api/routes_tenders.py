@@ -112,27 +112,38 @@ def stats() -> dict[str, Any]:
     cli = _client()
     if not cli:
         raise HTTPException(503, "Database not configured")
-    res = cli.table("tenders").select("niche_tags, customer_region, created_at, nmck").execute()
-    rows = res.data or []
+
+    # Получаем общий count без загрузки данных
+    total_res = cli.table("tenders").select("id", count="exact").execute()
+    total = total_res.count or 0
+
+    # Count за последние 7 дней
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    recent_res = (
+        cli.table("tenders")
+        .select("id", count="exact")
+        .gte("created_at", week_ago)
+        .execute()
+    )
+    recent = recent_res.count or 0
+
+    # Агрегация по нишам и регионам — загружаем только нужные поля, лимит 5000
     by_niche: dict[str, int] = {}
     by_region: dict[str, int] = {}
-    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
-    recent = 0
-    for r in rows:
+    res = (
+        cli.table("tenders")
+        .select("niche_tags, customer_region")
+        .limit(5000)
+        .execute()
+    )
+    for r in res.data or []:
         for t in r.get("niche_tags") or []:
             by_niche[t] = by_niche.get(t, 0) + 1
         reg = r.get("customer_region") or "unknown"
         by_region[reg] = by_region.get(reg, 0) + 1
-        ca = r.get("created_at")
-        if isinstance(ca, str):
-            try:
-                dt = datetime.fromisoformat(ca.replace("Z", "+00:00"))
-                if dt >= week_ago:
-                    recent += 1
-            except ValueError:
-                pass
+
     result = {
-        "total": len(rows),
+        "total": total,
         "by_niche": by_niche,
         "by_region": by_region,
         "created_last_7_days": recent,

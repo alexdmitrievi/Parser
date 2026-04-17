@@ -123,8 +123,8 @@ class FundingSearchFilters(BaseModel):
     industry: Optional[str] = None
     amount_max: Optional[float] = None
     status: str = "active"
-    page: int = 1
-    per_page: int = 12
+    page: int = Field(default=1, ge=1)
+    per_page: int = Field(default=12, ge=1, le=100)
 
 
 class SearchFilters(BaseModel):
@@ -142,8 +142,8 @@ class SearchFilters(BaseModel):
     date_to: Optional[str] = None
     source_platform: Optional[str] = None
     sort_by: str = "created_at"
-    page: int = 1
-    per_page: int = 5
+    page: int = Field(default=1, ge=1)
+    per_page: int = Field(default=5, ge=1, le=100)
 
     @classmethod
     def from_state_dict(
