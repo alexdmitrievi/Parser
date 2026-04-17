@@ -19,7 +19,10 @@ from api.routes_web_subscribe import router as web_subscribe_router
 from api.routes_suggestions import router as suggestions_router
 from api.routes_funding import router as funding_router
 
-_CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
+_CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
+if not _CORS_ORIGINS:
+    logger.warning("CORS_ORIGINS not set — defaulting to localhost only")
+    _CORS_ORIGINS = ["http://localhost:3000", "http://localhost:8000"]
 
 app = FastAPI(title="Тендер PRO — Tenders API", version="1.0.0")
 app.add_middleware(

@@ -55,6 +55,8 @@ async def process_update(update_dict: dict[str, Any]) -> None:
     try:
         update = Update.de_json(update_dict, application.bot)
         await application.process_update(update)
+    except Exception:
+        logger.exception("process_update failed")
     finally:
         await application.shutdown()
 

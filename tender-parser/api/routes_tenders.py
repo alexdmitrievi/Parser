@@ -30,13 +30,11 @@ def _set_cached(key: str, val: Any) -> None:
 
 
 def _client():
-    from shared.config import supabase_key, supabase_url
-    from supabase import create_client
-
-    url, key = supabase_url(), supabase_key()
-    if not url or not key:
+    try:
+        from shared.db import get_db
+        return get_db()
+    except Exception:
         return None
-    return create_client(url, key)
 
 
 @router.get("/tenders")
@@ -78,11 +76,15 @@ def list_tenders(
     elif sort == "created_at":
         order_col = "created_at"
     start = (page - 1) * page_size
-    res = (
-        qb.order(order_col, desc=True)
-        .range(start, start + page_size - 1)
-        .execute()
-    )
+    try:
+        res = (
+            qb.order(order_col, desc=True)
+            .range(start, start + page_size - 1)
+            .execute()
+        )
+    except Exception as e:
+        logger.exception("list_tenders DB error")
+        raise HTTPException(502, "Database query failed") from e
     total = getattr(res, "count", None) or len(res.data or [])
     return {
         "items": res.data or [],
@@ -97,7 +99,11 @@ def get_tender(tender_id: str) -> dict[str, Any]:
     cli = _client()
     if not cli:
         raise HTTPException(503, "Database not configured")
-    res = cli.table("tenders").select("*").eq("id", tender_id).limit(1).execute()
+    try:
+        res = cli.table("tenders").select("*").eq("id", tender_id).limit(1).execute()
+    except Exception as e:
+        logger.exception("get_tender DB error")
+        raise HTTPException(502, "Database query failed") from e
     rows = res.data or []
     if not rows:
         raise HTTPException(404, "Not found")
@@ -114,33 +120,37 @@ def stats() -> dict[str, Any]:
         raise HTTPException(503, "Database not configured")
 
     # Получаем общий count без загрузки данных
-    total_res = cli.table("tenders").select("id", count="exact").execute()
-    total = total_res.count or 0
+    try:
+        total_res = cli.table("tenders").select("id", count="exact").execute()
+        total = total_res.count or 0
 
-    # Count за последние 7 дней
-    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
-    recent_res = (
-        cli.table("tenders")
-        .select("id", count="exact")
-        .gte("created_at", week_ago)
-        .execute()
-    )
-    recent = recent_res.count or 0
+        # Count за последние 7 дней
+        week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        recent_res = (
+            cli.table("tenders")
+            .select("id", count="exact")
+            .gte("created_at", week_ago)
+            .execute()
+        )
+        recent = recent_res.count or 0
 
-    # Агрегация по нишам и регионам — загружаем только нужные поля, лимит 5000
-    by_niche: dict[str, int] = {}
-    by_region: dict[str, int] = {}
-    res = (
-        cli.table("tenders")
-        .select("niche_tags, customer_region")
-        .limit(5000)
-        .execute()
-    )
-    for r in res.data or []:
-        for t in r.get("niche_tags") or []:
-            by_niche[t] = by_niche.get(t, 0) + 1
-        reg = r.get("customer_region") or "unknown"
-        by_region[reg] = by_region.get(reg, 0) + 1
+        # Агрегация по нишам и регионам — загружаем только нужные поля, лимит 5000
+        by_niche: dict[str, int] = {}
+        by_region: dict[str, int] = {}
+        res = (
+            cli.table("tenders")
+            .select("niche_tags, customer_region")
+            .limit(5000)
+            .execute()
+        )
+        for r in res.data or []:
+            for t in r.get("niche_tags") or []:
+                by_niche[t] = by_niche.get(t, 0) + 1
+            reg = r.get("customer_region") or "unknown"
+            by_region[reg] = by_region.get(reg, 0) + 1
+    except Exception as e:
+        logger.exception("stats DB error")
+        raise HTTPException(502, "Database query failed") from e
 
     result = {
         "total": total,
@@ -157,7 +167,11 @@ def niches() -> dict[str, Any]:
     cli = _client()
     if not cli:
         raise HTTPException(503, "Database not configured")
-    res = cli.table("tenders").select("niche_tags").execute()
+    try:
+        res = cli.table("tenders").select("niche_tags").limit(5000).execute()
+    except Exception as e:
+        logger.exception("niches DB error")
+        raise HTTPException(502, "Database query failed") from e
     rows = res.data or []
     counts: dict[str, int] = {}
     for r in rows:

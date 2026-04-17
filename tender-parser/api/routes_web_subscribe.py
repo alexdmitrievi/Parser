@@ -16,13 +16,11 @@ router = APIRouter(tags=["web-subscribe"])
 
 
 def _client():
-    from shared.config import supabase_key, supabase_url
-    from supabase import create_client
-
-    url, key = supabase_url(), supabase_key()
-    if not url or not key:
+    try:
+        from shared.db import get_db
+        return get_db()
+    except Exception:
         return None
-    return create_client(url, key)
 
 
 def _normalize_email(raw: str) -> str:

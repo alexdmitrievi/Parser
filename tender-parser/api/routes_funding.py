@@ -29,12 +29,11 @@ def _set_cache(key: str, val: Any) -> None:
 
 
 def _db():
-    from shared.config import supabase_key, supabase_url
-    from supabase import create_client
-    url, key = supabase_url(), supabase_key()
-    if not url or not key:
+    try:
+        from shared.db import get_db
+        return get_db()
+    except Exception:
         return None
-    return create_client(url, key)
 
 
 # Отображаемые названия типов программ
@@ -97,16 +96,20 @@ def list_funding(
         # Программы с нижней планкой не выше amount_max
         qb = qb.lte("amount_min", amount_max)
     if region:
-        # Программы без привязки к региону (пустой массив) или с нужным регионом
-        # Supabase: contains + or-logic через cs (contains-and) + нет ограничений
-        qb = qb.or_(f"regions.cs.{{{region}}},regions.eq.{{}}")
+        import re
+        safe_region = re.sub(r'[,.()\'"\[\]{}]', '', region)
+        qb = qb.or_(f"regions.cs.{{{safe_region}}},regions.eq.{{}}")
 
     start = (page - 1) * page_size
-    res = (
-        qb.order("created_at", desc=True)
-        .range(start, start + page_size - 1)
-        .execute()
-    )
+    try:
+        res = (
+            qb.order("created_at", desc=True)
+            .range(start, start + page_size - 1)
+            .execute()
+        )
+    except Exception as e:
+        logger.exception("list_funding DB error")
+        raise HTTPException(502, "Database query failed") from e
     total = getattr(res, "count", None) or len(res.data or [])
     items = [_enrich(r) for r in (res.data or [])]
 
@@ -131,7 +134,11 @@ def funding_meta() -> dict[str, Any]:
     if not cli:
         raise HTTPException(503, "Database not configured")
 
-    res = cli.table("funding_programs").select("program_type, source_platform, status").execute()
+    try:
+        res = cli.table("funding_programs").select("program_type, source_platform, status").execute()
+    except Exception as e:
+        logger.exception("funding_meta DB error")
+        raise HTTPException(502, "Database query failed") from e
     rows = res.data or []
 
     by_type: dict[str, int] = {}
@@ -166,13 +173,17 @@ def get_funding_program(program_id: str) -> dict[str, Any]:
     if not cli:
         raise HTTPException(503, "Database not configured")
 
-    res = (
-        cli.table("funding_programs")
-        .select("*")
-        .eq("id", program_id)
-        .limit(1)
-        .execute()
-    )
+    try:
+        res = (
+            cli.table("funding_programs")
+            .select("*")
+            .eq("id", program_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception as e:
+        logger.exception("get_funding_program DB error")
+        raise HTTPException(502, "Database query failed") from e
     rows = res.data or []
     if not rows:
         raise HTTPException(404, "Program not found")
