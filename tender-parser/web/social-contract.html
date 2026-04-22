@@ -189,6 +189,215 @@
     .sc-important-note svg { flex-shrink: 0; color: #f59e0b; margin-top: 2px; }
     .sc-important-note p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; }
 
+    .sc-quiz {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+    }
+    .sc-quiz-intro {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .sc-quiz-grid {
+      display: grid;
+      gap: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .sc-quiz-item {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.9rem 1rem;
+    }
+    .sc-quiz-item.is-critical {
+      border-color: rgba(245,158,11,0.35);
+      box-shadow: inset 0 0 0 1px rgba(245,158,11,0.1);
+    }
+    .sc-quiz-question {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.65rem;
+      line-height: 1.5;
+      color: var(--text-primary);
+    }
+    .sc-quiz-item.is-critical .sc-quiz-question::after {
+      content: " *";
+      color: #f59e0b;
+    }
+    .sc-quiz-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .sc-quiz-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.35rem 0.65rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      background: rgba(0, 0, 0, 0.15);
+      transition: var(--transition);
+      font-size: 0.82rem;
+      user-select: none;
+    }
+    .sc-quiz-option:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+    .sc-quiz-option:focus-within {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.18);
+    }
+    .sc-quiz-option input {
+      width: 14px;
+      min-height: 14px;
+      height: 14px;
+      margin: 0;
+      accent-color: var(--accent-blue);
+      cursor: pointer;
+    }
+    .sc-quiz-option.selected {
+      border-color: rgba(59,130,246,0.45);
+      color: var(--text-primary);
+      background: rgba(59,130,246,0.15);
+    }
+    .sc-quiz-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 0.9rem;
+    }
+    .sc-quiz-btn {
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0.62rem 1rem;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .sc-quiz-btn.primary {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    }
+    .sc-quiz-btn.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+    }
+    .sc-quiz-btn.ghost {
+      background: rgba(255,255,255,0.04);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .sc-quiz-btn.ghost:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+    .sc-quiz-btn.contact {
+      background: rgba(16,185,129,0.16);
+      color: #10b981;
+      border: 1px solid rgba(16,185,129,0.35);
+    }
+    .sc-quiz-btn.contact:hover {
+      background: rgba(16,185,129,0.22);
+    }
+    .sc-quiz-warning {
+      display: none;
+      margin-bottom: 0.85rem;
+      color: #fbbf24;
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.75rem;
+      font-size: 0.85rem;
+    }
+    .sc-quiz-warning.show { display: block; }
+    .sc-quiz-result {
+      display: none;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      padding: 1rem;
+      background: rgba(255,255,255,0.025);
+    }
+    .sc-quiz-result.show { display: block; }
+    .sc-quiz-result-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.45rem;
+    }
+    .sc-quiz-result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border-radius: 999px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .sc-quiz-result-badge.high {
+      background: rgba(16,185,129,0.18);
+      color: #34d399;
+      border: 1px solid rgba(16,185,129,0.4);
+    }
+    .sc-quiz-result-badge.medium {
+      background: rgba(245,158,11,0.18);
+      color: #fbbf24;
+      border: 1px solid rgba(245,158,11,0.4);
+    }
+    .sc-quiz-result-badge.low {
+      background: rgba(239,68,68,0.16);
+      color: #f87171;
+      border: 1px solid rgba(239,68,68,0.35);
+    }
+    .sc-quiz-result-text {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 0.7rem;
+    }
+    .sc-quiz-tips {
+      margin: 0.65rem 0 0;
+      padding-left: 1.15rem;
+      color: var(--text-secondary);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+    .sc-quiz-disclaimer {
+      margin-top: 0.8rem;
+      border-top: 1px dashed var(--border);
+      padding-top: 0.7rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    .sc-quiz-contacts {
+      margin-top: 1rem;
+      display: none;
+    }
+    .sc-quiz-contacts.show {
+      display: block;
+    }
+    .sc-quiz-contacts-title {
+      font-size: 0.86rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 0.55rem;
+    }
+    .sc-quiz-contacts .sc-contact-row {
+      text-decoration: none;
+      margin-bottom: 0.55rem;
+    }
+
     @media (max-width: 640px) {
       .sc-hero { padding: 1.5rem; }
       .sc-hero h1 { font-size: 1.5rem; }
@@ -198,6 +407,9 @@
       .sc-docs-list { grid-template-columns: 1fr; }
       .sc-spend-grid { grid-template-columns: 1fr; }
       .sc-cta { padding: 1.5rem; }
+      .sc-quiz-item { padding: 0.8rem; }
+      .sc-quiz-options { gap: 0.4rem; }
+      .sc-quiz-option { padding: 0.32rem 0.58rem; }
     }
   </style>
 </head>
@@ -461,6 +673,145 @@
       </div>
     </section>
 
+    <!-- Предварительный опросник -->
+    <section class="sc-section" id="sc-quiz-section">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11H3"/><path d="M13 11h8"/><path d="M6 15h9"/><path d="M3 19h18"/><path d="M3 7h18"/></svg>
+        Предварительный опросник
+      </h2>
+      <div class="sc-quiz">
+        <p class="sc-quiz-intro">
+          Ответьте на вопросы, чтобы получить предварительную оценку вероятности одобрения социального контракта на предпринимательскую деятельность (до 350 000 ₽).
+          Для каждого пункта выберите один вариант: «Да», «Нет» или «Не знаю».
+        </p>
+
+        <div class="sc-quiz-grid" id="sc-quiz-grid">
+          <div class="sc-quiz-item is-critical" data-question-id="q1">
+            <div class="sc-quiz-question">1. Я являюсь гражданином Российской Федерации.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 1">
+              <label class="sc-quiz-option"><input type="radio" name="q1" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q1" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q1" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item is-critical" data-question-id="q2">
+            <div class="sc-quiz-question">2. У меня есть постоянная или временная регистрация в регионе, где планирую подавать заявление.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 2">
+              <label class="sc-quiz-option"><input type="radio" name="q2" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q2" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q2" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item is-critical" data-question-id="q3">
+            <div class="sc-quiz-question">3. Мой среднедушевой доход (или доход, если проживаю один) ниже прожиточного минимума в моём регионе.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 3">
+              <label class="sc-quiz-option"><input type="radio" name="q3" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q3" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q3" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item" data-question-id="q4">
+            <div class="sc-quiz-question">4. Я могу подтвердить доходы и состав семьи документами.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 4">
+              <label class="sc-quiz-option"><input type="radio" name="q4" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q4" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q4" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item" data-question-id="q5">
+            <div class="sc-quiz-question">5. У меня есть идея для предпринимательской деятельности.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 5">
+              <label class="sc-quiz-option"><input type="radio" name="q5" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q5" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q5" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item" data-question-id="q6">
+            <div class="sc-quiz-question">6. У меня есть или я готов(а) подготовить бизнес-план.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 6">
+              <label class="sc-quiz-option"><input type="radio" name="q6" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q6" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q6" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item is-critical" data-question-id="q7">
+            <div class="sc-quiz-question">7. Я готов(а) зарегистрироваться как ИП или самозанятый(ая), если это потребуется.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 7">
+              <label class="sc-quiz-option"><input type="radio" name="q7" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q7" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q7" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item" data-question-id="q8">
+            <div class="sc-quiz-question">8. Я готов(а) пройти тестирование / оценку предпринимательских компетенций, если это потребуется в регионе.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 8">
+              <label class="sc-quiz-option"><input type="radio" name="q8" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q8" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q8" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item is-critical" data-question-id="q9">
+            <div class="sc-quiz-question">9. Я понимаю, на что именно буду тратить средства, и готов(а) подтвердить целевое использование расходов.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 9">
+              <label class="sc-quiz-option"><input type="radio" name="q9" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q9" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q9" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item" data-question-id="q10">
+            <div class="sc-quiz-question">10. Я готов(а) сохранять чеки, договоры и другие подтверждающие документы.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 10">
+              <label class="sc-quiz-option"><input type="radio" name="q10" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q10" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q10" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item" data-question-id="q11">
+            <div class="sc-quiz-question">11. Я готов(а) вести деятельность после получения соцконтракта и соблюдать условия отчётности.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 11">
+              <label class="sc-quiz-option"><input type="radio" name="q11" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q11" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q11" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+
+          <div class="sc-quiz-item is-critical" data-question-id="q12">
+            <div class="sc-quiz-question">12. У меня нет намерения использовать средства на личные нецелевые расходы.</div>
+            <div class="sc-quiz-options" role="radiogroup" aria-label="Вопрос 12">
+              <label class="sc-quiz-option"><input type="radio" name="q12" value="yes"> Да</label>
+              <label class="sc-quiz-option"><input type="radio" name="q12" value="no"> Нет</label>
+              <label class="sc-quiz-option"><input type="radio" name="q12" value="unknown"> Не знаю</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="sc-quiz-warning" id="sc-quiz-warning">Ответьте, пожалуйста, на все 12 вопросов, чтобы получить корректную предварительную оценку.</div>
+
+        <div class="sc-quiz-actions">
+          <button type="button" class="sc-quiz-btn primary" id="sc-quiz-calc">Показать предварительную оценку</button>
+          <button type="button" class="sc-quiz-btn ghost" id="sc-quiz-reset">Сбросить ответы</button>
+          <button type="button" class="sc-quiz-btn contact" id="sc-quiz-contact" style="display: none;">Открыть контакты для консультации</button>
+        </div>
+
+        <div class="sc-quiz-result" id="sc-quiz-result" aria-live="polite"></div>
+
+        <div class="sc-quiz-contacts" id="sc-quiz-contacts" aria-live="polite">
+          <div class="sc-quiz-contacts-title">Контакты для консультации</div>
+          <div id="sc-quiz-contacts-list"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- CTA -->
     <div class="sc-cta">
       <h2>Бесплатная консультация</h2>
@@ -542,6 +893,144 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') modal.classList.remove('open');
     });
+
+    // Social contract quiz
+    const quizMeta = [
+      { id: 'q1', critical: true, tip: 'Подтвердите гражданство РФ: без этого условия одобрение обычно невозможно.' },
+      { id: 'q2', critical: true, tip: 'Проверьте регистрацию в регионе подачи: это базовое требование соцзащиты.' },
+      { id: 'q3', critical: true, tip: 'Сверьте доход с прожиточным минимумом по вашему региону.' },
+      { id: 'q4', critical: false, tip: 'Подготовьте документы о доходах и составе семьи заранее.' },
+      { id: 'q5', critical: false, tip: 'Сформулируйте конкретную бизнес-идею с понятной услугой или товаром.' },
+      { id: 'q6', critical: false, tip: 'Составьте краткий бизнес-план со сметой и прогнозом выручки.' },
+      { id: 'q7', critical: true, tip: 'Уточните формат регистрации: ИП или самозанятость в вашем регионе.' },
+      { id: 'q8', critical: false, tip: 'Уточните в соцзащите, проводится ли тестирование компетенций в вашем регионе.' },
+      { id: 'q9', critical: true, tip: 'Сделайте список целевых расходов и привяжите их к задачам бизнеса.' },
+      { id: 'q10', critical: false, tip: 'Организуйте хранение чеков и договоров в отдельной папке.' },
+      { id: 'q11', critical: false, tip: 'Оцените, сможете ли стабильно вести деятельность и сдавать отчетность.' },
+      { id: 'q12', critical: true, tip: 'Использование средств строго по назначению — ключевое условие контракта.' }
+    ];
+
+    const quizCalcBtn = document.getElementById('sc-quiz-calc');
+    const quizResetBtn = document.getElementById('sc-quiz-reset');
+    const quizContactBtn = document.getElementById('sc-quiz-contact');
+    const quizWarning = document.getElementById('sc-quiz-warning');
+    const quizResult = document.getElementById('sc-quiz-result');
+    const quizContacts = document.getElementById('sc-quiz-contacts');
+    const quizContactsList = document.getElementById('sc-quiz-contacts-list');
+
+    function syncSelectedQuizOptions() {
+      document.querySelectorAll('.sc-quiz-options').forEach((group) => {
+        group.querySelectorAll('.sc-quiz-option').forEach((label) => {
+          const input = label.querySelector('input[type="radio"]');
+          label.classList.toggle('selected', !!input?.checked);
+        });
+      });
+    }
+
+    document.querySelectorAll('.sc-quiz-options input[type="radio"]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        syncSelectedQuizOptions();
+        quizWarning.classList.remove('show');
+      });
+    });
+
+    function getQuizValue(questionId) {
+      const selected = document.querySelector(`input[name="${questionId}"]:checked`);
+      return selected ? selected.value : '';
+    }
+
+    function renderContactsFromExistingBlock() {
+      if (!quizContactsList) return;
+      quizContactsList.innerHTML = '';
+      const rows = modal ? modal.querySelectorAll('.sc-contact-row') : [];
+      rows.forEach((row) => {
+        quizContactsList.appendChild(row.cloneNode(true));
+      });
+      quizContacts.classList.add('show');
+      quizContactBtn.style.display = 'inline-flex';
+    }
+
+    function evaluateQuiz() {
+      const unanswered = quizMeta.filter((item) => !getQuizValue(item.id));
+      if (unanswered.length) {
+        quizWarning.classList.add('show');
+        quizResult.classList.remove('show');
+        quizContacts.classList.remove('show');
+        quizContactBtn.style.display = 'none';
+        return;
+      }
+
+      quizWarning.classList.remove('show');
+      let score = 0;
+      let maxScore = 0;
+      let criticalNoCount = 0;
+      const tips = [];
+
+      quizMeta.forEach((item) => {
+        const value = getQuizValue(item.id);
+        const weight = item.critical ? 2 : 1;
+        maxScore += weight;
+
+        if (value === 'yes') {
+          score += weight;
+        } else if (value === 'unknown') {
+          score += weight * 0.5;
+          tips.push(item.tip);
+        } else {
+          if (item.critical) criticalNoCount += 1;
+          tips.push(item.tip);
+        }
+      });
+
+      const percent = Math.round((score / maxScore) * 100);
+      let level = 'medium';
+      let levelTitle = 'Средняя вероятность';
+      let levelText = 'Есть база для подачи, но часть условий требует доработки перед обращением в соцзащиту.';
+
+      if (criticalNoCount >= 2 || percent < 45) {
+        level = 'low';
+        levelTitle = 'Низкая вероятность на текущем этапе';
+        levelText = 'Сейчас есть существенные риски отказа. Рекомендуется сначала закрыть ключевые критерии и проверить документы.';
+      } else if (criticalNoCount === 0 && percent >= 70) {
+        level = 'high';
+        levelTitle = 'Повышенная вероятность';
+        levelText = 'По анкете вы близки к базовым требованиям. Следующий шаг — аккуратно подготовить пакет документов и бизнес-план.';
+      }
+
+      const uniqueTips = Array.from(new Set(tips)).slice(0, 5);
+      const tipsHtml = uniqueTips.length
+        ? `<ul class="sc-quiz-tips">${uniqueTips.map((tip) => `<li>${tip}</li>`).join('')}</ul>`
+        : '';
+
+      quizResult.innerHTML = `
+        <div class="sc-quiz-result-badge ${level}">${levelTitle}</div>
+        <div class="sc-quiz-result-title">Итоговый балл: ${percent}%</div>
+        <p class="sc-quiz-result-text">${levelText}</p>
+        ${tipsHtml}
+        <p class="sc-quiz-disclaimer">
+          Важно: результат носит предварительный информационный характер и не является юридическим заключением. Окончательное решение об одобрении принимает уполномоченный орган социальной защиты в вашем регионе.
+        </p>
+      `;
+      quizResult.classList.add('show');
+      renderContactsFromExistingBlock();
+    }
+
+    function resetQuiz() {
+      document.querySelectorAll('.sc-quiz-options input[type="radio"]').forEach((radio) => {
+        radio.checked = false;
+      });
+      syncSelectedQuizOptions();
+      quizWarning.classList.remove('show');
+      quizResult.classList.remove('show');
+      quizResult.innerHTML = '';
+      quizContacts.classList.remove('show');
+      quizContactsList.innerHTML = '';
+      quizContactBtn.style.display = 'none';
+    }
+
+    quizCalcBtn?.addEventListener('click', evaluateQuiz);
+    quizResetBtn?.addEventListener('click', resetQuiz);
+    quizContactBtn?.addEventListener('click', () => modal.classList.add('open'));
 
     // Burger menu
     document.getElementById("navbar-burger")?.addEventListener("click", function() {
