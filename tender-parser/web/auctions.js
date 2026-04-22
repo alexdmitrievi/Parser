@@ -1,5 +1,5 @@
 /**
- * Тендер PRO — Аукционы банкротов + СНГ (CAT)
+ * Тендер PRO — Аукционы
  */
 
 const form = document.getElementById("search-form");
@@ -27,7 +27,7 @@ function showToast(msg) {
 
 /* ── Tab state ── */
 
-let activeTab = "bankruptcy"; // "bankruptcy" | "cis_cat"
+let activeTab = "bankruptcy";
 
 const TAB_CONFIG = {
   bankruptcy: {
@@ -36,13 +36,6 @@ const TAB_CONFIG = {
     subtitle: "Имущество банкротов: земля, недвижимость, транспорт, оборудование",
     showPropertyType: true,
     resultLabel: "лотов",
-  },
-  cis_cat: {
-    lawType: "cis_cat",
-    title: "СНГ (CAT) — Спецтехника",
-    subtitle: "Б/у спецтехника Caterpillar: экскаваторы, бульдозеры, погрузчики по площадкам СНГ",
-    showPropertyType: false,
-    resultLabel: "объявлений",
   },
 };
 
@@ -175,7 +168,7 @@ function exportCSV(items) {
     PLATFORM_NAMES[t.source_platform] || t.source_platform || "",
     t.original_url || "",
   ].join(";")).join("\n");
-  const filename = activeTab === "cis_cat" ? "cat_equipment.csv" : "auctions.csv";
+  const filename = "auctions.csv";
   const blob = new Blob([BOM + header + rows], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
 }
@@ -191,11 +184,8 @@ function buildQueryString() {
   const region = (fd.get("region") || "").trim();
   if (region) params.set("region", region);
 
-  // Property type filter only for bankruptcy tab
-  if (activeTab === "bankruptcy") {
-    const niche = (fd.get("niche") || "").trim();
-    if (niche) params.set("niche", niche);
-  }
+  const niche = (fd.get("niche") || "").trim();
+  if (niche) params.set("niche", niche);
 
   const minNmck = fd.get("min_nmck");
   if (minNmck !== "" && minNmck != null) params.set("min_nmck", String(minNmck));
@@ -217,9 +207,7 @@ function buildQueryString() {
 function renderCards(items) {
   resultsEl.innerHTML = "";
   if (!items || items.length === 0) {
-    const emptyMsg = activeTab === "cis_cat"
-      ? "Объявлений CAT пока нет. Данные обновляются автоматически каждые 12 часов. Попробуйте позже или измените фильтры."
-      : "Лотов не найдено. Измените ключевые слова или фильтры.";
+    const emptyMsg = "Лотов не найдено. Измените ключевые слова или фильтры.";
     resultsEl.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 6 0"/></svg></div><p>${emptyMsg}</p></div>`;
     return;
   }
