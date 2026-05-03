@@ -191,28 +191,37 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     if data == "sub:ok":
         st = _state(uid)
-        url, key = supabase_url(), supabase_key()
-        if url and key:
-            from supabase import create_client
+        from shared.config import get_config
+        from shared.db import count_user_subscriptions, add_subscription
+        from shared.models import SubscriptionCreate
 
-            cli = create_client(url, key)
-            niche_val = st.get("niche")
-            kw_raw = st.get("keywords") or ""
-            cli.table("subscriptions").insert(
-                {
-                    "telegram_user_id": uid,
-                    "name": str(uid),
-                    "niche_tags": [niche_val] if niche_val and niche_val != "custom" else [],
-                    "keywords": [k.strip() for k in kw_raw.split(",") if k.strip()] if kw_raw else [],
-                    "regions": [st["region"]] if st.get("region") else [],
-                    "min_nmck": st.get("nmck_min"),
-                    "max_nmck": st.get("nmck_max"),
-                    "law_types": [],
-                    "okpd2_prefixes": [],
-                }
-            ).execute()
+        cfg = get_config()
+        max_subs = cfg.get("max_free_subscriptions", 3)
+        current = count_user_subscriptions(uid)
+        if current >= max_subs:
+            await q.edit_message_text(f"Лимит подписок ({max_subs}) исчерпан. Удалите старые через /mysubs.")
+            _reset(uid)
+            return
+
+        niche_val = st.get("niche")
+        kw_raw = st.get("keywords") or ""
+        sub = SubscriptionCreate(
+            telegram_user_id=uid,
+            name=str(uid),
+            niche_tags=[niche_val] if niche_val and niche_val != "custom" else [],
+            keywords=[k.strip() for k in kw_raw.split(",") if k.strip()] if kw_raw else [],
+            regions=[st["region"]] if st.get("region") else [],
+            min_nmck=st.get("nmck_min"),
+            max_nmck=st.get("nmck_max"),
+            law_types=[],
+            okpd2_prefixes=[],
+        )
+        result = add_subscription(sub)
+        if result:
+            await q.edit_message_text("Подписка сохранена.")
+        else:
+            await q.edit_message_text("Ошибка сохранения подписки. Попробуйте позже.")
         _reset(uid)
-        await q.edit_message_text("Подписка сохранена.")
         return
 
     if data == "sub:cancel":

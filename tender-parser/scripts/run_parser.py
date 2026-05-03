@@ -63,18 +63,26 @@ def run_eis_api() -> int:
     ]
     for region in POPULAR_REGIONS:
         total += _process_and_save(
-            scraper.run(queries=queries_main, max_pages=1, region=region),
+            scraper.run(queries=queries_main, max_pages=2, region=region),
             f"EIS API [{region}]",
         )
 
     # 2. Широкие запросы без региона (для покрытия)
     queries_wide = [
         "IT услуги", "транспортные услуги", "мазут", "печное топливо",
+        "продукты питания", "охранные услуги",
     ]
     total += _process_and_save(
         scraper.run(queries=queries_wide, max_pages=2),
         "EIS API [all regions]",
     )
+
+    # 3. 223-ФЗ запросы (отдельный фильтр по типу закона)
+    for q in ["ремонт помещений", "поставка оборудования", "клининг"]:
+        total += _process_and_save(
+            scraper.run(queries=[q], max_pages=1, law_type="223-fz"),
+            f"EIS API 223-ФЗ [{q}]",
+        )
     return total
 
 
@@ -103,7 +111,7 @@ def run_eis_api_extra() -> int:
 
     # Широкие запросы без региона
     total += _process_and_save(
-        scraper.run(queries=queries_extra, max_pages=1),
+        scraper.run(queries=queries_extra, max_pages=2),
         "EIS API extra [all regions]",
     )
     return total
@@ -154,8 +162,16 @@ def run_tenderguru() -> int:
     scraper = TenderGuruScraper()
     return _process_and_save(
         scraper.run(
-            queries=["мебель поставка", "подряд строительство",
-                     "ремонт помещений", "изготовление мебели"],
+            queries=[
+                "мебель поставка", "подряд строительство",
+                "ремонт помещений", "изготовление мебели",
+                "IT услуги", "медицинское оборудование",
+                "продукты питания поставка", "охранные услуги",
+                "клининг", "транспортные услуги",
+                "спецодежда поставка", "канцтовары поставка",
+                "проектные работы", "капитальный ремонт",
+                "дизельное топливо", "строительные материалы",
+            ],
             max_pages=3,
         ),
         "TenderGuru",
@@ -210,41 +226,55 @@ def run_torgi_gov_pw() -> int:
     return _process_and_save(scraper.run(max_pages=10), "Torgi.gov.ru")
 
 
-# ──────── СНГ (CAT) — б/у спецтехника Caterpillar ────────
+# ──────── Corporate / Корпоративные площадки ────────
 
-def run_mascus() -> int:
-    from scrapers.mascus import MascusScraper
-    logger.info("=== Mascus (CAT) ===")
-    scraper = MascusScraper()
-    return _process_and_save(scraper.run(max_pages=10), "Mascus")
-
-
-def run_machinerytrader() -> int:
-    from scrapers.machinerytrader_pw import MachineryTraderPlaywrightScraper
-    logger.info("=== MachineryTrader (CAT, Playwright) ===")
-    scraper = MachineryTraderPlaywrightScraper()
-    return _process_and_save(scraper.run(max_pages=3), "MachineryTrader")
+def run_gazprom() -> int:
+    from scrapers.gazprom import GazpromScraper
+    logger.info("=== Gazprom ===")
+    scraper = GazpromScraper()
+    return _process_and_save(scraper.run(), "Gazprom")
 
 
-def run_catused() -> int:
-    from scrapers.catused_pw import CatUsedPlaywrightScraper
-    logger.info("=== CAT Used (Playwright) ===")
-    scraper = CatUsedPlaywrightScraper()
-    return _process_and_save(scraper.run(max_pages=3), "CAT Used")
+def run_rosatom() -> int:
+    from scrapers.rosatom import RosatomScraper
+    logger.info("=== Rosatom ===")
+    scraper = RosatomScraper()
+    return _process_and_save(scraper.run(), "Rosatom")
 
 
-def run_avito_cat() -> int:
-    from scrapers.avito_cat_pw import AvitoCatPlaywrightScraper
-    logger.info("=== Avito (CAT, Playwright) ===")
-    scraper = AvitoCatPlaywrightScraper()
-    return _process_and_save(scraper.run(max_pages=2), "Avito CAT")
+def run_rosneft() -> int:
+    from scrapers.rosneft import RosneftScraper
+    logger.info("=== Rosneft ===")
+    scraper = RosneftScraper()
+    return _process_and_save(scraper.run(), "Rosneft")
 
 
-def run_kolesa_kz() -> int:
-    from scrapers.kolesa_kz_pw import KolesaKzPlaywrightScraper
-    logger.info("=== Kolesa.kz (CAT, Playwright) ===")
-    scraper = KolesaKzPlaywrightScraper()
-    return _process_and_save(scraper.run(max_pages=5), "Kolesa.kz")
+def run_lukoil() -> int:
+    from scrapers.lukoil import LukoilScraper
+    logger.info("=== Lukoil ===")
+    scraper = LukoilScraper()
+    return _process_and_save(scraper.run(), "Lukoil")
+
+
+def run_nornickel() -> int:
+    from scrapers.nornickel import NornickelScraper
+    logger.info("=== Nornickel ===")
+    scraper = NornickelScraper()
+    return _process_and_save(scraper.run(), "Nornickel")
+
+
+def run_mts() -> int:
+    from scrapers.mts import MtsScraper
+    logger.info("=== MTS ===")
+    scraper = MtsScraper()
+    return _process_and_save(scraper.run(), "MTS")
+
+
+def run_sberb2b() -> int:
+    from scrapers.sberb2b import SberB2bScraper
+    logger.info("=== SberB2B ===")
+    scraper = SberB2bScraper()
+    return _process_and_save(scraper.run(), "SberB2B")
 
 
 # ──────── Группы ────────
@@ -256,15 +286,12 @@ GROUPS = {
     "roseltorg": [run_roseltorg],
     "etp": [run_roseltorg, run_sberbank_ast, run_rts_tender, run_tektorg],
     "commercial": [run_b2b_center, run_rostender, run_tenderguru],
+    "corporate": [run_gazprom, run_rosatom, run_rosneft, run_lukoil, run_nornickel, run_mts, run_sberb2b],
     "rostender": [run_rostender],
     "auctions": [run_lot_online, run_torgi_gov_pw],
     "auctions_rad": [run_lot_online],
     "auctions_torgi": [run_torgi_gov_pw],
     "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
-    # СНГ (CAT) — б/у спецтехника Caterpillar
-    "cis_cat": [run_mascus, run_machinerytrader, run_catused, run_avito_cat, run_kolesa_kz],
-    "cis_cat_intl": [run_mascus],  # httpx only
-    "cis_cat_local": [run_machinerytrader, run_catused, run_avito_cat, run_kolesa_kz],  # Playwright
     "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
             run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
 }

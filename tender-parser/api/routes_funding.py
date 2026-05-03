@@ -75,6 +75,7 @@ def list_funding(
     program_type: str | None = Query(None, description="Тип: grant, loan, subsidy, guarantee, microloan"),
     industry: str | None = Query(None, description="Отрасль"),
     amount_max: float | None = Query(None, description="Максимальная сумма, руб"),
+    source_platform: str | None = Query(None, description="Площадка: corpmsp, mybusiness, frprf, mspbank"),
     status: str = Query("active", description="Статус: active, closed, all"),
     page: int = Query(1, ge=1),
     page_size: int = Query(12, ge=1, le=100),
@@ -92,6 +93,8 @@ def list_funding(
         qb = qb.ilike("program_name", f"%{q}%")
     if program_type:
         qb = qb.eq("program_type", program_type)
+    if source_platform:
+        qb = qb.eq("source_platform", source_platform)
     if amount_max is not None:
         # Программы с нижней планкой не выше amount_max
         qb = qb.lte("amount_min", amount_max)

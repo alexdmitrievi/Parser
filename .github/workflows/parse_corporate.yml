@@ -1,8 +1,8 @@
-name: Parse Commercial Platforms
+name: Parse Corporate Platforms
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Каждые 6 часов (чаще = больше тендеров)
+    - cron: '0 4,16 * * *'  # Дважды в день
   workflow_dispatch: {}
 
 defaults:
@@ -12,7 +12,7 @@ defaults:
 jobs:
   parse:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4
@@ -23,15 +23,10 @@ jobs:
           cache-dependency-path: tender-parser/requirements-parser.txt
       - run: pip install -r requirements-parser.txt
 
-      - name: Parse Commercial (B2B-Center, TenderGuru)
-        run: python scripts/run_parser.py --source commercial
+      - name: Parse Corporate (Gazprom, Rosatom, Rosneft, Lukoil, Nornickel, MTS, SberB2B)
+        continue-on-error: true
+        timeout-minutes: 20
+        run: python scripts/run_parser.py --source corporate
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-
-      - name: Send notifications
-        run: python scripts/run_notifier.py
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

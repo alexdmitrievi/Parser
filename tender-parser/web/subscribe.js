@@ -108,18 +108,27 @@ setupAutocomplete(
 /* ── Dynamic niches ── */
 
 async function loadNiches() {
+  const NICHE_NAMES = {
+    furniture: "Мебель",
+    construction: "Стройка / ремонт",
+    it: "IT-услуги",
+    security: "Охрана",
+    cleaning: "Клининг",
+    food: "Продукты питания",
+    medical: "Медицина",
+    transport: "Транспорт",
+  };
   try {
     const res = await fetch("/api/niches", { headers: { Accept: "application/json" } });
     if (!res.ok) return;
     const data = await res.json();
     const sel = document.getElementById("niche");
     const niches = data.niches || [];
-    // Insert before "custom" option
     const customOpt = sel.querySelector('option[value="custom"]');
     for (const n of niches) {
       const opt = document.createElement("option");
       opt.value = n.name;
-      opt.textContent = `${n.name} (${n.count})`;
+      opt.textContent = `${NICHE_NAMES[n.name] || n.name} (${n.count})`;
       if (customOpt) sel.insertBefore(opt, customOpt);
       else sel.appendChild(opt);
     }

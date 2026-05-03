@@ -48,18 +48,18 @@ def insert_tenders(tenders: list[TenderCreate]) -> int:
     rows = []
     for t in tenders:
         reg = t.registry_number
-        # Генерируем fallback ID для тендеров без registry_number,
-        # чтобы избежать коллизий при upsert
         if not reg:
             fallback = hashlib.sha256(
-                f"{t.source_platform}|{t.title}|{t.customer_name or ''}".encode()
-            ).hexdigest()[:16]
+                f"{t.source_platform}|{t.title}|{t.customer_name or ''}|{t.original_url or ''}".encode()
+            ).hexdigest()[:24]
             reg = f"_gen_{fallback}"
             t.registry_number = reg
         key = (t.source_platform, reg)
         if key in seen:
             continue
         seen.add(key)
+        # Поддержка sources из TenderCreate
+        t.sources = list(dict.fromkeys((t.sources or []) + [t.source_platform]))
         data = t.model_dump(mode="json")
         if data.get("publish_date"):
             data["publish_date"] = str(data["publish_date"])

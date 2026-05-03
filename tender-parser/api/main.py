@@ -19,10 +19,17 @@ from api.routes_web_subscribe import router as web_subscribe_router
 from api.routes_suggestions import router as suggestions_router
 from api.routes_funding import router as funding_router
 
-_CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
-if not _CORS_ORIGINS:
-    logger.warning("CORS_ORIGINS not set — defaulting to localhost only")
-    _CORS_ORIGINS = ["http://localhost:3000", "http://localhost:8000"]
+_CORS_RAW = os.getenv("CORS_ORIGINS", "")
+if _CORS_RAW:
+    _CORS_ORIGINS = [o.strip() for o in _CORS_RAW.split(",") if o.strip()]
+else:
+    _CORS_ORIGINS = [
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "https://tender-pro.vercel.app",
+        "https://tender-parser.vercel.app",
+    ]
+    logger.warning("CORS_ORIGINS not set — using default origins including Vercel domains")
 
 app = FastAPI(title="Тендер PRO — Tenders API", version="1.0.0")
 app.add_middleware(
@@ -48,11 +55,13 @@ if _web_dir.is_dir():
 @app.on_event("startup")
 def _validate_env() -> None:
     """Предупреждение при отсутствии критичных переменных окружения."""
-    from shared.config import supabase_url, supabase_key
+    from shared.config import supabase_url, supabase_key, get_config
     if not supabase_url():
         logger.warning("SUPABASE_URL not set — DB endpoints will fail")
     if not supabase_key():
         logger.warning("SUPABASE_KEY not set — DB endpoints will fail")
+    if not get_config().get("telegram_bot_token"):
+        logger.warning("TELEGRAM_BOT_TOKEN not set — bot webhook will fail")
 
 
 @app.get("/health")

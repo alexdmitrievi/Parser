@@ -328,39 +328,44 @@ function resetFilters() {
 }
 
 // Autocomplete for region
-const REGIONS = [
-  "Москва","Санкт-Петербург","Московская область","Краснодарский край",
-  "Республика Татарстан","Свердловская область","Новосибирская область",
-  "Омская область","Тюменская область","Ростовская область","Нижегородская область",
-  "Самарская область","Красноярский край","Челябинская область",
-  "Пермский край","Воронежская область","Ставропольский край",
-  "Саратовская область","Башкортостан","Волгоградская область",
-];
-
 function setupRegionAutocomplete() {
   const input = document.getElementById("g-region");
   const dropdown = document.getElementById("region-dropdown");
   if (!input || !dropdown) return;
 
+  let timer = null;
+
+  async function fetchRegions(q) {
+    try {
+      const res = await fetch(`/api/suggest/regions?q=${encodeURIComponent(q)}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.items || [];
+    } catch { return []; }
+  }
+
   input.addEventListener("input", () => {
-    const val = input.value.trim().toLowerCase();
-    if (!val) { dropdown.classList.add("hidden"); return; }
-    const matches = REGIONS.filter(r => r.toLowerCase().includes(val)).slice(0, 8);
-    if (!matches.length) { dropdown.classList.add("hidden"); return; }
-    dropdown.innerHTML = matches
-      .map(r => `<div class="autocomplete-item" tabindex="-1">${r}</div>`)
-      .join("");
-    dropdown.classList.remove("hidden");
-    dropdown.querySelectorAll(".autocomplete-item").forEach(item => {
-      item.addEventListener("mousedown", e => {
-        e.preventDefault();
-        input.value = item.textContent;
-        state.region = item.textContent;
-        dropdown.classList.add("hidden");
-        state.page = 1;
-        loadPrograms();
+    clearTimeout(timer);
+    const val = input.value.trim();
+    if (val.length < 1) { dropdown.classList.add("hidden"); return; }
+    timer = setTimeout(async () => {
+      const items = await fetchRegions(val);
+      if (!items.length) { dropdown.classList.add("hidden"); return; }
+      dropdown.innerHTML = items
+        .map(r => `<div class="autocomplete-item" tabindex="-1">${r}</div>`)
+        .join("");
+      dropdown.classList.remove("hidden");
+      dropdown.querySelectorAll(".autocomplete-item").forEach(item => {
+        item.addEventListener("mousedown", e => {
+          e.preventDefault();
+          input.value = item.textContent;
+          state.region = item.textContent;
+          dropdown.classList.add("hidden");
+          state.page = 1;
+          loadPrograms();
+        });
       });
-    });
+    }, 250);
   });
 
   document.addEventListener("click", e => {

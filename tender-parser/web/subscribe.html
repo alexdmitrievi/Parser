@@ -193,5 +193,12 @@
     }, { once: true });
   });
   </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/web/sw.js').catch(() => {});
+  });
+}
+</script>
 </body>
 </html>

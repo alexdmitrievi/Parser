@@ -26,7 +26,7 @@ def search_tenders_web(
     niche: str | None = Query(None, description="Тег ниши, например furniture"),
     min_nmck: float | None = Query(None),
     max_nmck: float | None = Query(None),
-    law_type: str | None = Query(None, description="44-fz, 223-fz, commercial"),
+    law_type: str | None = Query(None, description="44-fz, 223-fz, commercial, auction"),
     purchase_method: str | None = Query(None, description="Способ закупки: AE, OK, ZK, ZP, EP"),
     date_from: str | None = Query(None, description="Дата публикации от (YYYY-MM-DD)"),
     date_to: str | None = Query(None, description="Дата публикации до (YYYY-MM-DD)"),

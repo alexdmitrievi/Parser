@@ -30,6 +30,7 @@ class TenderCreate(BaseModel):
     original_url: Optional[str] = None
     raw_data: Optional[dict] = None
     niche_tags: list[str] = Field(default_factory=list)
+    sources: list[str] = Field(default_factory=list)
 
 
 class TenderResponse(BaseModel):
