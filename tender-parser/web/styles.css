@@ -1,20 +1,21 @@
 /* ============================================
-   Подряд PRO — TenderPars Design System
-   Dark Professional Theme + Glassmorphism
-   Brandbook: #2F5BFF (primary) / #6C5CE7 (violet) / #1E2A5A (dark) / #FF6B35 (accent)
+   TenderPars — Design System
+   Сервис платформы Подряд PRO
+   Brandbook: #2F5BFF (primary) / #6C5CE7 (violet) / #1E2A5A (dark) / #F7F9FC (bg)
    ============================================ */
 
 /* --- Custom Properties --- */
+/* Light theme (default, matching Подряд PRO brandbook) */
 :root {
-  --bg-primary: #0a0c14;
-  --bg-secondary: #12151f;
-  --bg-glass: rgba(18, 21, 31, 0.7);
-  --bg-glass-hover: rgba(18, 21, 31, 0.88);
-  --border: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(47, 91, 255, 0.25);
-  --text-primary: #e4e4e7;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --bg-primary: #F7F9FC;
+  --bg-secondary: #FFFFFF;
+  --bg-glass: rgba(255, 255, 255, 0.85);
+  --bg-glass-hover: rgba(255, 255, 255, 0.95);
+  --border: #e5e7eb;
+  --border-hover: rgba(47, 91, 255, 0.2);
+  --text-primary: #2B2B2B;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
   --accent-blue: #2F5BFF;
   --accent-purple: #6C5CE7;
   --accent-violet-light: #8B74F2;
@@ -24,16 +25,34 @@
   --gradient: linear-gradient(135deg, #2F5BFF, #6C5CE7);
   --gradient-amber: linear-gradient(135deg, #FF6B35, #f97316);
   --gradient-green: linear-gradient(135deg, #10b981, #059669);
-  --gradient-dark: linear-gradient(160deg, #0a0c14 0%, #1E2A5A 30%, #2F5BFF 70%, #6C5CE7 100%);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 24px rgba(47, 91, 255, 0.15);
+  --gradient-dark: linear-gradient(160deg, #1E2A5A, #2F5BFF, #6C5CE7);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+  --shadow-glow: 0 0 20px rgba(47,91,255,0.1);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
   --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Dark theme override */
+body.dark,
+.dark {
+  --bg-primary: #0a0c14;
+  --bg-secondary: #12151f;
+  --bg-glass: rgba(18, 21, 31, 0.85);
+  --bg-glass-hover: rgba(18, 21, 31, 0.95);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(47, 91, 255, 0.25);
+  --text-primary: #e4e4e7;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 20px rgba(47,91,255,0.12);
 }
 
 /* --- Reset & Base --- */
@@ -82,7 +101,7 @@ a:hover {
   justify-content: space-between;
   padding: 0 2rem;
   height: 60px;
-  background: rgba(10, 14, 23, 0.85);
+  background: var(--bg-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
@@ -125,7 +144,7 @@ a:hover {
 
 .nav-link:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(47,91,255,0.06);
 }
 
 /* --- Hamburger burger button (mobile only) --- */
@@ -166,7 +185,7 @@ a:hover {
 
 .nav-link.active {
   color: var(--accent-blue);
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(47,91,255, 0.1);
 }
 
 .nav-link svg, .nav-link i {
@@ -295,7 +314,7 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 3px rgba(47,91,255, 0.15);
 }
 
 input::placeholder, textarea::placeholder {
@@ -388,7 +407,7 @@ select option {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.1) transparent;
+  scrollbar-color: rgba(47,91,255,0.08) transparent;
 }
 
 .autocomplete-dropdown::-webkit-scrollbar {
@@ -400,7 +419,7 @@ select option {
 }
 
 .autocomplete-dropdown::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: rgba(47,91,255,0.08);
   border-radius: 10px;
 }
 
@@ -426,12 +445,12 @@ select option {
 
 .autocomplete-item:hover,
 .autocomplete-item.active {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(47,91,255, 0.15);
   color: var(--text-primary);
 }
 
 .autocomplete-item.active {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(47,91,255, 0.2);
 }
 
 /* --- Advanced Filters --- */
@@ -498,7 +517,7 @@ select option {
 
 .btn:hover {
   border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(47,91,255,0.06);
 }
 
 .btn:disabled {
@@ -511,11 +530,11 @@ select option {
   border-color: transparent;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 2px 12px rgba(47, 91, 255, 0.25);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 20px rgba(47, 91, 255, 0.4);
   transform: translateY(-1px);
 }
 
@@ -549,7 +568,7 @@ select option {
 
 .btn-ghost:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(47,91,255,0.06);
 }
 
 .btn-sm {
@@ -765,7 +784,7 @@ select option {
 }
 
 .badge-44fz {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(47,91,255, 0.15);
   color: #60a5fa;
 }
 
@@ -790,7 +809,7 @@ select option {
 }
 
 .badge-platform {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(47,91,255,0.05);
   color: var(--text-secondary);
 }
 
@@ -805,7 +824,7 @@ select option {
 }
 
 .badge-status-expired {
-  background: rgba(100, 116, 139, 0.15);
+  background: rgba(47,91,255,0.10);
   color: #94a3b8;
 }
 
@@ -815,7 +834,7 @@ select option {
 }
 
 .badge-status-completed {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(47,91,255, 0.15);
   color: #60a5fa;
 }
 
@@ -926,7 +945,7 @@ select option {
   flex-shrink: 0;
 }
 
-.kpi-icon.blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+.kpi-icon.blue { background: rgba(47,91,255, 0.15); color: var(--accent-blue); }
 .kpi-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
 .kpi-icon.purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
 .kpi-icon.amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
@@ -1449,7 +1468,7 @@ select option {
     left: 0;
     right: 0;
     flex-direction: column;
-    background: rgba(10, 14, 23, 0.95);
+    background: var(--bg-glass-hover);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
