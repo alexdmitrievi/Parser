@@ -565,6 +565,16 @@ if (chipsEl && searchInput) {
   });
 }
 
+// When user types manually in search field, deactivate chip filter
+if (searchInput) {
+  searchInput.addEventListener("input", () => {
+    const chips = document.getElementById("construction-chips");
+    if (chips) {
+      chips.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.chip === "all"));
+    }
+  });
+}
+
 /* ── Events ── */
 
 form.addEventListener("submit", ev => {
@@ -579,6 +589,11 @@ btnReset.addEventListener("click", () => {
   pageInput.value = "1";
   sortSelect.value = "created_at";
   setStatus("");
+  // Reset chips when form is reset
+  const activeChip = chipsEl?.querySelector(".chip.active:not([data-chip='all'])");
+  if (activeChip) {
+    chipsEl.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.chip === "all"));
+  }
   resultsToolbar.classList.add("hidden");
   resultsEl.innerHTML = "";
   pagerEl.classList.add("hidden");

@@ -287,14 +287,14 @@ async function runSearch() {
   }
 }
 
-/* ── Construction chip filter ── */
+/* ── Auction chip filter (property types, not construction) ── */
 
 const CHIP_KEYWORDS = {
   all: "",
-  labor: "разнорабочие рабочие грузчики монтажники сварщики клининг уборка персонал",
-  equipment: "аренда техники аренда спецтехники экскаватор бульдозер погрузчик кран самосвал",
-  materials: "стройматериалы бетон щебень арматура металлопрокат кирпич цемент асфальт дорожные",
-  road: "дорожные работы асфальтирование дорожное строительство ямочный ремонт благоустройство",
+  realestate: "недвижимость помещение здание квартира офис склад",
+  land: "земельный участок земля участок гектар сотка",
+  vehicles: "автомобиль транспорт грузовой легковой спецтехника",
+  equipment: "оборудование станок линия производственная техника",
 };
 
 const chipsEl = document.getElementById("construction-chips");
@@ -316,7 +316,14 @@ if (chipsEl && searchInput) {
 /* ── Events ── */
 
 form.addEventListener("submit", ev => { ev.preventDefault(); pageInput.value = "1"; runSearch(); });
-btnReset.addEventListener("click", () => { form.reset(); pageInput.value = "1"; sortSelect.value = "created_at"; setStatus(""); resultsToolbar.classList.add("hidden"); resultsEl.innerHTML = ""; pagerEl.classList.add("hidden"); });
+btnReset.addEventListener("click", () => { form.reset(); pageInput.value = "1"; sortSelect.value = "created_at"; setStatus(""); const chips = document.getElementById("construction-chips"); if (chips) chips.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.chip === "all")); resultsToolbar.classList.add("hidden"); resultsEl.innerHTML = ""; pagerEl.classList.add("hidden"); });
 btnPrev.addEventListener("click", () => { pageInput.value = String(Math.max(1, parseInt(pageInput.value, 10) - 1)); runSearch(); });
 btnNext.addEventListener("click", () => { pageInput.value = String(parseInt(pageInput.value, 10) + 1); runSearch(); });
 sortSelect.addEventListener("change", () => { pageInput.value = "1"; runSearch(); });
+
+if (searchInput) {
+  searchInput.addEventListener("input", () => {
+    const chips = document.getElementById("construction-chips");
+    if (chips) chips.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.chip === "all"));
+  });
+}

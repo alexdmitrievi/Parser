@@ -184,8 +184,8 @@ def search_tenders(filters: SearchFilters) -> list[dict]:
         result = query.execute()
         return result.data or []
     except Exception as e:
-        logger.error(f"Error searching tenders: {e}")
-        return []
+        logger.error(f"search_tenders failed: {e}", extra={"filters": str(filters.dict()) if hasattr(filters, 'dict') else str(filters)})
+        raise  # Let API layer decide how to respond
 
 
 def count_tenders(filters: SearchFilters) -> int:
@@ -197,8 +197,9 @@ def count_tenders(filters: SearchFilters) -> int:
     try:
         result = query.execute()
         return result.count or 0
-    except Exception:
-        return 0
+    except Exception as e:
+        logger.error(f"count_tenders failed: {e}")
+        raise
 
 
 def suggest_regions(q: str, limit: int = 10) -> list[str]:

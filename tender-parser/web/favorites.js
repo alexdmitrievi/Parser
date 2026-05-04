@@ -9,6 +9,15 @@ const favCount = document.getElementById("fav-count");
 const btnExport = document.getElementById("btn-export-fav");
 const btnClear = document.getElementById("btn-clear-fav");
 
+// Guard: skip if page structure is missing (prevents null-reference crashes)
+if (!favResults || !favToolbar || !favCount) {
+  console.warn("Favorites page DOM incomplete — skipping init.");
+} else {
+  initFavorites();
+}
+
+function initFavorites() {
+
 function showToast(msg) {
   let c = document.querySelector(".toast-container");
   if (!c) { c = document.createElement("div"); c.className = "toast-container"; document.body.appendChild(c); }
@@ -137,3 +146,4 @@ if (btnClear) {
 }
 
 render();
+}
