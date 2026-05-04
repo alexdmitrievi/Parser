@@ -303,7 +303,7 @@ input, select, textarea {
   padding: 0.65rem 0.85rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 0.95rem;
   font-family: inherit;
