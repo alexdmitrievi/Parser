@@ -287,6 +287,32 @@ async function runSearch() {
   }
 }
 
+/* ── Construction chip filter ── */
+
+const CHIP_KEYWORDS = {
+  all: "",
+  labor: "разнорабочие рабочие грузчики монтажники сварщики клининг уборка персонал",
+  equipment: "аренда техники аренда спецтехники экскаватор бульдозер погрузчик кран самосвал",
+  materials: "стройматериалы бетон щебень арматура металлопрокат кирпич цемент асфальт дорожные",
+  road: "дорожные работы асфальтирование дорожное строительство ямочный ремонт благоустройство",
+};
+
+const chipsEl = document.getElementById("construction-chips");
+const searchInput = document.getElementById("q");
+
+if (chipsEl && searchInput) {
+  chipsEl.addEventListener("click", (ev) => {
+    const chip = ev.target.closest(".chip");
+    if (!chip) return;
+    chipsEl.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    const kw = CHIP_KEYWORDS[chip.dataset.chip] || "";
+    searchInput.value = kw;
+    pageInput.value = "1";
+    runSearch();
+  });
+}
+
 /* ── Events ── */
 
 form.addEventListener("submit", ev => { ev.preventDefault(); pageInput.value = "1"; runSearch(); });

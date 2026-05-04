@@ -117,6 +117,26 @@ class CorporateSourceAdapter(BaseSourceAdapter):
 
 
 # ══════════════════════════════════════════════
+# Construction-focused search queries — targeting labor, equipment, materials (Подряд PRO audience)
+_CONSTRUCTION_QUERIES = [
+    # Core construction
+    "строительство", "капитальный ремонт", "текущий ремонт", "реконструкция",
+    "строительно-монтажные работы", "благоустройство", "демонтаж",
+    # Labor / workforce
+    "клининг", "уборка помещений", "уборка территории",
+    "обслуживание зданий", "обслуживающий персонал",
+    # Equipment / machinery
+    "аренда техники", "аренда спецтехники", "услуги техники",
+    "строительная техника", "дорожная техника",
+    # Materials / supplies
+    "стройматериалы", "строительные материалы", "поставка материалов",
+    "бетон", "металлопрокат", "дорожные материалы",
+    # Specialized works
+    "фасадные работы", "кровельные работы", "дорожные работы",
+    "земляные работы", "электромонтажные работы", "сантехнические работы",
+    "отделочные работы", "проектные работы", "проектно-сметная документация",
+]
+
 # Corporate portal configurations
 # ══════════════════════════════════════════════
 
@@ -130,8 +150,7 @@ _CORPORATE_SOURCES = [
             "query_param": "query",
             "page_param": "page",
         },
-        "search_queries": [
-            "поставка оборудования", "ремонт", "строительство",
+        "search_queries": _CONSTRUCTION_QUERIES + [
             "газоснабжение", "техническое обслуживание", "транспорт",
         ],
     },
@@ -140,8 +159,7 @@ _CORPORATE_SOURCES = [
         "platform_name": "rosatom",
         "base_url": "https://zakupki.rosatom.ru",
         "endpoints": {"search": "/search", "query_param": "q", "page_param": "page"},
-        "search_queries": [
-            "поставка оборудования", "ремонт", "строительство",
+        "search_queries": _CONSTRUCTION_QUERIES + [
             "атомная энергия", "техническое обслуживание", "транспорт",
         ],
     },
@@ -150,8 +168,7 @@ _CORPORATE_SOURCES = [
         "platform_name": "rosneft",
         "base_url": "https://zakupki.rosneft.ru",
         "endpoints": {"search": "/search", "query_param": "q", "page_param": "page"},
-        "search_queries": [
-            "поставка оборудования", "ремонт", "строительство",
+        "search_queries": _CONSTRUCTION_QUERIES + [
             "нефтепродукты", "техническое обслуживание", "транспорт",
         ],
     },
@@ -160,8 +177,7 @@ _CORPORATE_SOURCES = [
         "platform_name": "lukoil",
         "base_url": "https://tender.lukoil.ru",
         "endpoints": {"search": "/search", "query_param": "q", "page_param": "page"},
-        "search_queries": [
-            "поставка оборудования", "ремонт", "строительство",
+        "search_queries": _CONSTRUCTION_QUERIES + [
             "нефтепродукты", "техническое обслуживание", "транспорт",
         ],
     },
@@ -170,8 +186,7 @@ _CORPORATE_SOURCES = [
         "platform_name": "nornickel",
         "base_url": "https://tenders.nornickel.ru",
         "endpoints": {"search": "/search", "query_param": "q", "page_param": "page"},
-        "search_queries": [
-            "поставка оборудования", "ремонт", "строительство",
+        "search_queries": _CONSTRUCTION_QUERIES + [
             "горнодобыча", "техническое обслуживание", "транспорт",
         ],
     },
@@ -180,8 +195,7 @@ _CORPORATE_SOURCES = [
         "platform_name": "mts",
         "base_url": "https://tenders.mts.ru",
         "endpoints": {"search": "/search", "query_param": "q", "page_param": "page"},
-        "search_queries": [
-            "поставка оборудования", "ремонт", "строительство",
+        "search_queries": _CONSTRUCTION_QUERIES + [
             "IT услуги", "телекоммуникации", "техническое обслуживание",
         ],
     },
