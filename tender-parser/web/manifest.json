@@ -1,37 +1,21 @@
 {
-  "name": "Тендер PRO — Поиск тендеров",
-  "short_name": "Тендер PRO",
-  "description": "Поиск государственных и коммерческих закупок по всей России",
+  "name": "TenderPars — поиск тендеров и аукционов",
+  "short_name": "TenderPars",
+  "description": "Поиск государственных и коммерческих закупок, грантов и субсидий для бизнеса. Сервис платформы Подряд PRO.",
   "scope": "/",
   "start_url": "/web/index.html",
   "display": "standalone",
-  "background_color": "#0a0e17",
-  "theme_color": "#0a0e17",
+  "background_color": "#0a0c14",
+  "theme_color": "#2F5BFF",
   "orientation": "any",
   "categories": ["business", "productivity", "utilities"],
   "iarc_rating_id": "e58c174a-81d2-5c3c-bbbe-1e3e0a9ff4e4",
   "lang": "ru",
   "icons": [
-    {
-      "src": "/web/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/web/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/web/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/web/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "screenshots": [
-    {
-      "src": "/web/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Поиск тендеров"
-    }
+    { "src": "/web/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "Поиск тендеров" }
   ]
 }
