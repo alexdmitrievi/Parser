@@ -32,6 +32,10 @@ else:
     logger.warning("CORS_ORIGINS not set — using default origins including Vercel domains")
 
 app = FastAPI(title="Тендер PRO — Tenders API", version="1.0.0")
+
+from shared.rate_limiter import rate_limit_middleware
+app.middleware("http")(rate_limit_middleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_CORS_ORIGINS,
@@ -55,6 +59,8 @@ if _web_dir.is_dir():
 @app.on_event("startup")
 def _validate_env() -> None:
     """Предупреждение при отсутствии критичных переменных окружения."""
+    from shared.logging_config import configure_logging
+    configure_logging()
     from shared.config import supabase_url, supabase_key, get_config
     if not supabase_url():
         logger.warning("SUPABASE_URL not set — DB endpoints will fail")
@@ -66,4 +72,10 @@ def _validate_env() -> None:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    try:
+        from shared.db import get_db
+        db = get_db()
+        result = db.table("tenders").select("id", count="estimated").limit(1).execute()
+        return {"status": "ok", "db": "connected", "tenders_count": str(result.count if result.count else "?")}
+    except Exception as e:
+        return {"status": "degraded", "db": f"error: {str(e)[:100]}"}

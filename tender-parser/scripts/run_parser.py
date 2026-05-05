@@ -17,13 +17,16 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from shared.logging_config import configure_logging
 from shared.db import insert_tenders
 from pipeline.normalizer import normalize_batch
 from pipeline.tagger import tag_tenders_batch
 
+configure_logging()
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+    force=False,  # don't override JsonFormatter if LOG_FORMAT=json
 )
 logger = logging.getLogger("parser")
 
