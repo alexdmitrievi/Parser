@@ -19,6 +19,7 @@
     { "src": "/api/funding(.*)", "dest": "/api/tenders.py" },
     { "src": "/health", "dest": "/api/tenders.py" },
     { "src": "/", "dest": "/web/index.html" },
+    { "src": "/api/(meta|stats|niches)", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600" } },
     { "src": "/web/sw\\.js", "headers": { "Cache-Control": "max-age=0, s-maxage=0" } },
     { "src": "/web/(.*\\.html)", "headers": { "Cache-Control": "public, max-age=60, s-maxage=300" } },
     { "src": "/web/(.*\\.js)", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600" } },

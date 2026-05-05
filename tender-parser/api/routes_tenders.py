@@ -178,3 +178,34 @@ def niches() -> dict[str, Any]:
         for t in r.get("niche_tags") or []:
             counts[t] = counts.get(t, 0) + 1
     return {"niches": [{"name": k, "count": v} for k, v in sorted(counts.items())]}
+
+
+@router.get("/meta")
+def meta() -> dict[str, Any]:
+    """Single endpoint for all enrichment data — reduces cold starts (3 calls → 1)."""
+    cli = _client()
+    if not cli:
+        raise HTTPException(503, "Database not configured")
+    result: dict[str, Any] = {"niches": [], "platforms": [], "methods": []}
+    try:
+        res = cli.table("tenders").select("niche_tags,source_platform,purchase_method").limit(5000).execute()
+    except Exception as e:
+        logger.exception("meta DB error")
+        raise HTTPException(502, "Database query failed") from e
+    rows = res.data or []
+    niche_counts: dict[str, int] = {}
+    platform_counts: dict[str, int] = {}
+    method_counts: dict[str, int] = {}
+    for r in rows:
+        for t in r.get("niche_tags") or []:
+            niche_counts[t] = niche_counts.get(t, 0) + 1
+        p = r.get("source_platform", "")
+        if p:
+            platform_counts[p] = platform_counts.get(p, 0) + 1
+        m = r.get("purchase_method", "")
+        if m:
+            method_counts[m] = method_counts.get(m, 0) + 1
+    result["niches"] = [{"name": k, "count": v} for k, v in sorted(niche_counts.items())]
+    result["platforms"] = [{"id": k, "name": k, "count": v} for k, v in sorted(platform_counts.items())]
+    result["methods"] = [{"id": k, "name": k, "count": v} for k, v in sorted(method_counts.items())]
+    return result

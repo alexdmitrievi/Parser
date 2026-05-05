@@ -272,73 +272,59 @@ setupAutocomplete(
   fetchRegionSuggestions
 );
 
-/* ── Dynamic niches ── */
+/* ── Dynamic meta: niches + platforms + methods (single call, lazy load) ── */
 
-const NICHE_NAMES = {
-  furniture: "\u041c\u0435\u0431\u0435\u043b\u044c",
-  construction: "\u0421\u0442\u0440\u043e\u0439\u043a\u0430 / \u0440\u0435\u043c\u043e\u043d\u0442",
-  it: "IT-\u0443\u0441\u043b\u0443\u0433\u0438",
-  security: "\u041e\u0445\u0440\u0430\u043d\u0430",
-  cleaning: "\u041a\u043b\u0438\u043d\u0438\u043d\u0433",
-  food: "\u041f\u0440\u043e\u0434\u0443\u043a\u0442\u044b \u043f\u0438\u0442\u0430\u043d\u0438\u044f",
-  medical: "\u041c\u0435\u0434\u0438\u0446\u0438\u043d\u0430",
-  transport: "\u0422\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442",
-};
+const NICHE_NAMES = { construction: "Строительство", furniture: "Мебель" };
 
-async function loadNiches() {
+async function loadMeta() {
   try {
-    const res = await fetch("/api/niches", { headers: { Accept: "application/json" } });
+    const res = await fetch("/api/meta", { headers: { Accept: "application/json" } });
     if (!res.ok) return;
     const data = await res.json();
-    const sel = document.getElementById("niche");
-    const niches = data.niches || [];
-    for (const n of niches) {
-      const opt = document.createElement("option");
-      opt.value = n.name;
-      opt.textContent = `${NICHE_NAMES[n.name] || n.name} (${n.count})`;
-      sel.appendChild(opt);
+    // niches
+    const nicheSel = document.getElementById("niche");
+    if (nicheSel) {
+      (data.niches || []).forEach(n => {
+        const opt = document.createElement("option");
+        opt.value = n.name;
+        opt.textContent = `${NICHE_NAMES[n.name] || n.name} (${n.count})`;
+        nicheSel.appendChild(opt);
+      });
     }
-  } catch { /* silent */ }
+    // platforms
+    const platSel = document.getElementById("source_platform");
+    if (platSel) {
+      (data.platforms || []).forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = `${p.name} (${p.count})`;
+        platSel.appendChild(opt);
+      });
+    }
+    // purchase methods
+    const methodSel = document.getElementById("purchase_method");
+    if (methodSel) {
+      (data.methods || []).forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        opt.textContent = `${m.name} (${m.count})`;
+        methodSel.appendChild(opt);
+      });
+    }
+  } catch { /* non-critical */ }
 }
 
-/* ── Dynamic platforms & methods ── */
-
-async function loadPlatforms() {
-  try {
-    const res = await fetch("/api/suggest/platforms");
-    if (!res.ok) return;
-    const data = await res.json();
-    const sel = document.getElementById("source_platform");
-    for (const p of data.items || []) {
-      const opt = document.createElement("option");
-      opt.value = p.id;
-      opt.textContent = p.name;
-      sel.appendChild(opt);
-    }
-  } catch { /* silent */ }
-}
-
-async function loadMethods() {
-  try {
-    const res = await fetch("/api/suggest/purchase-methods");
-    if (!res.ok) return;
-    const data = await res.json();
-    const sel = document.getElementById("purchase_method");
-    for (const m of data.items || []) {
-      const opt = document.createElement("option");
-      opt.value = m.id;
-      opt.textContent = m.name;
-      sel.appendChild(opt);
-    }
-  } catch { /* silent */ }
-}
-
-/* ── Advanced filters toggle ── */
-
-if (advancedToggle && advancedBody) {
+// Lazy: load meta only when user opens advanced filters (reuses existing advancedToggle/advancedBody)
+let metaLoaded = false;
+if (advancedToggle) {
   advancedToggle.addEventListener("click", () => {
-    advancedToggle.classList.toggle("open");
-    advancedBody.classList.toggle("open");
+    const open = !advancedBody.classList.contains("open");
+    advancedToggle.classList.toggle("open", open);
+    advancedBody.classList.toggle("open", open);
+    if (open && !metaLoaded) {
+      metaLoaded = true;
+      loadMeta();
+    }
   });
 }
 
@@ -614,11 +600,7 @@ btnNext.addEventListener("click", () => {
   runSearch();
 });
 
-/* ── Init: load dynamic data ── */
-loadNiches();
-loadPlatforms();
-loadMethods();
-
+/* ── Init: hero stats only (meta loads lazy on advanced filter toggle) ── */
 /* ── Hero Stats counter ── */
 (async function loadHeroStats() {
   const el = document.getElementById("hero-stats");
