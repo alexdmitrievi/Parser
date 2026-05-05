@@ -12,12 +12,6 @@ const listEmpty = document.getElementById("list-empty");
 
 /* ── Helpers ── */
 
-function esc(s) {
-  const d = document.createElement("div");
-  d.textContent = String(s ?? "");
-  return d.innerHTML;
-}
-
 function setStatus(text, kind = "neutral") {
   globalStatus.textContent = text;
   globalStatus.className = "status-msg";

@@ -139,21 +139,26 @@ def stats() -> dict[str, Any]:
         by_region: dict[str, int] = {}
         res = (
             cli.table("tenders")
-            .select("niche_tags, customer_region")
+            .select("niche_tags, customer_region, source_platform")
             .limit(5000)
             .execute()
         )
+        platforms: set[str] = set()
         for r in res.data or []:
             for t in r.get("niche_tags") or []:
                 by_niche[t] = by_niche.get(t, 0) + 1
             reg = r.get("customer_region") or "unknown"
             by_region[reg] = by_region.get(reg, 0) + 1
+            plat = r.get("source_platform")
+            if plat:
+                platforms.add(plat)
     except Exception as e:
         logger.exception("stats DB error")
         raise HTTPException(502, "Database query failed") from e
 
     result = {
         "total": total,
+        "platforms": len(platforms),
         "by_niche": by_niche,
         "by_region": by_region,
         "created_last_7_days": recent,

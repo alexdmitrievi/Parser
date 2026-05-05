@@ -19,6 +19,18 @@ if str(_ROOT) not in sys.path:
 logger = logging.getLogger(__name__)
 
 
+def _run_async(coro):
+    """Safely execute a coroutine in a synchronous context, reusing event loop."""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            raise RuntimeError("Event loop is closed")
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coro)
+
+
 class handler(BaseHTTPRequestHandler):
     """Vercel ожидает класс handler(BaseHTTPRequestHandler)."""
 
@@ -39,7 +51,7 @@ class handler(BaseHTTPRequestHandler):
             data = json.loads(raw.decode("utf-8"))
             from bot.handler import process_update
 
-            asyncio.run(process_update(data))
+            _run_async(process_update(data))
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"OK")

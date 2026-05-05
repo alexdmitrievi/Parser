@@ -18,12 +18,14 @@ const STATIC_ASSETS = [
   '/web/favorites.js',
   '/web/subscribe.js',
   '/web/stats.js',
+  '/web/social-contract.js',
+  '/web/navbar.js',
+  '/web/shared.js',
   '/web/styles.css',
   '/web/vendor/chart.umd.min.js',
   '/web/manifest.json',
   '/web/icon-192.png',
   '/web/icon-512.png',
-  '/web/logo.png',
 ];
 
 // Install: кешируем статику

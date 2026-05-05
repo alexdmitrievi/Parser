@@ -16,15 +16,6 @@ const btnReset = document.getElementById("btn-reset");
 const sortSelect = document.getElementById("sort-select");
 const btnExportEl = document.getElementById("btn-export");
 
-/* ── Toast ── */
-
-function showToast(msg) {
-  let c = document.querySelector(".toast-container");
-  if (!c) { c = document.createElement("div"); c.className = "toast-container"; document.body.appendChild(c); }
-  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; c.appendChild(t);
-  setTimeout(() => { t.classList.add("fade-out"); t.addEventListener("animationend", () => t.remove()); }, 2500);
-}
-
 /* ── Tab state ── */
 
 let activeTab = "bankruptcy";
@@ -37,17 +28,25 @@ const TAB_CONFIG = {
     showPropertyType: true,
     resultLabel: "лотов",
   },
+  privatization: {
+    lawType: "auction",
+    auctionType: "privatization",
+    title: "Приватизация",
+    subtitle: "Государственное и муниципальное имущество, акции, предприятия",
+    showPropertyType: false,
+    resultLabel: "объектов",
+  },
+  pledged: {
+    lawType: "auction",
+    auctionType: "pledged",
+    title: "Залоговое имущество",
+    subtitle: "Реализация залогового имущества банками и кредиторами",
+    showPropertyType: true,
+    resultLabel: "лотов",
+  },
 };
 
-/* ── Helpers ── */
-
-function esc(s) {
-  const d = document.createElement("div");
-  d.textContent = String(s ?? "");
-  return d.innerHTML;
-}
-
-const CURRENCY_SYMBOLS = { RUB: "\u20BD", USD: "$", EUR: "\u20AC", KZT: "\u20B8" };
+/* ── Helpers ── */const CURRENCY_SYMBOLS = { RUB: "\u20BD", USD: "$", EUR: "\u20AC", KZT: "\u20B8" };
 
 function fmtMoney(n, currency) {
   if (n == null) return "\u2014";
@@ -168,7 +167,8 @@ function exportCSV(items) {
     PLATFORM_NAMES[t.source_platform] || t.source_platform || "",
     t.original_url || "",
   ].join(";")).join("\n");
-  const filename = "auctions.csv";
+  const today = new Date().toISOString().slice(0, 10);
+  const filename = `auctions_${today}.csv`;
   const blob = new Blob([BOM + header + rows], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
 }
@@ -195,6 +195,7 @@ function buildQueryString() {
   // law_type зависит от активного таба
   const cfg = TAB_CONFIG[activeTab];
   params.set("law_type", cfg.lawType);
+  if (cfg.auctionType) params.set("auction_type", cfg.auctionType);
   params.set("sort", sortSelect.value || "created_at");
   params.set("status", "active");
   params.set("page", pageInput.value || "1");

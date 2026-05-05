@@ -19,28 +19,7 @@ const advancedToggle = document.getElementById("advanced-toggle");
 const advancedBody = document.getElementById("advanced-body");
 const btnExportEl = document.getElementById("btn-export");
 
-/* ── Toast ── */
-
-function showToast(msg) {
-  let c = document.querySelector(".toast-container");
-  if (!c) { c = document.createElement("div"); c.className = "toast-container"; document.body.appendChild(c); }
-  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; c.appendChild(t);
-  setTimeout(() => { t.classList.add("fade-out"); t.addEventListener("animationend", () => t.remove()); }, 2500);
-}
-
 /* ── Helpers ── */
-
-function esc(s) {
-  const d = document.createElement("div");
-  d.textContent = String(s ?? "");
-  return d.innerHTML;
-}
-
-function fmtMoney(n) {
-  if (n == null) return "\u2014";
-  try { return Number(n).toLocaleString("ru-RU") + " \u20BD"; }
-  catch { return String(n); }
-}
 
 function fmtDate(iso) {
   if (!iso) return "\u2014";
@@ -188,7 +167,8 @@ function exportCSV(items) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "tenders_podryad_pro.csv";
+  const today = new Date().toISOString().slice(0, 10);
+  a.download = `tenders_${today}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -612,7 +592,8 @@ btnNext.addEventListener("click", () => {
     const total = data.total ?? 0;
     const regions = Object.keys(data.by_region || {}).length;
     if (total > 0) {
-      el.innerHTML = `<span>${total.toLocaleString("ru-RU")}</span> \u0442\u0435\u043d\u0434\u0435\u0440\u043e\u0432 \u0438\u0437 <span>6</span> \u043f\u043b\u043e\u0449\u0430\u0434\u043e\u043a \u0432 <span>${regions}</span> \u0440\u0435\u0433\u0438\u043e\u043d\u0430\u0445`;
+      const platforms = data.platforms ?? 0;
+      el.innerHTML = `<span>${total.toLocaleString("ru-RU")}</span> \u0442\u0435\u043d\u0434\u0435\u0440\u043e\u0432 \u0438\u0437 <span>${platforms}</span> \u043f\u043b\u043e\u0449\u0430\u0434\u043e\u043a \u0432 <span>${regions}</span> \u0440\u0435\u0433\u0438\u043e\u043d\u0430\u0445`;
     }
   } catch { /* silent */ }
 })();

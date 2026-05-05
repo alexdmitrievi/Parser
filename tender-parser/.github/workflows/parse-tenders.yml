@@ -1,0 +1,58 @@
+name: Parse Tenders
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"  # каждые 3 часа
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Группа парсеров (all / eis_ftp / etp / commercial / corporate)"
+        required: false
+        default: "all"
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-parser.txt
+
+      - name: Parse tenders (all main sources)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python scripts/run_parser.py --source ${{ github.event.inputs.source || 'all' }}
+
+      - name: Parse ETP platforms
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python scripts/run_parser.py --source etp
+
+      - name: Parse commercial aggregators
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python scripts/run_parser.py --source commercial
+
+      - name: Parse corporate platforms
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python scripts/run_parser.py --source corporate

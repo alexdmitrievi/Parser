@@ -18,25 +18,6 @@ if (!favResults || !favToolbar || !favCount) {
 
 function initFavorites() {
 
-function showToast(msg) {
-  let c = document.querySelector(".toast-container");
-  if (!c) { c = document.createElement("div"); c.className = "toast-container"; document.body.appendChild(c); }
-  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; c.appendChild(t);
-  setTimeout(() => { t.classList.add("fade-out"); t.addEventListener("animationend", () => t.remove()); }, 2500);
-}
-
-function esc(s) {
-  const d = document.createElement("div");
-  d.textContent = String(s ?? "");
-  return d.innerHTML;
-}
-
-function fmtMoney(n) {
-  if (n == null) return "\u2014";
-  try { return Number(n).toLocaleString("ru-RU") + " \u20BD"; }
-  catch { return String(n); }
-}
-
 function getFavorites() {
   try { return JSON.parse(localStorage.getItem("podryad_favorites") || "[]"); }
   catch { return []; }
@@ -76,7 +57,8 @@ function exportCSV(items) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "favorites_podryad_pro.csv";
+  const today = new Date().toISOString().slice(0, 10);
+  a.download = `favorites_${today}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
