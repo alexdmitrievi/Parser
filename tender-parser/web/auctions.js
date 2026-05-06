@@ -124,32 +124,6 @@ document.querySelectorAll(".auction-tab").forEach(btn => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
 
-/* ── Autocomplete ── */
-
-function setupAutocomplete(inputEl, dropdownEl, fetchFn) {
-  let timer = null, idx = -1, items = [];
-
-  function show(results) {
-    items = results; idx = -1;
-    if (!results.length) { dropdownEl.classList.add("hidden"); return; }
-    dropdownEl.innerHTML = results.map((t, i) => `<div class="autocomplete-item" data-index="${i}">${esc(t)}</div>`).join("");
-    dropdownEl.classList.remove("hidden");
-  }
-  function pick(i) { if (i >= 0 && i < items.length) { inputEl.value = items[i]; dropdownEl.classList.add("hidden"); items = []; idx = -1; } }
-  function highlight() { dropdownEl.querySelectorAll(".autocomplete-item").forEach((el, i) => { el.classList.toggle("active", i === idx); if (i === idx) el.scrollIntoView({ block: "nearest" }); }); }
-
-  inputEl.addEventListener("input", () => { clearTimeout(timer); const q = inputEl.value.trim(); if (q.length < 1) { dropdownEl.classList.add("hidden"); return; } timer = setTimeout(async () => { try { show(await fetchFn(q)); } catch { dropdownEl.classList.add("hidden"); } }, 300); });
-  inputEl.addEventListener("keydown", e => { if (dropdownEl.classList.contains("hidden")) return; if (e.key === "ArrowDown") { e.preventDefault(); idx = Math.min(idx + 1, items.length - 1); highlight(); } else if (e.key === "ArrowUp") { e.preventDefault(); idx = Math.max(idx - 1, 0); highlight(); } else if (e.key === "Enter" && idx >= 0) { e.preventDefault(); pick(idx); } else if (e.key === "Escape") { dropdownEl.classList.add("hidden"); } });
-  dropdownEl.addEventListener("click", e => { const item = e.target.closest(".autocomplete-item"); if (item) pick(parseInt(item.dataset.index, 10)); });
-  document.addEventListener("click", e => { if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) dropdownEl.classList.add("hidden"); });
-}
-
-async function fetchRegionSuggestions(q) {
-  const res = await fetch(`/api/suggest/regions?q=${encodeURIComponent(q)}`);
-  if (!res.ok) return [];
-  return (await res.json()).items || [];
-}
-
 setupAutocomplete(document.getElementById("region"), document.getElementById("region-dropdown"), fetchRegionSuggestions);
 
 /* ── CSV Export ── */

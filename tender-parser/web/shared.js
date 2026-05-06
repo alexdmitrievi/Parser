@@ -37,7 +37,92 @@ function fmtMoney(n) {
   };
 })();
 
-/* ── Service Worker ── */
+/* ── Formatters ── */
+function fmtDate(iso) {
+  if (!iso) return "\u2014";
+  try {
+    return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" });
+  } catch { return String(iso).slice(0, 10); }
+}
+
+/* ── Autocomplete (shared across all pages) ── */
+function setupAutocomplete(inputEl, dropdownEl, fetchFn) {
+  let timer = null;
+  let idx = -1;
+  let items = [];
+  let abort = null;
+
+  function show(results) {
+    items = results;
+    idx = -1;
+    if (!results.length) { dropdownEl.classList.add("hidden"); dropdownEl.innerHTML = ""; return; }
+    dropdownEl.innerHTML = results
+      .map((t, i) => `<div class="autocomplete-item" data-index="${i}">${esc(t)}</div>`)
+      .join("");
+    dropdownEl.classList.remove("hidden");
+  }
+
+  function pick(i) {
+    if (i >= 0 && i < items.length) {
+      inputEl.value = items[i];
+      dropdownEl.classList.add("hidden");
+      items = [];
+      idx = -1;
+    }
+  }
+
+  function highlight() {
+    dropdownEl.querySelectorAll(".autocomplete-item").forEach((el, i) => {
+      el.classList.toggle("active", i === idx);
+      if (i === idx) el.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  inputEl.addEventListener("input", () => {
+    clearTimeout(timer);
+    if (abort) abort.abort();
+    const q = inputEl.value.trim();
+    if (q.length < 1) { dropdownEl.classList.add("hidden"); return; }
+    timer = setTimeout(async () => {
+      try {
+        abort = new AbortController();
+        const signal = abort.signal;
+        show(await fetchFn(q, signal));
+      } catch { dropdownEl.classList.add("hidden"); }
+    }, 300);
+  });
+
+  inputEl.addEventListener("keydown", e => {
+    if (dropdownEl.classList.contains("hidden")) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); idx = Math.min(idx + 1, items.length - 1); highlight(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); idx = Math.max(idx - 1, 0); highlight(); }
+    else if (e.key === "Enter" && idx >= 0) { e.preventDefault(); pick(idx); }
+    else if (e.key === "Escape") { dropdownEl.classList.add("hidden"); }
+  });
+
+  dropdownEl.addEventListener("click", e => {
+    const item = e.target.closest(".autocomplete-item");
+    if (item) pick(parseInt(item.dataset.index, 10));
+  });
+
+  document.addEventListener("click", e => {
+    if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) dropdownEl.classList.add("hidden");
+  });
+}
+
+async function fetchRegionSuggestions(q, signal) {
+  const res = await fetch(`/api/suggest/regions?q=${encodeURIComponent(q)}`, signal ? { signal } : {});
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.items || [];
+}
+
+/* ── Status message ── */
+function setStatus(el, text, isError) {
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle("error", !!isError);
+}
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/web/sw.js").catch(() => {});
