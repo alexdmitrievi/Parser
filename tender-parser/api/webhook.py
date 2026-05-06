@@ -38,13 +38,19 @@ class handler(BaseHTTPRequestHandler):
         try:
             from shared.config import get_config
             secret = get_config()["bot_webhook_secret"]
-            if secret:
-                token = self.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-                if token != secret:
-                    self.send_response(403)
-                    self.end_headers()
-                    self.wfile.write(b"Forbidden")
-                    return
+            if not secret:
+                logger.critical("BOT_WEBHOOK_SECRET is not set — webhook disabled")
+                self.send_response(503)
+                self.end_headers()
+                self.wfile.write(b"Webhook disabled — BOT_WEBHOOK_SECRET not configured")
+                return
+
+            token = self.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+            if token != secret:
+                self.send_response(401)
+                self.end_headers()
+                self.wfile.write(b"Unauthorized")
+                return
 
             length = int(self.headers.get("Content-Length", 0))
             raw = self.rfile.read(length)

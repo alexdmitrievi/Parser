@@ -28,15 +28,8 @@ const STATIC_ASSETS = [
   '/web/icon-512.png',
 ];
 
-// Install: кешируем статику
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn('[SW] Cache preload partial:', err);
-      });
-    })
-  );
+// Install: skip waiting (no pre-cache — lazy-cache on first use)
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 

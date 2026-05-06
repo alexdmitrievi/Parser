@@ -14,11 +14,12 @@ import argparse
 import logging
 import sys
 import os
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from shared.logging_config import configure_logging
-from shared.db import insert_tenders
+from shared.db import insert_tenders, log_scrape_start, log_scrape_finish
 from pipeline.normalizer import normalize_batch
 from pipeline.tagger import tag_tenders_batch
 
@@ -26,7 +27,7 @@ configure_logging()
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-    force=False,  # don't override JsonFormatter if LOG_FORMAT=json
+    force=False,
 )
 logger = logging.getLogger("parser")
 
@@ -41,6 +42,23 @@ def _process_and_save(tenders, source_name: str) -> int:
     count = insert_tenders(tenders)
     logger.info(f"{source_name}: saved {count} tenders")
     return count
+
+
+def _run_with_log(runner_fn, group: str) -> int:
+    """Запустить runner с записью в scrape_log."""
+    name = runner_fn.__name__
+    log_id = log_scrape_start(name, group)
+    t0 = time.time()
+    try:
+        count = runner_fn()
+        duration_ms = int((time.time() - t0) * 1000)
+        log_scrape_finish(log_id, "success", tenders_found=count, tenders_inserted=count, duration_ms=duration_ms)
+        return count
+    except Exception as e:
+        duration_ms = int((time.time() - t0) * 1000)
+        log_scrape_finish(log_id, "failed", error_message=str(e)[:500], duration_ms=duration_ms)
+        logger.error(f"Runner {name} failed: {e}", exc_info=True)
+        return 0
 
 
 # ──────── ЕИС ────────
@@ -311,14 +329,11 @@ def main():
     args = parser.parse_args()
 
     total = 0
-    runners = GROUPS[args.source]
+    group = args.source
+    runners = GROUPS[group]
 
     for runner in runners:
-        try:
-            total += runner()
-        except Exception as e:
-            logger.error(f"Runner {runner.__name__} failed: {e}", exc_info=True)
-            continue
+        total += _run_with_log(runner, group)
 
     logger.info(f"=== DONE. Total tenders: {total} ===")
     return 0

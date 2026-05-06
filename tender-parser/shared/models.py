@@ -167,7 +167,7 @@ class SearchFilters(BaseModel):
             date_from=filters.get("date_from"),
             date_to=filters.get("date_to"),
             source_platform=filters.get("source_platform"),
-            sort_by=filters.get("sort_by") or "created_at",
+            sort_by=filters.get("sort_by") or filters.get("sort") or "created_at",
             page=page,
             per_page=per_page,
         )

@@ -1,4 +1,4 @@
-"""Structured JSON logging configuration — opt-in via LOG_FORMAT=json env var."""
+"""Structured JSON logging — enabled by default on Vercel, opt-out via LOG_FORMAT=text."""
 from __future__ import annotations
 
 import json
@@ -17,17 +17,20 @@ class JsonFormatter(logging.Formatter):
             "level": record.levelname,
             "logger": record.name,
             "msg": record.getMessage(),
+            "module": record.module,
+            "funcName": record.funcName,
         }
         if record.exc_info and record.exc_info[1]:
             payload["error"] = str(record.exc_info[1])
-        if hasattr(record, "extra") and record.extra:
-            payload.update(getattr(record, "extra", {}))
+        if record.args and isinstance(record.args, dict):
+            payload.update(record.args)
         return json.dumps(payload, ensure_ascii=False)
 
 
 def configure_logging() -> None:
-    """Apply JSON logging if LOG_FORMAT=json, otherwise plain text."""
-    if os.environ.get("LOG_FORMAT", "").lower() != "json":
+    """Apply JSON logging unless LOG_FORMAT=text is set."""
+    log_format = os.environ.get("LOG_FORMAT", "json").lower()
+    if log_format == "text":
         return
 
     handler = logging.StreamHandler(sys.stderr)

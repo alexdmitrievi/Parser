@@ -1,0 +1,24 @@
+name: Notify on Failure
+
+on:
+  workflow_run:
+    workflows:
+      - "Parse Tenders"
+      - "Parse Auctions"
+      - "Parse Funding Programs"
+      - "Notify"
+    types:
+      - completed
+
+jobs:
+  alert:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Report failure
+        run: |
+          echo "Workflow ${{ github.event.workflow_run.name }} FAILED"
+          echo "Run URL: ${{ github.event.workflow_run.html_url }}"
+          echo "Branch: ${{ github.event.workflow_run.head_branch }}"

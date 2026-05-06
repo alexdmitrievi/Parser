@@ -5,8 +5,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
-from datetime import datetime
-from typing import Any, Optional
+from datetime import datetime, timedelta, timezone
 
 from supabase import create_client, Client
 
@@ -120,21 +119,10 @@ def _sanitize_postgrest(value: str) -> str:
 def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
     """Применить общие фильтры к запросу (используется в search и count)."""
     if filters.query:
-        # Ищем каждое слово запроса (обрезанное до корня) в title, description, customer_name
-        words = filters.query.strip().split()
-        for word in words:
-            stem = _sanitize_postgrest(_stem_russian(word))
-            if len(stem) < 2:
-                stem = _sanitize_postgrest(word.lower())
-            if not stem:
-                continue
-            query = query.or_(
-                f"title.ilike.%{stem}%,description.ilike.%{stem}%,customer_name.ilike.%{stem}%"
-            )
+        q = _sanitize_postgrest(filters.query.strip())
+        if q:
+            query = query.text_search("fts", q)
     if filters.region:
-        # Ищем только в customer_region (нормализованное поле).
-        # НЕ ищем в title/description — это давало ложные срабатывания
-        # (например "Омск" матчился внутри "Костромская").
         r = _sanitize_postgrest(filters.region)
         if r:
             query = query.ilike("customer_region", f"%{r}%")
@@ -259,7 +247,6 @@ def suggest_customers(q: str, limit: int = 10) -> list[str]:
 def get_new_tenders_since(since_minutes: int = 60) -> list[dict]:
     """Получить тендеры, добавленные за последние N минут."""
     db = get_db()
-    from datetime import datetime, timedelta, timezone
     cutoff = (datetime.now(timezone.utc) - timedelta(minutes=since_minutes)).isoformat()
 
     try:
@@ -479,3 +466,252 @@ def set_user_state(telegram_user_id: int, state: dict[str, Any]) -> None:
 def clear_user_state(telegram_user_id: int) -> None:
     """Очистить состояние диалога бота."""
     set_user_state(telegram_user_id, {})
+
+
+# ──────────────────────── Агрегация (RPC) ────────────────────────
+
+
+def get_stats_via_rpc() -> dict:
+    """Статистика через DB-агрегацию (не грузит строки в память)."""
+    db = get_db()
+    try:
+        result = db.rpc("get_tender_stats").execute()
+        return result.data if result.data else {}
+    except Exception as e:
+        logger.warning(f"get_tender_stats RPC failed, falling back: {e}")
+        return _get_stats_fallback()
+
+
+def get_meta_via_rpc() -> dict:
+    """Meta enrichment через DB-агрегацию."""
+    db = get_db()
+    try:
+        result = db.rpc("get_tender_meta").execute()
+        return result.data if result.data else {}
+    except Exception as e:
+        logger.warning(f"get_tender_meta RPC failed, falling back: {e}")
+        return _get_meta_fallback()
+
+
+def _get_stats_fallback() -> dict:
+    """Fallback: in-Python aggregation (для старой БД без RPC)."""
+    db = get_db()
+    total_res = db.table("tenders").select("id", count="exact").execute()
+    total = total_res.count or 0
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    recent_res = db.table("tenders").select("id", count="exact").gte("created_at", week_ago).execute()
+    recent = recent_res.count or 0
+    res = db.table("tenders").select("niche_tags, customer_region, source_platform").limit(5000).execute()
+    by_niche: dict[str, int] = {}
+    by_region: dict[str, int] = {}
+    platforms: set[str] = set()
+    for r in res.data or []:
+        for t in r.get("niche_tags") or []:
+            by_niche[t] = by_niche.get(t, 0) + 1
+        reg = r.get("customer_region") or "unknown"
+        by_region[reg] = by_region.get(reg, 0) + 1
+        plat = r.get("source_platform")
+        if plat:
+            platforms.add(plat)
+    return {
+        "total": total, "platforms": len(platforms),
+        "by_niche": by_niche, "by_region": by_region,
+        "created_last_7_days": recent,
+    }
+
+
+def _get_meta_fallback() -> dict:
+    """Fallback для meta."""
+    db = get_db()
+    res = db.table("tenders").select("niche_tags,source_platform,purchase_method").limit(5000).execute()
+    rows = res.data or []
+    niche_counts: dict[str, int] = {}
+    platform_counts: dict[str, int] = {}
+    method_counts: dict[str, int] = {}
+    for r in rows:
+        for t in r.get("niche_tags") or []:
+            niche_counts[t] = niche_counts.get(t, 0) + 1
+        p = r.get("source_platform", "")
+        if p:
+            platform_counts[p] = platform_counts.get(p, 0) + 1
+        m = r.get("purchase_method", "")
+        if m:
+            method_counts[m] = method_counts.get(m, 0) + 1
+    return {
+        "niches": [{"name": k, "count": v} for k, v in sorted(niche_counts.items())],
+        "platforms": [{"id": k, "name": k, "count": v} for k, v in sorted(platform_counts.items())],
+        "methods": [{"id": k, "name": k, "count": v} for k, v in sorted(method_counts.items())],
+    }
+
+
+# ──────────────────────── Funding ────────────────────────
+
+
+def get_funding_programs(
+    q: str | None = None,
+    region: str | None = None,
+    program_type: str | None = None,
+    industry: str | None = None,
+    amount_max: float | None = None,
+    source_platform: str | None = None,
+    status: str = "active",
+    page: int = 1,
+    page_size: int = 12,
+) -> tuple[list[dict], int]:
+    """Поиск программ финансирования с фильтрами. Возвращает (rows, total)."""
+    db = get_db()
+    qb = db.table("funding_programs").select("*", count="exact")
+    if status and status != "all":
+        qb = qb.eq("status", status)
+    if q:
+        qb = qb.ilike("program_name", f"%{_sanitize_postgrest(q)}%")
+    if region:
+        qb = qb.contains("regions", [region])
+    if program_type:
+        qb = qb.eq("program_type", program_type)
+    if amount_max is not None:
+        qb = qb.lte("amount_min", amount_max)
+    if source_platform:
+        qb = qb.eq("source_platform", source_platform)
+    start = (page - 1) * page_size
+    try:
+        res = qb.order("created_at", desc=True).range(start, start + page_size - 1).execute()
+        total = getattr(res, "count", None) or 0
+        return res.data or [], total
+    except Exception as e:
+        logger.error(f"get_funding_programs: {e}")
+        return [], 0
+
+
+def get_funding_detail(program_id: str) -> dict | None:
+    """Одна программа финансирования по ID."""
+    db = get_db()
+    try:
+        res = db.table("funding_programs").select("*").eq("id", program_id).limit(1).execute()
+        rows = res.data or []
+        return rows[0] if rows else None
+    except Exception as e:
+        logger.error(f"get_funding_detail: {e}")
+        return None
+
+
+def get_funding_meta_via_rpc() -> dict:
+    """Funding meta через RPC."""
+    db = get_db()
+    try:
+        result = db.rpc("get_funding_meta").execute()
+        return result.data if result.data else {}
+    except Exception as e:
+        logger.warning(f"get_funding_meta RPC failed: {e}")
+        db = get_db()
+        total = db.table("funding_programs").select("id", count="exact").eq("status", "active").execute()
+        return {"total_active": total.count or 0, "by_type": [], "by_platform": []}
+
+
+def get_niches() -> list[dict]:
+    """Список ниш с количеством тендеров."""
+    db = get_db()
+    try:
+        res = db.table("tenders").select("niche_tags").limit(5000).execute()
+    except Exception as e:
+        logger.error(f"niches: {e}")
+        return []
+    rows = res.data or []
+    counts: dict[str, int] = {}
+    for r in rows:
+        for t in r.get("niche_tags") or []:
+            counts[t] = counts.get(t, 0) + 1
+    return [{"name": k, "count": v} for k, v in sorted(counts.items())]
+
+
+# ──────────────────────── Scrape Log ────────────────────────
+
+
+def log_scrape_start(scraper_name: str, source_group: str) -> str | None:
+    """Записать начало парсинга, вернуть ID записи."""
+    db = get_db()
+    try:
+        result = db.table("scrape_log").insert({
+            "scraper_name": scraper_name,
+            "source_group": source_group,
+            "status": "running",
+        }).execute()
+        return result.data[0]["id"] if result.data else None
+    except Exception as e:
+        logger.warning(f"log_scrape_start: {e}")
+        return None
+
+
+def log_scrape_finish(
+    log_id: str | None, status: str,
+    tenders_found: int = 0, tenders_inserted: int = 0,
+    error_message: str = "", duration_ms: int = 0,
+) -> None:
+    """Обновить запись парсинга после завершения."""
+    if not log_id:
+        return
+    db = get_db()
+    try:
+        payload: dict[str, Any] = {"status": status, "completed_at": datetime.now(timezone.utc).isoformat()}
+        if tenders_found:
+            payload["tenders_found"] = tenders_found
+        if tenders_inserted:
+            payload["tenders_inserted"] = tenders_inserted
+        if error_message:
+            payload["error_message"] = error_message[:500]
+        if duration_ms:
+            payload["duration_ms"] = duration_ms
+        db.table("scrape_log").update(payload).eq("id", log_id).execute()
+    except Exception as e:
+        logger.warning(f"log_scrape_finish: {e}")
+
+
+def get_scrape_health() -> list[dict]:
+    """Последние результаты всех скрейперов (для health/full)."""
+    db = get_db()
+    try:
+        res = db.table("scrape_log").select("*").order("started_at", desc=True).limit(50).execute()
+        return res.data or []
+    except Exception:
+        return []
+
+
+# ──────────────────────── Rate Limiter (DB-based) ────────────────────────
+
+
+def check_rate_limit(ip: str, endpoint: str, max_requests: int = 30, window_seconds: int = 60) -> bool:
+    """Проверить лимит запросов для IP. True = разрешено."""
+    db = get_db()
+    now = datetime.now(timezone.utc)
+    cutoff = (now - timedelta(seconds=window_seconds)).isoformat()
+    try:
+        existing = db.table("rate_limits").select("count,window_start").eq("ip", ip).eq("endpoint", endpoint).execute()
+        row = existing.data[0] if existing.data else None
+        if row:
+            window_start = row.get("window_start")
+            if window_start:
+                ws = datetime.fromisoformat(window_start.replace("Z", "+00:00"))
+                if (now - ws).total_seconds() < window_seconds:
+                    if row["count"] >= max_requests:
+                        return False
+                    db.table("rate_limits").update({"count": row["count"] + 1}).eq("ip", ip).eq("endpoint", endpoint).execute()
+                    return True
+            db.table("rate_limits").update({"window_start": now.isoformat(), "count": 1}).eq("ip", ip).eq("endpoint", endpoint).execute()
+        else:
+            db.table("rate_limits").insert({"ip": ip, "endpoint": endpoint, "window_start": now.isoformat(), "count": 1}).execute()
+        return True
+    except Exception as e:
+        logger.warning(f"rate_limit check failed: {e}")
+        return True
+
+
+def cleanup_old_rate_limits() -> None:
+    """Удалить устаревшие записи rate_limits (вызывать из cron)."""
+    db = get_db()
+    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+    try:
+        db.table("rate_limits").delete().lt("window_start", cutoff).execute()
+    except Exception as e:
+        logger.warning(f"cleanup_old_rate_limits: {e}")
+
+
