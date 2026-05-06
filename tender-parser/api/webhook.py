@@ -42,7 +42,7 @@ class handler(BaseHTTPRequestHandler):
                 logger.critical("BOT_WEBHOOK_SECRET is not set — webhook disabled")
                 self.send_response(503)
                 self.end_headers()
-                self.wfile.write(b"Webhook disabled — BOT_WEBHOOK_SECRET not configured")
+                self.wfile.write(b"Webhook disabled - BOT_WEBHOOK_SECRET not configured")
                 return
 
             token = self.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
