@@ -117,6 +117,27 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
+.nav-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--accent-blue);
+  text-decoration: none;
+  transition: var(--transition);
+  margin-right: 0.25rem;
+}
+.nav-back-link:hover {
+  background: rgba(47, 91, 255, 0.08);
+  color: var(--accent-purple);
+}
+.nav-back-link svg {
+  flex-shrink: 0;
+}
+
 .logo-img {
   width: 32px;
   height: 32px;

@@ -17,9 +17,18 @@ const NAV_LINKS = [
 class NavBar extends HTMLElement {
   connectedCallback() {
     const active = this.getAttribute("active") || "tenders";
+    const isMain = active === "tenders";
+
+    const backLink = isMain ? "" : `
+      <a href="/web/" class="nav-back-link" title="Вернуться к поиску тендеров">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <span>Назад</span>
+      </a>
+    `;
 
     this.innerHTML = `
       <div class="navbar-brand">
+        ${backLink}
         <span>Тендер PRO</span>
         <a href="https://podryadpro.ru/" class="nav-podryad" title="Платформа Подряд PRO" style="margin-left:10px;font-size:11px;font-weight:500;color:var(--text-muted);opacity:0.5;transition:opacity 0.2s;white-space:nowrap;text-decoration:none" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">← Подряд PRO</a>
       </div>
