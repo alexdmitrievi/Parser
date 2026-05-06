@@ -26,16 +26,18 @@ class NavBar extends HTMLElement {
       </a>
     `;
 
+    const linksClass = `navbar-links${isMain ? ' always-visible' : ''}`;
+
     this.innerHTML = `
       <div class="navbar-brand">
         ${backLink}
         <span>Тендер PRO</span>
         <a href="https://podryadpro.ru/" class="nav-podryad" title="Платформа Подряд PRO" style="margin-left:10px;font-size:11px;font-weight:500;color:var(--text-muted);opacity:0.5;transition:opacity 0.2s;white-space:nowrap;text-decoration:none" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">← Подряд PRO</a>
       </div>
-      <button class="navbar-burger" id="navbar-burger" aria-label="Меню" aria-expanded="false">
+      <button class="navbar-burger${isMain ? ' hidden-on-main' : ''}" id="navbar-burger" aria-label="Меню" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
-      <div class="navbar-links">
+      <div class="${linksClass}">
         ${NAV_LINKS.map(l => `
           <a href="${l.href}" class="nav-link${l.id === active ? ' active' : ''}">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${l.svg}</svg>
