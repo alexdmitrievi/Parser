@@ -14,6 +14,7 @@
     { "src": "/api/subscriptions(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/tenders(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/stats", "dest": "/api/tenders.py" },
+    { "src": "/api/meta", "dest": "/api/tenders.py" },
     { "src": "/api/niches", "dest": "/api/tenders.py" },
     { "src": "/api/suggest(.*)", "dest": "/api/tenders.py" },
     { "src": "/api/funding(.*)", "dest": "/api/tenders.py" },

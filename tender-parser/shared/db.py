@@ -117,11 +117,17 @@ def _sanitize_postgrest(value: str) -> str:
 
 
 def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
-    """Применить общие фильтры к запросу (используется в search и count)."""
+    """Apply common filters to query (used in search and count)."""
     if filters.query:
         q = _sanitize_postgrest(filters.query.strip())
         if q:
-            query = query.text_search("fts", q)
+            words = q.split()
+            if len(words) == 1 and len(words[0]) >= 3:
+                query = query.ilike("title", f"%{words[0]}%")
+            else:
+                for word in words[:5]:
+                    if len(word) >= 2:
+                        query = query.ilike("title", f"%{word}%")
     if filters.region:
         r = _sanitize_postgrest(filters.region)
         if r:
