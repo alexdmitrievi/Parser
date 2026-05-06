@@ -1,32 +1,7 @@
 // Service Worker — Тендер PRO
-// Стратегия: Cache-First для статики, Network-First для API
+// Strategy: Cache-First for static, Network-First for API
 
-const CACHE_NAME = 'tender-pro-v2';
-const STATIC_ASSETS = [
-  '/web/',
-  '/web/index.html',
-  '/web/auctions.html',
-  '/web/grants.html',
-  '/web/favorites.html',
-  '/web/subscribe.html',
-  '/web/stats.html',
-  '/web/social-contract.html',
-  '/web/about.html',
-  '/web/app.js',
-  '/web/auctions.js',
-  '/web/grants.js',
-  '/web/favorites.js',
-  '/web/subscribe.js',
-  '/web/stats.js',
-  '/web/social-contract.js',
-  '/web/navbar.js',
-  '/web/shared.js',
-  '/web/styles.css',
-  '/web/vendor/chart.umd.min.js',
-  '/web/manifest.json',
-  '/web/icon-192.png',
-  '/web/icon-512.png',
-];
+const CACHE_NAME = 'tender-pro-v3';
 
 // Install: skip waiting (no pre-cache — lazy-cache on first use)
 self.addEventListener('install', () => {

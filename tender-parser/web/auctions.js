@@ -279,7 +279,7 @@ async function runSearch() {
     setStatus("", false);
     if (total > 0) resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (e) {
-    console.error(e);
+
     setStatus("Ошибка: " + (e.message || "Проверьте сеть."), true);
     resultsEl.innerHTML = "";
     resultsToolbar.classList.add("hidden");

@@ -25,6 +25,18 @@ function fmtMoney(n) {
   catch { return String(n); }
 }
 
+/* ── Dark mode toggle ── */
+(function initTheme() {
+  const saved = localStorage.getItem("tenderpro-theme");
+  if (saved === "dark") {
+    document.body.classList.add("dark");
+  }
+  window.toggleTheme = function () {
+    const isDark = document.body.classList.toggle("dark");
+    localStorage.setItem("tenderpro-theme", isDark ? "dark" : "light");
+  };
+})();
+
 /* ── Service Worker ── */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

@@ -4,6 +4,7 @@ Contains all business logic, separated to keep Vercel handler minimal.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -16,7 +17,9 @@ if _ROOT not in sys.path:
 
 logger = logging.getLogger(__name__)
 
-CORS_ORIGINS = "http://localhost:3000,http://localhost:8000,https://tender-pro.vercel.app,https://tender-parser.vercel.app"
+def _stable_hash(s: str) -> int:
+    """Deterministic integer hash — same across all processes."""
+    return int(hashlib.sha256(s.encode()).hexdigest(), 16) % (10 ** 15)
 
 PROGRAM_TYPE_LABELS = {
     "grant": "Грант", "loan": "Кредит", "microloan": "Микрозайм",
@@ -134,10 +137,24 @@ def _set_cached(key, val):
     _cache[key] = (time.time(), val)
 
 
+def _check_limit(h):
+    ip = h.client_address[0] if h.client_address else "0.0.0.0"
+    path = h.path.split("?")[0]
+    try:
+        from shared.db import check_rate_limit
+        max_req = 10 if path in ("/api/stats", "/api/meta") else 30
+        return check_rate_limit(ip, path, max_requests=max_req, window_seconds=60)
+    except Exception:
+        return True
+
+
 # ── Route dispatcher ──
 
 def route(handler, method, path, query, body):
     h = handler
+
+    if not _check_limit(h):
+        return _json(h, 429, {"error": "rate_limited", "detail": "Too many requests"})
 
     if path == "/health":
         return _health(h)
@@ -207,6 +224,7 @@ def _health(h):
         result = db.table("tenders").select("id", count="estimated").limit(1).execute()
         _json(h, 200, {"status": "ok", "db": "connected", "tenders_count": str(result.count if result.count else "?")})
     except Exception as e:
+        logger.exception("health")
         _json(h, 200, {"status": "degraded", "db": f"error: {str(e)[:100]}"})
 
 
@@ -226,6 +244,7 @@ def _health_full(h):
             "scrapers": {k: {"last_run": v.get("started_at"), "status": v.get("status"), "tenders_found": v.get("tenders_found", 0), "error": v.get("error_message", "")} for k, v in scrapers.items()},
         }, cache_max_age=60)
     except Exception as e:
+        logger.exception("health_full")
         _json(h, 200, {"status": "degraded", "error": str(e)[:100]})
 
 
@@ -293,6 +312,7 @@ def _list_tenders(h, q):
         total = getattr(res, "count", None) or len(res.data or [])
         _json(h, 200, {"items": res.data or [], "page": page, "page_size": page_size, "total": total})
     except Exception as e:
+        logger.exception("handler")
         _json(h, 502, {"error": str(e)[:200]})
 
 
@@ -306,6 +326,7 @@ def _get_tender(h, tid):
         else:
             _json(h, 404, {"error": "Not found"})
     except Exception as e:
+        logger.exception("handler")
         _json(h, 502, {"error": str(e)[:200]})
 
 
@@ -377,6 +398,7 @@ def _meta(h):
         _set_cached("meta", result)
         _json(h, 200, result, cache_max_age=300)
     except Exception as e:
+        logger.exception("handler")
         _json(h, 502, {"error": str(e)[:200]})
 
 
@@ -386,6 +408,7 @@ def _niches(h):
         result = get_niches()
         _json(h, 200, {"niches": result}, cache_max_age=300)
     except Exception as e:
+        logger.exception("handler")
         _json(h, 502, {"error": str(e)[:200]})
 
 
@@ -417,11 +440,11 @@ def _suggest_customers(h, q):
 
 
 def _suggest_platforms(h):
-    _json(h, 200, {"items": PLATFORMS})
+    _json(h, 200, {"items": PLATFORMS}, cache_max_age=86400)
 
 
 def _suggest_methods(h):
-    _json(h, 200, {"items": PURCHASE_METHODS})
+    _json(h, 200, {"items": PURCHASE_METHODS}, cache_max_age=86400)
 
 
 def _funding_list(h, q):
@@ -442,6 +465,7 @@ def _funding_list(h, q):
             r["platform_label"] = DESCRIPTIVE_PLATFORM_NAMES.get(r.get("source_platform", ""), r.get("source_platform", ""))
         _json(h, 200, {"items": rows, "page": _parse_int(q.get("page"), 1), "page_size": min(_parse_int(q.get("page_size"), 12), 100), "total": total, "pages": max(1, -(-total // min(_parse_int(q.get("page_size"), 12), 100))) if total else 1})
     except Exception as e:
+        logger.exception("handler")
         _json(h, 502, {"error": str(e)[:200]})
 
 
@@ -451,6 +475,7 @@ def _funding_meta(h):
         result = get_funding_meta_via_rpc()
         _json(h, 200, result, cache_max_age=600)
     except Exception as e:
+        logger.exception("handler")
         _json(h, 502, {"error": str(e)[:200]})
 
 
@@ -471,7 +496,7 @@ def _subscribe_create(h, body):
     email = (body.get("email") or "").strip()
     if not email or len(email) < 3 or "@" not in email:
         return _json(h, 400, {"error": "Valid email required"})
-    uid = abs(hash(email)) % (10 ** 15)
+    uid = _stable_hash(email)
     kw = body.get("keywords", "") or ""
     sub = SubscriptionCreate(
         telegram_user_id=uid, name=email,
@@ -487,6 +512,7 @@ def _subscribe_create(h, body):
         result = add_subscription(sub)
         _json(h, 201 if result else 500, {"subscription": result} if result else {"error": "Failed to create subscription"})
     except Exception as e:
+        logger.exception("handler")
         _json(h, 500, {"error": str(e)[:200]})
 
 
@@ -495,11 +521,12 @@ def _subscribe_list(h, q):
     email = q.get("email", "").strip()
     if not email:
         return _json(h, 400, {"error": "email required"})
-    uid = abs(hash(email)) % (10 ** 15)
+    uid = _stable_hash(email)
     try:
         subs = get_subscriptions(uid)
         _json(h, 200, {"subscriptions": subs})
     except Exception as e:
+        logger.exception("handler")
         _json(h, 500, {"error": str(e)[:200]})
 
 
@@ -508,9 +535,10 @@ def _subscribe_delete(h, sid, q):
     email = q.get("email", "").strip()
     if not email:
         return _json(h, 400, {"error": "email required"})
-    uid = abs(hash(email)) % (10 ** 15)
+    uid = _stable_hash(email)
     try:
         ok = delete_subscription(sid, uid)
         _json(h, 200 if ok else 404, {"deleted": True} if ok else {"error": "Not found"})
     except Exception as e:
+        logger.exception("handler")
         _json(h, 500, {"error": str(e)[:200]})

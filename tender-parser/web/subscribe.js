@@ -189,7 +189,7 @@ async function deleteOne(subscriptionId) {
     setStatus("\u041f\u043e\u0434\u043f\u0438\u0441\u043a\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0430", "ok");
     await loadList();
   } catch (e) {
-    console.error(e);
+
     setStatus("\u041e\u0448\u0438\u0431\u043a\u0430: " + (e.message || "\u043d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0443\u0434\u0430\u043b\u0438\u0442\u044c"), "error");
   }
 }
@@ -214,7 +214,7 @@ async function loadList() {
     }
     renderList(items);
   } catch (e) {
-    console.error(e);
+
     setStatus("\u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438 \u0434\u0430\u043d\u043d\u044b\u0445.", "error");
   }
 }
@@ -251,7 +251,7 @@ form.addEventListener("submit", async ev => {
     setStatus("\u041f\u043e\u0434\u043f\u0438\u0441\u043a\u0430 \u0430\u043a\u0442\u0438\u0432\u043d\u0430!", "ok");
     await loadList();
   } catch (e) {
-    console.error(e);
+
     setStatus("\u041e\u0448\u0438\u0431\u043a\u0430: " + (e.message || "\u043d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c"), "error");
   }
 });

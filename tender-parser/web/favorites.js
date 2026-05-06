@@ -11,7 +11,7 @@ const btnClear = document.getElementById("btn-clear-fav");
 
 // Guard: skip if page structure is missing (prevents null-reference crashes)
 if (!favResults || !favToolbar || !favCount) {
-  console.warn("Favorites page DOM incomplete — skipping init.");
+
 } else {
   initFavorites();
 }

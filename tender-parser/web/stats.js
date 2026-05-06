@@ -136,7 +136,7 @@ async function loadStats() {
 
     setStatus("", false);
   } catch (e) {
-    console.error(e);
+
     setStatus("\u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438 \u0430\u043d\u0430\u043b\u0438\u0442\u0438\u043a\u0438.", true);
   }
 }

@@ -8,14 +8,20 @@ const btnOrder = document.getElementById('btn-order-bp');
 const modal = document.getElementById('contacts-modal');
 const closeBtn = document.getElementById('contacts-close');
 
-btnOrder.addEventListener('click', () => modal.classList.add('open'));
-closeBtn.addEventListener('click', () => modal.classList.remove('open'));
-modal.addEventListener('click', (e) => {
-  if (e.target === modal) modal.classList.remove('open');
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') modal.classList.remove('open');
-});
+if (btnOrder && modal) {
+  btnOrder.addEventListener('click', () => modal.classList.add('open'));
+}
+if (closeBtn && modal) {
+  closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+}
+if (modal) {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('open');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) modal.classList.remove('open');
+  });
+}
 
 // Social contract quiz
 const quizMeta = [

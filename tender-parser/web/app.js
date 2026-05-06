@@ -495,7 +495,7 @@ async function runSearch() {
     setStatus("", false);
     if (total > 0) resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (e) {
-    console.error(e);
+
     setStatus("\u041e\u0448\u0438\u0431\u043a\u0430: " + (e.message || "\u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0441\u0435\u0442\u044c."), true);
     resultsEl.innerHTML = "";
     resultsToolbar.classList.add("hidden");

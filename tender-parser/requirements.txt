@@ -5,3 +5,11 @@ pydantic==2.12.5
 fastapi==0.115.6
 starlette==0.41.3
 python-telegram-bot==22.0
+
+# Local dev
+uvicorn==0.34.0
+
+# Testing & linting
+pytest==8.3.4
+pytest-cov==6.0.0
+ruff==0.11.0

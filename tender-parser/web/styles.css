@@ -92,20 +92,7 @@ a:hover {
 }
 
 /* --- Navbar --- */
-nav-bar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2rem;
-  height: 60px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
-}
+nav-bar,
 .navbar {
   position: sticky;
   top: 0;
@@ -152,11 +139,22 @@ nav-bar {
   flex-shrink: 0;
 }
 
-.logo-img {
-  width: 32px;
-  height: 32px;
+.nav-theme-btn {
+  background: none;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  object-fit: contain;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  margin-left: 0.5rem;
+}
+.nav-theme-btn:hover {
+  background: var(--border-hover);
+  color: var(--accent-purple);
 }
 
 .navbar-links {

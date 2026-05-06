@@ -55,13 +55,29 @@ class handler(BaseHTTPRequestHandler):
             self._text(500, "ERR")
 
     def do_GET(self):
-        self._text(200, '{"ok":true}')
+        self._json(200, {"ok": True})
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
 
     def _text(self, code, body):
         self.send_response(code)
         self.send_header("Content-Type", "text/plain")
         self.end_headers()
         self.wfile.write(body.encode("utf-8") if isinstance(body, str) else body)
+
+    def _json(self, code, data):
+        import json as _json
+        payload = _json.dumps(data, ensure_ascii=False).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
 
     def log_message(self, fmt, *args):
         pass

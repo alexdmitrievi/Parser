@@ -32,6 +32,9 @@ class NavBar extends HTMLElement {
       <div class="navbar-brand">
         ${backLink}
         <span>Тендер PRO</span>
+        <button class="nav-theme-btn" onclick="toggleTheme()" title="Тёмная тема" aria-label="Переключить тему">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
         <a href="https://podryadpro.ru/" class="nav-podryad" title="Платформа Подряд PRO" style="margin-left:10px;font-size:11px;font-weight:500;color:var(--text-muted);opacity:0.5;transition:opacity 0.2s;white-space:nowrap;text-decoration:none" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">← Подряд PRO</a>
       </div>
       <button class="navbar-burger${isMain ? ' hidden-on-main' : ''}" id="navbar-burger" aria-label="Меню" aria-expanded="false">

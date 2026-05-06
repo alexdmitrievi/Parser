@@ -296,7 +296,7 @@ async function loadPrograms() {
         <button class="btn btn-ghost btn-sm" onclick="loadPrograms()">Повторить</button>
       </div>`;
     status.textContent = "Ошибка загрузки";
-    console.error("Funding API error:", err);
+
   }
 }
 
