@@ -21,11 +21,13 @@
     { "src": "/api/health(.*)", "dest": "/api/tenders.py" },
     { "src": "/", "dest": "/web/index.html" },
     { "src": "/web/hero\\.json", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600, stale-while-revalidate=86400" } },
-    { "src": "/api/(meta|stats|niches)", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600, stale-while-revalidate=120" } },
-    { "src": "/web/sw\\.js", "headers": { "Cache-Control": "max-age=0, s-maxage=0" } },
-    { "src": "/web/(.*\\.html)", "headers": { "Cache-Control": "public, max-age=60, s-maxage=300" } },
-    { "src": "/web/(.*\\.js)", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600" } },
-    { "src": "/web/(.*\\.css)", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600" } },
-    { "src": "/web/(.*\\.png)", "headers": { "Cache-Control": "public, max-age=86400, s-maxage=86400" } }
+    { "src": "/api/(meta|stats|niches|funding/meta)", "headers": { "Cache-Control": "public, max-age=120, s-maxage=600, stale-while-revalidate=86400" } },
+    { "src": "/api/suggest/(platforms|purchase-methods)", "headers": { "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800" } },
+    { "src": "/web/sw\\.js", "headers": { "Cache-Control": "public, max-age=0, must-revalidate", "Service-Worker-Allowed": "/" } },
+    { "src": "/web/manifest\\.json", "headers": { "Cache-Control": "public, max-age=3600, s-maxage=86400" } },
+    { "src": "/web/(.*\\.html)", "headers": { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=86400" } },
+    { "src": "/web/(.*\\.js)", "headers": { "Cache-Control": "public, max-age=600, s-maxage=86400, stale-while-revalidate=604800" } },
+    { "src": "/web/(.*\\.css)", "headers": { "Cache-Control": "public, max-age=600, s-maxage=86400, stale-while-revalidate=604800" } },
+    { "src": "/web/(.*\\.png)", "headers": { "Cache-Control": "public, max-age=86400, s-maxage=2592000, immutable" } }
   ]
 }

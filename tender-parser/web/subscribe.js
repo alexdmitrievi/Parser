@@ -44,7 +44,7 @@ async function loadNiches() {
     transport: "Транспорт",
   };
   try {
-    const res = await fetch("/api/niches", { headers: { Accept: "application/json" } });
+    const res = await fetchWithTimeout("/api/niches", { headers: { Accept: "application/json" } }, 5000);
     if (!res.ok) return;
     const data = await res.json();
     const sel = document.getElementById("niche");
@@ -114,7 +114,7 @@ async function deleteOne(subscriptionId) {
   const q = new URLSearchParams({ email });
   const url = `/api/subscriptions/${encodeURIComponent(subscriptionId)}?${q}`;
   try {
-    const res = await fetch(url, { method: "DELETE", headers: { Accept: "application/json" } });
+    const res = await fetchWithTimeout(url, { method: "DELETE", headers: { Accept: "application/json" } }, 8000);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.detail || data.message || `HTTP ${res.status}`);
     setStatus("\u041f\u043e\u0434\u043f\u0438\u0441\u043a\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0430", "ok");
@@ -134,7 +134,7 @@ async function loadList() {
   const q = new URLSearchParams({ email });
   const url = `/api/subscriptions/list?${q}`;
   try {
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const res = await fetchWithTimeout(url, { headers: { Accept: "application/json" } }, 8000);
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
     const items = data.items || [];
@@ -169,11 +169,11 @@ form.addEventListener("submit", async ev => {
   if (!email) { setStatus("\u0423\u043a\u0430\u0436\u0438\u0442\u0435 email.", "error"); return; }
   setStatus("\u0421\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u0435\u2026", "neutral");
   try {
-    const res = await fetch("/api/subscriptions/create", {
+    const res = await fetchWithTimeout("/api/subscriptions/create", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify(body),
-    });
+    }, 8000);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);

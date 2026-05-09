@@ -231,7 +231,7 @@ async function runSearch() {
   pagerEl.classList.add("hidden");
 
   try {
-    const res = await fetch(`/api/search/tenders?${buildQueryString()}`, { headers: { Accept: "application/json" } });
+    const res = await fetchWithTimeout(`/api/search/tenders?${buildQueryString()}`, { headers: { Accept: "application/json" } }, 8000);
     const raw = await res.text();
     if (!res.ok) { let msg = `HTTP ${res.status}`; try { const j = JSON.parse(raw); if (j.detail) msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch {} throw new Error(msg); }
     const data = JSON.parse(raw);
