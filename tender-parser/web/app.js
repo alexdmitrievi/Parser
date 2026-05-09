@@ -519,11 +519,11 @@ btnNext.addEventListener("click", () => {
   const el = document.getElementById("hero-stats");
   if (!el) return;
   try {
-    const res = await fetch("/api/stats", { headers: { Accept: "application/json" } });
+    const res = await fetch("/api/hero", { headers: { Accept: "application/json" } });
     if (!res.ok) return;
     const data = await res.json();
     const total = data.total ?? 0;
-    const regions = Object.keys(data.by_region || {}).length;
+    const regions = data.regions ?? 0;
     if (total > 0) {
       const platforms = data.platforms ?? 0;
       el.innerHTML = `<span>${total.toLocaleString("ru-RU")}</span> \u0442\u0435\u043d\u0434\u0435\u0440\u043e\u0432 \u0438\u0437 <span>${platforms}</span> \u043f\u043b\u043e\u0449\u0430\u0434\u043e\u043a \u0432 <span>${regions}</span> \u0440\u0435\u0433\u0438\u043e\u043d\u0430\u0445`;
