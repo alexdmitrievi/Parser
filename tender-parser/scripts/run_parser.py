@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import sys
 import os
@@ -336,7 +337,43 @@ def main():
         total += _run_with_log(runner, group)
 
     logger.info(f"=== DONE. Total tenders: {total} ===")
+
+    # ── Generate hero.json for static hero stats on landing page ──
+    try:
+        generate_hero_json()
+    except Exception as e:
+        logger.error(f"Failed to generate hero.json: {e}")
+
     return 0
+
+
+def generate_hero_json():
+    """Write web/hero.json with live stats — used by landing page (no API call needed)."""
+    from shared.db import get_db
+    from datetime import datetime, timedelta, timezone
+
+    db = get_db()
+    total_res = db.table("tenders").select("id", count="exact").execute()
+    total = total_res.count or 0
+
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    recent_res = db.table("tenders").select("id", count="exact").gte("created_at", week_ago).execute()
+    recent = recent_res.count or 0
+
+    platforms_res = db.table("tenders").select("source_platform").limit(2000).execute()
+    platforms = len(set(r.get("source_platform", "") for r in (platforms_res.data or []) if r.get("source_platform")))
+
+    regions_res = db.table("tenders").select("customer_region").limit(2000).execute()
+    regions = len(set((r.get("customer_region") or "").strip() for r in (regions_res.data or []) if (r.get("customer_region") or "").strip()))
+
+    hero = {"total": total, "platforms": platforms, "regions": regions, "recent_7d": recent, "updated_at": datetime.now(timezone.utc).isoformat()}
+
+    web_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web")
+    os.makedirs(web_dir, exist_ok=True)
+    hero_path = os.path.join(web_dir, "hero.json")
+    with open(hero_path, "w", encoding="utf-8") as f:
+        json.dump(hero, f, ensure_ascii=False)
+    logger.info(f"hero.json written: {hero['total']} tenders, {hero['platforms']} platforms, {hero['regions']} regions")
 
 
 if __name__ == "__main__":

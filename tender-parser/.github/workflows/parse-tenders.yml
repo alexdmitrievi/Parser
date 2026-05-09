@@ -56,3 +56,12 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           python scripts/run_parser.py --source corporate
+
+      - name: Commit updated hero.json
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add web/hero.json
+          git diff --cached --quiet || git commit -m "chore: update hero.json stats [skip ci]"
+          git push
