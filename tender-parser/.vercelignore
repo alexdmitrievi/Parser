@@ -1,0 +1,16 @@
+scrapers/
+engine/
+tests/
+.github/
+deploy/
+scripts/
+pipeline/
+bot/
+api/main.py
+api/debug.py
+requirements-parser.txt
+.pre-commit-config.yaml
+.cursorrules
+CURSOR_PROMPTS.md
+CLAUDE.md
+README.md

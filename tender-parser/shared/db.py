@@ -117,21 +117,19 @@ def _sanitize_postgrest(value: str) -> str:
 
 
 def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
-    """Apply common filters to query (used in search and count)."""
+    """Apply common filters to query (used in search and count). Uses FTS for text search."""
     if filters.query:
         q = _sanitize_postgrest(filters.query.strip())
         if q:
-            words = q.split()
-            if len(words) == 1 and len(words[0]) >= 3:
-                query = query.ilike("title", f"%{words[0]}%")
-            else:
-                for word in words[:5]:
-                    if len(word) >= 2:
-                        query = query.ilike("title", f"%{word}%")
+            words = [w for w in q.split() if len(w) >= 2][:5]
+            if words:
+                fts_query = ' & '.join(words)
+                query = query.text_search("fts", fts_query, config="russian")
     if filters.region:
         r = _sanitize_postgrest(filters.region)
         if r:
-            query = query.ilike("customer_region", f"%{r}%")
+            query = query.eq("customer_region", r) if len(r) >= 3 else query
+    # ... rest of filters unchanged
     if filters.min_nmck is not None:
         query = query.gte("nmck", filters.min_nmck)
     if filters.max_nmck is not None:

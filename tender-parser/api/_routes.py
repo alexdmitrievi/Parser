@@ -286,13 +286,16 @@ def _list_tenders(h, q):
         qb = qb.eq("status", status)
     qt = q.get("q", "").strip()
     if qt:
-        qb = qb.ilike("title", f"%{qt}%")
+        words = [w for w in qt.split() if len(w) >= 2][:5]
+        if words:
+            fts_query = ' & '.join(words)
+            qb = qb.text_search("fts", fts_query, config="russian")
     niche = q.get("niche", "").strip()
     if niche:
         qb = qb.contains("niche_tags", [niche])
     region = q.get("region", "").strip()
     if region:
-        qb = qb.ilike("customer_region", f"%{region}%")
+        qb = qb.eq("customer_region", region) if len(region) >= 3 else qb.ilike("customer_region", f"%{region}%")
     law = (q.get("law") or q.get("law_type") or "").strip()
     if law:
         qb = qb.eq("law_type", law)
@@ -336,34 +339,8 @@ def _stats(h):
         return _json(h, 200, cached, cache_max_age=300)
 
     try:
-        db = _get_db()
-        total_res = db.table("tenders").select("id", count="exact").execute()
-        total = total_res.count or 0
-        platforms_res = db.table("tenders").select("source_platform").limit(5000).execute()
-        platforms = len(set(r.get("source_platform", "") for r in (platforms_res.data or []) if r.get("source_platform")))
-
-        by_niche = {}
-        by_region = {}
-        niche_counts = {}
-        region_counts = {}
-        rows = db.table("tenders").select("niche_tags, customer_region").limit(3000).execute()
-        for r in rows.data or []:
-            for t in r.get("niche_tags") or []:
-                niche_counts[t] = niche_counts.get(t, 0) + 1
-            reg = (r.get("customer_region") or "unknown").strip() or "unknown"
-            region_counts[reg] = region_counts.get(reg, 0) + 1
-
-        top_niches = dict(sorted(niche_counts.items(), key=lambda x: -x[1])[:20])
-        top_regions = dict(sorted(region_counts.items(), key=lambda x: -x[1])[:20])
-
-        week_ago_res = db.table("tenders").select("id", count="exact").gte("created_at", (__import__("datetime").datetime.now(__import__("datetime").timezone.utc) - __import__("datetime").timedelta(days=7)).isoformat()).execute()
-        recent = week_ago_res.count or 0
-
-        result = {
-            "total": total, "platforms": platforms,
-            "by_niche": top_niches, "by_region": top_regions,
-            "created_last_7_days": recent,
-        }
+        from shared.db import get_stats_via_rpc
+        result = get_stats_via_rpc()
         _set_cached("stats", result)
         _json(h, 200, result, cache_max_age=300)
     except Exception as e:
@@ -376,25 +353,8 @@ def _meta(h):
     if cached:
         return _json(h, 200, cached, cache_max_age=300)
     try:
-        db = _get_db()
-        rows = db.table("tenders").select("niche_tags,source_platform,purchase_method").limit(3000).execute()
-        niche_counts = {}
-        platform_counts = {}
-        method_counts = {}
-        for r in rows.data or []:
-            for t in r.get("niche_tags") or []:
-                niche_counts[t] = niche_counts.get(t, 0) + 1
-            p = r.get("source_platform", "")
-            if p:
-                platform_counts[p] = platform_counts.get(p, 0) + 1
-            m = r.get("purchase_method", "")
-            if m:
-                method_counts[m] = method_counts.get(m, 0) + 1
-        result = {
-            "niches": [{"name": k, "count": v} for k, v in sorted(niche_counts.items())],
-            "platforms": [{"id": k, "name": k, "count": v} for k, v in sorted(platform_counts.items())],
-            "methods": [{"id": k, "name": k, "count": v} for k, v in sorted(method_counts.items())],
-        }
+        from shared.db import get_meta_via_rpc
+        result = get_meta_via_rpc()
         _set_cached("meta", result)
         _json(h, 200, result, cache_max_age=300)
     except Exception as e:
