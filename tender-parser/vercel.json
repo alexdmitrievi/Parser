@@ -27,5 +27,11 @@
     { "src": "/web/(.*\\.js)", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600" } },
     { "src": "/web/(.*\\.css)", "headers": { "Cache-Control": "public, max-age=300, s-maxage=600" } },
     { "src": "/web/(.*\\.png)", "headers": { "Cache-Control": "public, max-age=86400, s-maxage=86400" } }
+  ],
+  "crons": [
+    {
+      "path": "/api/hero",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }
