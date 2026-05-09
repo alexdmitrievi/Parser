@@ -191,7 +191,7 @@ const NICHE_NAMES = { construction: "Строительство", furniture: "М
 
 async function loadMeta() {
   try {
-    const res = await fetch("/api/meta", { headers: { Accept: "application/json" } });
+    const res = await fetchWithTimeout("/api/meta", { headers: { Accept: "application/json" } }, 6000);
     if (!res.ok) return;
     const data = await res.json();
     // niches
@@ -400,7 +400,7 @@ async function runSearch() {
   const url = `/api/search/tenders?${qs}`;
 
   try {
-    const res = await fetch(url, { method: "GET", headers: { Accept: "application/json" } });
+    const res = await fetchWithTimeout(url, { method: "GET", headers: { Accept: "application/json" } }, 8000);
     const raw = await res.text();
     if (!res.ok) {
       let msg = `HTTP ${res.status}`;
@@ -519,7 +519,7 @@ btnNext.addEventListener("click", () => {
   const el = document.getElementById("hero-stats");
   if (!el) return;
   try {
-    const res = await fetch("/web/hero.json");
+    const res = await fetchWithTimeout("/web/hero.json", {}, 3000);
     if (!res.ok) return;
     const data = await res.json();
     const total = data.total ?? 0;

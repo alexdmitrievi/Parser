@@ -59,14 +59,17 @@ def update_html(html_path: Path, bundle_name: str, extra_scripts: list[str] | No
     if extra_scripts:
         scripts_to_use.extend(extra_scripts)
 
-    script_tags = "\n".join(f'  <script src="{s}"></script>' for s in scripts_to_use)
+    script_tags = "\n".join(f'  <script src="{s}" defer></script>' for s in scripts_to_use)
 
-    pattern = r"(\s*<script src=\"[^\"]+\"></script>\s*)+"
+    # Захватываем серию <script>-тегов с любыми атрибутами (включая defer/async)
+    pattern = r"(\s*<script\s+[^>]*src=\"[^\"]+\"[^>]*></script>\s*)+"
     content = re.sub(pattern, f"\n{script_tags}\n", content, count=1)
 
-    if MIN_CSS in content:
-        pass
-    else:
+    if MIN_CSS not in content:
+        content = content.replace(
+            '<link rel="preload" href="/web/styles.css" as="style" />',
+            f'<link rel="preload" href="/web/{MIN_CSS}" as="style" />'
+        )
         content = content.replace(
             '<link rel="stylesheet" href="/web/styles.css" />',
             f'<link rel="stylesheet" href="/web/{MIN_CSS}" />'
@@ -108,11 +111,15 @@ def main():
     write_file(WEB_DIR / bundle_common, common_bundled)
     print(f"  JS about: {bundle_common} ({len(common_bundled):,} bytes)")
 
-    about_pattern = r"(\s*<script src=\"[^\"]+\"></script>\s*)+"
+    about_pattern = r"(\s*<script\s+[^>]*src=\"[^\"]+\"[^>]*></script>\s*)+"
     about_content = re.sub(
         about_pattern,
-        f'\n  <script src="/web/{bundle_common}"></script>\n',
+        f'\n  <script src="/web/{bundle_common}" defer></script>\n',
         about_content, count=1
+    )
+    about_content = about_content.replace(
+        '<link rel="preload" href="/web/styles.css" as="style" />',
+        f'<link rel="preload" href="/web/{MIN_CSS}" as="style" />'
     )
     about_content = about_content.replace(
         '<link rel="stylesheet" href="/web/styles.css" />',

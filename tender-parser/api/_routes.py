@@ -260,10 +260,14 @@ def _hero(h):
 
         result = {"total": total, "platforms": platforms, "regions": regions, "recent_7d": recent}
         _set_cached("hero", result)
-        _json(h, 200, result, cache_max_age=300)
-    except Exception as e:
+        return _json(h, 200, result, cache_max_age=300)
+    except Exception:
         logger.exception("hero")
-        _json(h, 200, {"total": 0, "platforms": 0, "regions": 0, "recent_7d": 0})
+        return _json(h, 200, {"total": 0, "platforms": 0, "regions": 0, "recent_7d": 0})
+
+
+def _health_full(h):
+    """Расширенный health-check: статус БД + здоровье парсеров."""
     try:
         from shared.db import get_stats_via_rpc, get_scrape_health
         stats = get_stats_via_rpc()

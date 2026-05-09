@@ -9,7 +9,10 @@
   <meta property="og:description" content="Бесплатный поиск государственных и коммерческих закупок по всей России" />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="/web/logo.png" />
+  <link rel="preload" href="/web/styles.css" as="style" />
   <link rel="stylesheet" href="/web/styles.css" />
+  <link rel="preload" href="/web/shared.js" as="script" />
+  <link rel="preload" href="/web/navbar.js" as="script" />
   <link rel="icon" type="image/png" href="/web/icon-192.png" />
   <link rel="manifest" href="/web/manifest.json" />
   <meta name="theme-color" content="#2F5BFF" />
@@ -104,7 +107,7 @@
     <a href="/web/stats.html">Аналитика</a>
   <div class="footer-brand">Сервис платформы <a href="https://podryadpro.ru/">Подряд PRO</a></div></footer>
 
-  <script src="/web/shared.js"></script>
-  <script src="/web/navbar.js"></script>
+  <script src="/web/shared.js" defer></script>
+  <script src="/web/navbar.js" defer></script>
 </body>
 </html>

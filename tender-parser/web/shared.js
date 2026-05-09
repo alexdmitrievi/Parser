@@ -111,7 +111,7 @@ function setupAutocomplete(inputEl, dropdownEl, fetchFn) {
 }
 
 async function fetchRegionSuggestions(q, signal) {
-  const res = await fetch(`/api/suggest/regions?q=${encodeURIComponent(q)}`, signal ? { signal } : {});
+  const res = await fetchWithTimeout(`/api/suggest/regions?q=${encodeURIComponent(q)}`, signal ? { signal } : {}, 4000);
   if (!res.ok) return [];
   const data = await res.json();
   return data.items || [];
@@ -123,8 +123,43 @@ function setStatus(el, text, isError) {
   el.textContent = text;
   el.classList.toggle("error", !!isError);
 }
+/* ── fetch с таймаутом и graceful fallback ── */
+function fetchWithTimeout(url, opts = {}, timeoutMs = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const merged = { ...opts, signal: opts.signal || ctrl.signal };
+  return fetch(url, merged).finally(() => clearTimeout(t));
+}
+
+/* ── Регистрация SW (отложенная, чтобы не блокировать первую отрисовку) ── */
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/web/sw.js").catch(() => {});
+  // Запоминаем, был ли контроллер до регистрации.
+  // Если был — значит, это обновление, и нужно перезагрузиться при смене SW,
+  // чтобы взять свежий HTML/CSS/JS. Если не было — это первая установка, reload не нужен.
+  const hadController = !!navigator.serviceWorker.controller;
+  const register = () => {
+    navigator.serviceWorker.register("/web/sw.js", { scope: "/" }).then((reg) => {
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) {
+            try { nw.postMessage("skipWaiting"); } catch {}
+          }
+        });
+      });
+    }).catch(() => {});
+  };
+  if ("requestIdleCallback" in window) {
+    window.addEventListener("load", () => requestIdleCallback(register, { timeout: 3000 }));
+  } else {
+    window.addEventListener("load", () => setTimeout(register, 1500));
+  }
+
+  let _reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || _reloaded) return;
+    _reloaded = true;
+    window.location.reload();
   });
 }

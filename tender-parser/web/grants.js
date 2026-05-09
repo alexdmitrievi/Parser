@@ -246,7 +246,7 @@ async function loadPrograms() {
   if (state.platform) params.set("source_platform", state.platform);
 
   try {
-    const res = await fetch(`${API}?${params}`);
+    const res = await fetchWithTimeout(`${API}?${params}`, {}, 8000);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
@@ -303,7 +303,7 @@ async function loadPrograms() {
 // Load meta counters
 async function loadMeta() {
   try {
-    const res = await fetch("/api/funding/meta");
+    const res = await fetchWithTimeout("/api/funding/meta", {}, 5000);
     if (!res.ok) return;
     const data = await res.json();
     document.getElementById("cnt-total").textContent = data.total_active || data.total || 0;
@@ -337,7 +337,7 @@ function setupRegionAutocomplete() {
 
   async function fetchRegions(q) {
     try {
-      const res = await fetch(`/api/suggest/regions?q=${encodeURIComponent(q)}`);
+      const res = await fetchWithTimeout(`/api/suggest/regions?q=${encodeURIComponent(q)}`, {}, 4000);
       if (!res.ok) return [];
       const data = await res.json();
       return data.items || [];
