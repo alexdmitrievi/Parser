@@ -117,14 +117,19 @@ def _sanitize_postgrest(value: str) -> str:
 
 
 def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
-    """Apply common filters to query (used in search and count). Uses FTS for text search."""
+    """Apply common filters to query (used in search and count). Uses ilike for text search."""
     if filters.query:
         q = _sanitize_postgrest(filters.query.strip())
         if q:
             words = [w for w in q.split() if len(w) >= 2][:5]
             if words:
-                fts_query = ' & '.join(words)
-                query = query.text_search("fts", fts_query, config="russian")
+                safe_words = [re.sub(r"[*_]", "", w) for w in words]
+                safe_words = [w for w in safe_words if len(w) >= 2]
+                if safe_words:
+                    or_filters = []
+                    for w in safe_words:
+                        or_filters.append(f"title.ilike.*{w}*,description.ilike.*{w}*")
+                    query = query.or_(','.join(or_filters))
     if filters.region:
         r = _sanitize_postgrest(filters.region)
         if r:
