@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5, user-scalable=yes" />
   <title>Поиск тендеров — Тендер PRO | Закупки 44-ФЗ, 223-ФЗ, коммерческие</title>
   <meta name="description" content="Бесплатный поиск государственных и коммерческих тендеров по всей России. ЕИС, Росэлторг, B2B-Center и другие площадки в одном месте." />
   <meta property="og:title" content="Тендер PRO — Поиск тендеров по всей России" />
@@ -29,13 +29,18 @@
     <header class="page-header">
       <h1>Поиск тендеров</h1>
       <p class="subtitle">Находите государственные и коммерческие закупки по всей России</p>
-      <p class="hero-stats" id="hero-stats"><span>9 000+</span> тендеров из <span>8</span> площадок в <span>80+</span> регионах</p>
+      <div class="hero-stats" id="hero-stats">
+        <span>9 000+</span> тендеров
+        <i class="stat-divider"></i>
+        из <span>8</span> площадок
+        <i class="stat-divider"></i>
+        в <span>80+</span> регионах
+      </div>
     </header>
 
     <!-- Filters -->
     <section class="glass form-panel">
       <form id="search-form" novalidate>
-        <!-- Row 1: Keywords (full width, with search icon) -->
         <div class="field">
           <label class="field-label" for="q">Ключевые слова</label>
           <div class="search-input-wrap">
@@ -46,9 +51,9 @@
           </div>
         </div>
 
-        <!-- Строительные фильтры (быстрые кнопки) -->
-        <div class="field" style="margin-top:0.5rem">
-          <label class="field-label" style="margin-bottom:0.5rem">Направление (быстрый фильтр)</label>
+        <!-- Quick-filter chips -->
+        <div class="field">
+          <label class="field-label">Направление (быстрый фильтр)</label>
           <div class="chip-row" id="construction-chips">
             <button type="button" class="chip active" data-chip="all">Все</button>
             <button type="button" class="chip" data-chip="labor">👷 Рабочая сила</button>
@@ -58,7 +63,7 @@
           </div>
         </div>
 
-        <!-- Row 2: Region + Law type -->
+        <!-- Region + Law -->
         <div class="form-row form-row-2">
           <div class="field">
             <label class="field-label" for="region">Регион</label>
@@ -78,19 +83,19 @@
           </div>
         </div>
 
-        <!-- Row 3: NMCK range -->
+        <!-- Price range -->
         <div class="form-row form-row-2">
           <div class="field">
             <label class="field-label" for="min_nmck">Цена от, &#8381;</label>
-            <input type="number" name="min_nmck" id="min_nmck" min="0" step="1000" placeholder="Минимальная сумма" />
+            <input type="number" name="min_nmck" id="min_nmck" min="0" step="1000" placeholder="Минимальная сумма" inputmode="numeric" />
           </div>
           <div class="field">
             <label class="field-label" for="max_nmck">Цена до, &#8381;</label>
-            <input type="number" name="max_nmck" id="max_nmck" min="0" step="1000" placeholder="Максимальная сумма" />
+            <input type="number" name="max_nmck" id="max_nmck" min="0" step="1000" placeholder="Максимальная сумма" inputmode="numeric" />
           </div>
         </div>
 
-        <!-- Advanced filters toggle -->
+        <!-- Advanced filters -->
         <button type="button" id="advanced-toggle" class="advanced-toggle">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
           Расширенные фильтры

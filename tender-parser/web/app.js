@@ -312,8 +312,9 @@ function renderCards(items) {
     const url = t.original_url || "";
     const dl = deadlineInfo(t.submission_deadline);
     const faved = isFavorite(t.id);
+    const urgency = dl.cls === "deadline-danger" ? "urgent" : dl.cls === "deadline-warning" ? "warning" : "default";
     const div = document.createElement("div");
-    div.className = "tender-card glass";
+    div.className = `tender-card glass ${urgency}`;
     div.innerHTML = `
       <div class="tender-card-header">
         <div class="tender-title">${esc(t.title || "\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f")}</div>
@@ -526,7 +527,7 @@ btnNext.addEventListener("click", () => {
     const regions = data.regions ?? 0;
     if (total > 0) {
       const platforms = data.platforms ?? 0;
-      el.innerHTML = `<span>${total.toLocaleString("ru-RU")}</span> \u0442\u0435\u043d\u0434\u0435\u0440\u043e\u0432 \u0438\u0437 <span>${platforms}</span> \u043f\u043b\u043e\u0449\u0430\u0434\u043e\u043a \u0432 <span>${regions}</span> \u0440\u0435\u0433\u0438\u043e\u043d\u0430\u0445`;
+      el.innerHTML = `<span>${total.toLocaleString("ru-RU")}</span> \u0442\u0435\u043d\u0434\u0435\u0440\u043e\u0432 <i class="stat-divider"></i> \u0438\u0437 <span>${platforms}</span> \u043f\u043b\u043e\u0449\u0430\u0434\u043e\u043a <i class="stat-divider"></i> \u0432 <span>${regions}</span> \u0440\u0435\u0433\u0438\u043e\u043d\u0430\u0445`;
     }
   } catch { /* keep default HTML values */ }
 })();
