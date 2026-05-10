@@ -17,16 +17,13 @@ const NAV_LINKS = [
 class NavBar extends HTMLElement {
   connectedCallback() {
     const active = this.getAttribute("active") || "tenders";
-    const isMain = active === "tenders";
 
-    const backLink = isMain ? "" : `
+    const backLink = active === "tenders" ? "" : `
       <a href="/web/" class="nav-back-link" title="Вернуться к поиску тендеров">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         <span>Назад</span>
       </a>
     `;
-
-    const linksClass = `navbar-links${isMain ? ' always-visible' : ''}`;
 
     this.innerHTML = `
       <div class="navbar-brand">
@@ -37,10 +34,10 @@ class NavBar extends HTMLElement {
         </button>
         <a href="https://podryadpro.ru/" class="nav-podryad" title="Платформа Подряд PRO" style="margin-left:10px;font-size:11px;font-weight:500;color:var(--text-muted);opacity:0.5;transition:opacity 0.2s;white-space:nowrap;text-decoration:none" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">← Подряд PRO</a>
       </div>
-      <button class="navbar-burger${isMain ? ' hidden-on-main' : ''}" id="navbar-burger" aria-label="Меню" aria-expanded="false">
+      <button class="navbar-burger" id="navbar-burger" aria-label="Меню" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
-      <div class="${linksClass}">
+      <div class="navbar-links">
         ${NAV_LINKS.map(l => `
           <a href="${l.href}" class="nav-link${l.id === active ? ' active' : ''}">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${l.svg}</svg>

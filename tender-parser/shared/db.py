@@ -121,7 +121,7 @@ def _apply_common_filters(query: Any, filters: SearchFilters) -> Any:
     if filters.query:
         q = _sanitize_postgrest(filters.query.strip())
         if q:
-            words = [w for w in q.split() if len(w) >= 2][:5]
+            words = [w for w in q.split() if len(w) >= 2][:10]
             if words:
                 safe_words = [re.sub(r"[*_]", "", w) for w in words]
                 safe_words = [w for w in safe_words if len(w) >= 2]
