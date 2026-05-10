@@ -10,6 +10,16 @@ from shared.time_utils import now_utc, parse_datetime_ru, to_utc
 
 logger = logging.getLogger(__name__)
 
+# Стоп-слова: заголовки, не являющиеся тендерами (политики, регламенты, соглашения)
+_NON_TENDER_TITLE = re.compile(
+    r"политик|персональных данны|конфиденциальност|оферт|соглашение"
+    r"|регламент\s+(?:работы|площадк|систем)"
+    r"|условия\s+(?:использован|работы)"
+    r"|согласие\s+на\s+обработку"
+    r"|инструкци[яи]\s+(?:по\s|для\s)",
+    re.IGNORECASE,
+)
+
 REGION_ALIASES: dict[str, str] = {
     "москва": "Москва",
     "г москва": "Москва",
@@ -34,6 +44,9 @@ def normalize_tender(raw: dict[str, Any]) -> dict[str, Any] | None:
     """Вернуть нормализованный dict или None если отсеять."""
     title = (raw.get("title") or "").strip()
     if not title:
+        return None
+    # Отсеиваем нетендерный контент (политики, регламенты, соглашения)
+    if _NON_TENDER_TITLE.search(title):
         return None
 
     status = (raw.get("status") or "active").lower()

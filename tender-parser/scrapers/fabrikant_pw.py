@@ -55,9 +55,20 @@ class FabrikantPlaywrightScraper(PlaywrightScraper):
 
         # Паттерн для ссылок на конкретные тендеры (содержат числовой ID в пути)
         _trade_link = re.compile(r"/trades/[^?#]*\d+")
-        # Ключевые слова нетендерного контента
+        # URL-фильтр: пропускаем только торги, исключаем служебные страницы
+        _skip_urls = re.compile(
+            r"/privacy|/policy|/legal|/terms|/politics|/politika|/agreement|/offer|/docs/|/faq|/about|/contacts|/reviews|/agreement|/rules|/regulations",
+            re.IGNORECASE,
+        )
+        # Ключевые слова нетендерного контента (политики, оферты, регламенты и т.д.)
         _skip_titles = re.compile(
-            r"политик|персональных данных|cookie|куки|оферт|пользовательское соглашение",
+            r"политик|персональных данны|конфиденциальност|cookie|куки|оферт"
+            r"|пользовательское соглашение|согласие на обработку"
+            r"|регламент\s+(?:работы|площадк|систем|взаимодейств)"
+            r"|условия\s+(?:использован|работы|площадк|поставк)"
+            r"|инструкци[яи]\s+(?:по\s|для\s)"
+            r"|положение\s+о\s+"
+            r"|документаци[яи]\s+(?:по\s|площадк|торгов)",
             re.IGNORECASE,
         )
 
@@ -88,8 +99,11 @@ class FabrikantPlaywrightScraper(PlaywrightScraper):
             # Пропускаем нетендерный контент (политики, оферты и т.д.)
             if _skip_titles.search(title):
                 continue
-            item["title"] = title
+            # Пропускаем служебные URL (privacy, policy, terms и т.д.)
             href = link.get("href", "")
+            if href and _skip_urls.search(href):
+                continue
+            item["title"] = title
             if href and not href.startswith("http"):
                 href = self.base_url + href
             item["url"] = href
