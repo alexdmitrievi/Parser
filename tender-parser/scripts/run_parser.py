@@ -82,27 +82,45 @@ def run_eis_api() -> int:
     queries_main = [
         "ремонт помещений", "строительные работы", "поставка оборудования",
         "мебель", "дизельное топливо", "медицинское оборудование",
+        # ── Строительство и дороги ──
+        "аренда спецтехники", "строительные материалы", "дорожные работы",
+        "капитальный ремонт", "благоустройство", "реконструкция",
+        # ── Рабочая сила ──
+        "разнорабочие", "клининг",
+        # ── Стройматериалы ──
+        "поставка бетона", "поставка щебня", "металлопрокат поставка",
+        "асфальтирование",
     ]
     for region in POPULAR_REGIONS:
         total += _process_and_save(
-            scraper.run(queries=queries_main, max_pages=2, region=region),
+            scraper.run(queries=queries_main[:10], max_pages=3, region=region),
             f"EIS API [{region}]",
         )
+        # Строительные запросы с ОКПД2-фильтром (точный поиск)
+        total += _process_and_save(
+            scraper.run(queries=queries_main[10:], max_pages=4, region=region,
+                        okpd2="41.2;42.;43.;71.1"),
+            f"EIS API constr [{region}]",
+        )
 
-    # 2. Широкие запросы без региона (для покрытия)
+    # 2. Широкие запросы без региона (для покрытия всех 85 регионов)
     queries_wide = [
         "IT услуги", "транспортные услуги", "мазут", "печное топливо",
         "продукты питания", "охранные услуги",
+        # ── Строительные широкие ──
+        "строительство дорог", "аренда экскаватора", "бетонные работы",
+        "кровельные работы", "земляные работы", "фасадные работы",
     ]
     total += _process_and_save(
-        scraper.run(queries=queries_wide, max_pages=2),
+        scraper.run(queries=queries_wide, max_pages=3),
         "EIS API [all regions]",
     )
 
     # 3. 223-ФЗ запросы (отдельный фильтр по типу закона)
-    for q in ["ремонт помещений", "поставка оборудования", "клининг"]:
+    for q in ["ремонт помещений", "поставка оборудования", "клининг",
+              "строительные работы", "аренда спецтехники", "поставка стройматериалов"]:
         total += _process_and_save(
-            scraper.run(queries=[q], max_pages=1, law_type="223-fz"),
+            scraper.run(queries=[q], max_pages=2, law_type="223-fz"),
             f"EIS API 223-ФЗ [{q}]",
         )
     return total
@@ -123,12 +141,37 @@ def run_eis_api_extra() -> int:
         "охранные услуги", "клининг", "проектные работы",
         "канцтовары", "спецтехника", "вывоз мусора",
         "страхование", "аудит",
+        # ── Строительство и дороги ──
+        "дорожные работы", "асфальтирование", "ямочный ремонт",
+        "поставка бетона", "поставка щебня", "поставка арматуры",
+        "металлопрокат", "кирпич поставка", "земляные работы",
+        "свайные работы", "кровельные работы", "фасадные работы",
+        "электромонтажные работы", "сантехнические работы",
+        "вентиляция и кондиционирование", "монтаж металлоконструкций",
+        # ── Рабочая сила и техника ──
+        "грузчики", "подсобные рабочие", "разнорабочие",
+        "аренда экскаватора", "аренда бульдозера", "аренда погрузчика",
+        "аренда автокрана", "услуги спецтехники", "техника с экипажем",
+        # ── Дорожные материалы ──
+        "асфальтобетонная смесь", "битум дорожный", "тротуарная плитка",
+        "бордюр дорожный", "дорожные знаки", "разметка дорожная",
     ]
     # С фильтром по популярным регионам
     for region in POPULAR_REGIONS:
         total += _process_and_save(
-            scraper.run(queries=queries_extra[:6], max_pages=1, region=region),
+            scraper.run(queries=queries_extra[:12], max_pages=2, region=region),
             f"EIS API extra [{region}]",
+        )
+        # Строительные запросы с ОКПД2
+        total += _process_and_save(
+            scraper.run(queries=queries_extra[12:28], max_pages=3, region=region,
+                        okpd2="41.2;42.;43.;71.1"),
+            f"EIS API extra constr [{region}]",
+        )
+        # Техника и рабочая сила
+        total += _process_and_save(
+            scraper.run(queries=queries_extra[28:], max_pages=3, region=region),
+            f"EIS API extra labor [{region}]",
         )
 
     # Широкие запросы без региона
@@ -222,7 +265,14 @@ def run_fabrikant_pw() -> int:
     from scrapers.fabrikant_pw import FabrikantPlaywrightScraper
     logger.info("=== Fabrikant (Playwright) ===")
     scraper = FabrikantPlaywrightScraper()
-    return _process_and_save(scraper.run(max_pages=2), "Fabrikant PW")
+    return _process_and_save(scraper.run(queries=[
+        "ремонт", "поставка оборудования", "строительство",
+        "IT услуги", "мебель", "уборка", "охрана",
+        "продукты питания", "транспортные услуги",
+        "аренда спецтехники", "строительные материалы",
+        "дорожные работы", "бетон поставка", "щебень поставка",
+        "металлопрокат", "кровельные работы", "земляные работы",
+    ], max_pages=3), "Fabrikant PW")
 
 
 def run_sberbank_ast_pw() -> int:
@@ -314,8 +364,9 @@ GROUPS = {
     "auctions_rad": [run_lot_online],
     "auctions_torgi": [run_torgi_gov_pw],
     "playwright": [run_tektorg_pw, run_fabrikant_pw, run_sberbank_ast_pw],
-    "all": [run_eis_ftp, run_eis_api, run_roseltorg, run_sberbank_ast,
-            run_rts_tender, run_tektorg, run_b2b_center, run_tenderguru],
+    "all": [run_eis_ftp, run_eis_api, run_eis_api_extra, run_roseltorg,
+            run_sberbank_ast, run_rts_tender, run_tektorg, run_b2b_center,
+            run_tenderguru],
 }
 
 

@@ -243,6 +243,7 @@ class EisApiScraper(BaseScraper):
         region: str = "",
         price_from: float | None = None,
         price_to: float | None = None,
+        okpd2: str = "",
         **kwargs,
     ) -> list[TenderCreate]:
         if queries is None:
@@ -252,12 +253,13 @@ class EisApiScraper(BaseScraper):
 
         with self:
             for query in queries:
-                logger.info(f"[EIS API] Searching: {query}" + (f" | region={region}" if region else ""))
+                logger.info(f"[EIS API] Searching: {query}" + (f" | region={region}" if region else "") + (f" | okpd2={okpd2}" if okpd2 else ""))
 
                 for page in range(1, max_pages + 1):
                     params = self._build_search_params(
                         query=query, law_type=law_type, region=region,
-                        price_from=price_from, price_to=price_to, page=page,
+                        price_from=price_from, price_to=price_to,
+                        okpd2=okpd2, page=page,
                     )
                     url = f"{self.SEARCH_URL}?{urlencode(params)}"
 

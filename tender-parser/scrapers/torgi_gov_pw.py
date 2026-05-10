@@ -33,10 +33,37 @@ PROPERTY_MAP = {
     "транспорт": "vehicles",
     "автомобил": "vehicles",
     "оборудов": "equipment",
+    "спецтехник": "special_equipment",
+    "экскаватор": "special_equipment",
+    "бульдозер": "special_equipment",
+    "погрузчик": "special_equipment",
+    "автокран": "special_equipment",
+    "трактор": "special_equipment",
+    "самосвал": "special_equipment",
+    "каток": "special_equipment",
+    "стройматериал": "construction_materials",
+    "строительн": "construction_materials",
+    "бетон": "construction_materials",
+    "щебен": "construction_materials",
+    "асфальт": "construction_materials",
+    "металлопрокат": "construction_materials",
+    "арматур": "construction_materials",
+    "кирпич": "construction_materials",
+    "пиломатериал": "construction_materials",
+    "лесоматериал": "construction_materials",
     "имущест": "other_assets",
     "реализац": "other_assets",
     "приватизац": "other_assets",
 }
+
+# Ключевые слова для целевых строительных лотов (приоритетный поиск)
+_CONSTRUCTION_TARGET = re.compile(
+    r"спецтехник|экскаватор|бульдозер|погрузчик|автокран|трактор|самосвал"
+    r"|строительн|стройматериал|бетон|щебен|асфальт|арматур|кирпич"
+    r"|дорожн|землян|фундамент|кровельн|фасад|металлоконструкц|благоустройств"
+    r"|грунт|песчан|гравийн|железобетон|монолит|свайн|буров",
+    re.IGNORECASE,
+)
 
 
 class TorgiGovPlaywrightScraper(PlaywrightScraper):
@@ -177,10 +204,11 @@ class TorgiGovPlaywrightScraper(PlaywrightScraper):
             ))
         return tenders
 
-    def run(self, max_pages: int = 10, **kwargs) -> list[TenderCreate]:
+    def run(self, max_pages: int = 10, construction_search: bool = True, **kwargs) -> list[TenderCreate]:
         all_items: list[dict] = []
 
         with self:
+            # 1. Основной сбор — все лоты
             url = f"{self.base_url}/new/public/lots/reg"
             logger.info(f"[Торги.гов.ру] Loading: {url}")
 
@@ -212,6 +240,41 @@ class TorgiGovPlaywrightScraper(PlaywrightScraper):
                 all_items.extend(fresh)
                 items = fresh
                 logger.info(f"  Page {page_num}: {len(fresh)} new lots (total: {len(all_items)})")
+
+            # 2. Целевой поиск строительных лотов через поиск
+            if construction_search:
+                construction_queries = [
+                    "спецтехника", "строительные материалы", "экскаватор",
+                    "бульдозер", "погрузчик", "асфальт", "бетон",
+                    "дорожные", "земельный участок",
+                ]
+                for cq in construction_queries:
+                    self._delay()
+                    try:
+                        search_url = f"{self.base_url}/new/public/lots/reg?searchString={cq}"
+                        logger.info(f"[Торги.гов.ру] Construction search: {cq}")
+                        ch = self.goto(search_url, wait_selector="div.lotDescription", timeout=20000)
+                        c_items = self._parse_page(ch)
+
+                        # Filter only construction-relevant lots
+                        c_targeted = [
+                            i for i in c_items
+                            if _CONSTRUCTION_TARGET.search(
+                                i.get("title", "") + " " +
+                                i.get("biddtype", "") + " " +
+                                i.get("property_type", "")
+                            )
+                        ]
+
+                        existing_urls = {i.get("url") for i in all_items}
+                        c_new = [i for i in c_targeted if i.get("url") not in existing_urls]
+
+                        if c_new:
+                            all_items.extend(c_new)
+                            logger.info(f"    +{len(c_new)} construction lots from '{cq}'")
+                    except Exception as e:
+                        logger.warning(f"  Construction search '{cq}' error: {e}")
+                        continue
 
         # Дозагрузка цен с детальных страниц
         if all_items:
