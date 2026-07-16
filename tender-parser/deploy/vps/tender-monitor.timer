@@ -1,0 +1,14 @@
+[Unit]
+Description=Run tender monitor cycle every 120 minutes
+
+[Timer]
+# Первый прогон через 5 минут после загрузки, далее каждые 120 минут
+# от момента завершения предыдущего запуска юнита.
+OnBootSec=5min
+OnUnitActiveSec=120min
+# Догнать пропущенный запуск после простоя/перезагрузки
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

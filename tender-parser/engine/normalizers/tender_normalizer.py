@@ -81,6 +81,8 @@ class TenderNormalizer:
             "customer_inn": record.customer_inn,
             "customer_region": customer_region,
             "okpd2_codes": record.okpd2_codes or [],
+            "application_guarantee": record.application_guarantee,
+            "contract_guarantee": record.contract_guarantee,
             "nmck": nmck,
             "currency": "RUB",
             "publish_date": publish_date,

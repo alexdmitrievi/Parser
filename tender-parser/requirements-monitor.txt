@@ -1,0 +1,13 @@
+# Зависимости VPS-мониторинга (monitor/ + engine/). Минимальный набор —
+# без Vercel/Supabase-стека. Установка: pip install -r requirements-monitor.txt
+httpx==0.28.1
+pydantic==2.12.5
+python-telegram-bot==22.0
+psycopg[binary]==3.2.9
+PyYAML==6.0.2
+beautifulsoup4==4.13.4
+lxml==5.4.0
+python-dateutil==2.9.0.post0
+
+# Тесты
+pytest==8.3.4

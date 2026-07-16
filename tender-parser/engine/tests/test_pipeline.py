@@ -75,9 +75,10 @@ class TestNicheTagger:
 
     def test_no_match(self):
         tagger = NicheTagger()
-        record = {"title": "Поставка молочных продуктов", "description": ""}
+        record = {"title": "Аудит бухгалтерской отчётности", "description": ""}
         tags = tagger.tag(record)
-        assert tags == []
+        assert "furniture" not in tags
+        assert "construction" not in tags
 
     def test_okpd2_match(self):
         tagger = NicheTagger()

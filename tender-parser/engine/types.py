@@ -79,6 +79,8 @@ class ParsedRecord:
     purchase_method: str | None = None
     description: str | None = None
     okpd2_codes: list[str] = field(default_factory=list)
+    application_guarantee: float | None = None  # обеспечение заявки, руб.
+    contract_guarantee: float | None = None  # обеспечение контракта, руб.
     publish_date: datetime | None = None
     submission_deadline: datetime | None = None
     auction_date: datetime | None = None

@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily PostgreSQL dump of tender monitor DB
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=tender
+WorkingDirectory=/opt/tender-parser
+EnvironmentFile=/opt/tender-parser/.env
+ExecStart=/bin/bash /opt/tender-parser/scripts/backup_pg.sh
+
+[Install]
+WantedBy=multi-user.target

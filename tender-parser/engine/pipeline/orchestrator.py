@@ -88,6 +88,14 @@ class PipelineOrchestrator:
             urls = source.discover()
             log.info(f"Discovered {len(urls)} target URLs")
 
+            # Incremental sources (FTP) may legitimately have nothing new.
+            if not urls and getattr(source, "empty_discovery_ok", False):
+                log.info("Nothing new to fetch — success (incremental source)")
+                cb.record_success()
+                self._health.record_success(source_id)
+                stats.finished_at = __import__("datetime").datetime.utcnow()
+                return stats
+
             # Step 2: Fetch + Parse each URL
             all_parsed: list[ParsedRecord] = []
             for url in urls:
@@ -104,8 +112,11 @@ class PipelineOrchestrator:
 
                     all_parsed.extend(records)
 
-                    if not records:
-                        break  # No more results on this page
+                    # Paginated sources stop on the first empty page; feed-style
+                    # sources (FTP archives) must keep going — an archive may
+                    # legitimately contain zero relevant records.
+                    if not records and getattr(source, "stop_on_empty_page", True):
+                        break
 
                 except Exception as e:
                     stats.fetch_errors += 1
@@ -114,9 +125,14 @@ class PipelineOrchestrator:
                     continue
 
             if not all_parsed:
-                log.warning("No records parsed — nothing to process")
-                cb.record_failure()
-                self._health.record_failure(source_id, "No records parsed")
+                if getattr(source, "empty_parse_ok", False) and stats.fetch_errors == 0:
+                    log.info("Fetched pages contained no records — success (feed source)")
+                    cb.record_success()
+                    self._health.record_success(source_id)
+                else:
+                    log.warning("No records parsed — nothing to process")
+                    cb.record_failure()
+                    self._health.record_failure(source_id, "No records parsed")
                 stats.finished_at = __import__("datetime").datetime.utcnow()
                 return stats
 

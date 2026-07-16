@@ -5,8 +5,8 @@ Migrated from scrapers/eis_api.py — same parsing logic, driven by engine pipel
 
 from __future__ import annotations
 
+import os
 import re
-from datetime import datetime
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -210,6 +210,10 @@ EIS_API_CONFIG = SourceConfig(
     max_pages=3,
     rate_limit=RateLimitConfig(min_delay=10.0, max_delay=18.0),
     law_type_default="44-fz",
+    # Резервный источник: основной — официальные XML-выгрузки FTP ЕИС
+    # (engine/sources/tenders/eis_ftp.py). HTML-скрейпинг включается только
+    # флагом EIS_HTML_FALLBACK=1.
+    enabled=os.environ.get("EIS_HTML_FALLBACK", "0") == "1",
 )
 
 
