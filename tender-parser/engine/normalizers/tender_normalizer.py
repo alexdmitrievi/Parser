@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from engine.parsers.utils import (
     parse_price,
@@ -13,7 +13,7 @@ from engine.parsers.utils import (
 )
 from engine.normalizers.law_type import detect_law_type
 from engine.normalizers.purchase_method import normalize_purchase_method
-from engine.types import ParsedRecord, SourceCategory
+from engine.types import ParsedRecord
 from engine.observability.logger import get_logger
 
 logger = get_logger("normalizer.tender")
@@ -81,6 +81,8 @@ class TenderNormalizer:
             "customer_inn": record.customer_inn,
             "customer_region": customer_region,
             "okpd2_codes": record.okpd2_codes or [],
+            "application_guarantee": record.application_guarantee,
+            "contract_guarantee": record.contract_guarantee,
             "nmck": nmck,
             "currency": "RUB",
             "publish_date": publish_date,

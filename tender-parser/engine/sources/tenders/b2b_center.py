@@ -16,12 +16,32 @@ from engine.types import (
     RateLimitConfig,
 )
 from engine.sources.base import BaseSourceAdapter
-from engine.parsers.utils import parse_price, parse_date, clean_text
+from engine.parsers.utils import parse_date, clean_text
 from engine.config.registry import get_registry
 
 
 class B2BCenterSourceAdapter(BaseSourceAdapter):
-    """Adapter for b2b-center.ru search results."""
+    """Adapter for b2b-center.ru search results.
+
+    Только публичные страницы поиска; robots.txt проверяется в discover().
+    """
+
+    # Пустой discover — осознанный пропуск по robots.txt, не сбой источника
+    empty_discovery_ok = True
+
+    def discover(self) -> list[str]:
+        from engine.fetchers.robots import get_robots_checker
+
+        urls = super().discover()
+        robots = get_robots_checker()
+        for url in urls[:1]:
+            if not robots.allowed(url):
+                from engine.observability.logger import get_logger
+                get_logger("source.b2b_center").warning(
+                    f"[{self.source_id}] robots.txt disallows search pages — skipping source"
+                )
+                return []
+        return urls
 
     def parse_listing(self, result: FetchResult) -> list[ParsedRecord]:
         soup = BeautifulSoup(result.content, "html.parser")
@@ -101,18 +121,12 @@ B2B_CENTER_CONFIG = SourceConfig(
     base_url="https://www.b2b-center.ru",
     fetch_method=FetchMethod.HTTP,
     search_queries=[
-        "ремонт", "капитальный ремонт", "строительство",
-        "строительно-монтажные работы", "реконструкция",
-        "фасадные работы", "кровельные работы", "отделочные работы",
-        "мазут", "печное топливо", "дизельное топливо", "ГСМ",
-        "поставка оборудования", "поставка материалов",
-        "поставка спецодежды", "металлопрокат",
-        "IT услуги", "транспортные услуги", "клининг",
-        "техническое обслуживание", "проектные работы",
-        "мебель", "продукты питания", "медицинское оборудование",
-        "утилизация", "озеленение", "страхование",
+        # Профиль «Подряд ПРО»: расчистка/снос/отделка/топливо
+        "расчистка территории", "валка деревьев", "снос", "демонтаж",
+        "благоустройство", "текущий ремонт", "ремонт помещений",
+        "отделочные работы", "печное топливо", "нефтепродукты", "мазут",
     ],
-    max_pages=5,
+    max_pages=3,
     endpoints={
         "search": "/market/",
         "query_param": "query",
@@ -120,6 +134,8 @@ B2B_CENTER_CONFIG = SourceConfig(
     },
     rate_limit=RateLimitConfig(min_delay=3.0, max_delay=7.0),
     law_type_default="commercial",
+    # Включается только после приёмки этапов 1–4 (COMMERCIAL_SOURCES=1)
+    enabled=False,
 )
 
 

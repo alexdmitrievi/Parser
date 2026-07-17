@@ -1,6 +1,5 @@
 """Tests for engine source adapters — corporate, EIS, B2B Center."""
 
-import pytest
 from engine.types import FetchResult, SourceCategory, FetchMethod, RateLimitConfig, SourceConfig
 from engine.sources.tenders.corporate import CorporateSourceAdapter, get_all_corporate_adapters
 from engine.sources.tenders.eis_api import EisApiSourceAdapter, EIS_API_CONFIG

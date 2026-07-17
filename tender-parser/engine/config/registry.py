@@ -10,7 +10,7 @@ The registry is the single source of truth for what sources exist and how they'r
 from __future__ import annotations
 
 import threading
-from typing import Any, Callable, Type
+from typing import Any
 
 from engine.types import SourceConfig, SourceCategory, FetchMethod, RateLimitConfig, RetryConfig
 from engine.observability.logger import get_logger

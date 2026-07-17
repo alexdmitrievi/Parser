@@ -1,7 +1,5 @@
 """Tests for engine.normalizers — law_type, purchase_method, tender_normalizer."""
 
-import pytest
-from datetime import datetime
 
 from engine.normalizers.law_type import detect_law_type
 from engine.normalizers.purchase_method import normalize_purchase_method

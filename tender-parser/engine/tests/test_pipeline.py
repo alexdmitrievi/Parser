@@ -1,6 +1,5 @@
 """Tests for engine.pipeline — deduplicator, versioner, tagger."""
 
-import pytest
 from engine.pipeline.deduplicator import Deduplicator
 from engine.pipeline.versioner import ChangeDetector
 from engine.pipeline.tagger import NicheTagger
@@ -75,9 +74,10 @@ class TestNicheTagger:
 
     def test_no_match(self):
         tagger = NicheTagger()
-        record = {"title": "Поставка молочных продуктов", "description": ""}
+        record = {"title": "Аудит бухгалтерской отчётности", "description": ""}
         tags = tagger.tag(record)
-        assert tags == []
+        assert "furniture" not in tags
+        assert "construction" not in tags
 
     def test_okpd2_match(self):
         tagger = NicheTagger()

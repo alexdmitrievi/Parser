@@ -1,0 +1,20 @@
+[Unit]
+Description=Tender monitor cycle (EIS FTP -> filters -> PostgreSQL -> Telegram)
+Wants=network-online.target postgresql.service
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=tender
+WorkingDirectory=/opt/tender-parser
+EnvironmentFile=/opt/tender-parser/.env
+ExecStart=/opt/tender-parser/.venv/bin/python -m monitor.run_cycle
+# Один цикл может обрабатывать большой бэклог архивов при первом запуске
+TimeoutStartSec=110min
+Nice=10
+# Логи: journald (journalctl -u tender-monitor) + файл через MONITOR_LOG_FILE в .env
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

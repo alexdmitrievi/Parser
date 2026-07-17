@@ -10,7 +10,6 @@ import logging
 from typing import Any
 
 from shared.models import TenderCreate
-from engine.types import SourceConfig
 from engine.sources.base import BaseSourceAdapter
 from engine.pipeline.orchestrator import PipelineOrchestrator
 from engine.normalizers.tender_normalizer import TenderNormalizer

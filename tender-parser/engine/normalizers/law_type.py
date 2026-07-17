@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 
 # 44-ФЗ: 19-digit numbers (government procurement)

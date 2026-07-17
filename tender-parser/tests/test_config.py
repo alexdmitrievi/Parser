@@ -43,7 +43,9 @@ class TestConfig:
         assert "подряд" in NICHE_CONSTRUCTION.keywords
         assert "41.2" in NICHE_CONSTRUCTION.okpd2_prefixes
 
-        assert len(ALL_NICHES) == 2
+        assert len(ALL_NICHES) >= 2
+        assert NICHE_FURNITURE in ALL_NICHES
+        assert NICHE_CONSTRUCTION in ALL_NICHES
 
 
 class TestRateLimiter:

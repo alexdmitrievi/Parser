@@ -1,0 +1,18 @@
+[Unit]
+Description=Tender monitor Telegram bot (single user, polling)
+Wants=network-online.target postgresql.service
+After=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=tender
+WorkingDirectory=/opt/tender-parser
+EnvironmentFile=/opt/tender-parser/.env
+ExecStart=/opt/tender-parser/.venv/bin/python -m monitor.bot
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
