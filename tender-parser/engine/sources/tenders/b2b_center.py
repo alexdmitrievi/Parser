@@ -26,6 +26,9 @@ class B2BCenterSourceAdapter(BaseSourceAdapter):
     Только публичные страницы поиска; robots.txt проверяется в discover().
     """
 
+    # Пустой discover — осознанный пропуск по robots.txt, не сбой источника
+    empty_discovery_ok = True
+
     def discover(self) -> list[str]:
         from engine.fetchers.robots import get_robots_checker
 

@@ -146,12 +146,23 @@ class PostgresTenderRepository(TenderRepository):
 
         seen: set[tuple] = set()
         rows: list[dict] = []
+        skipped_no_reg = 0
         for rec in records:
+            # registry_number NOT NULL в схеме и ключ дедупа уведомлений —
+            # записи без него (бывает у коммерческих площадок) пропускаем,
+            # иначе упадёт весь батч.
+            if not rec.get("registry_number"):
+                skipped_no_reg += 1
+                continue
             key = tuple(str(rec.get(k, "")) for k in conflict_keys)
             if key in seen:
                 continue
             seen.add(key)
             rows.append(self._prepare_row(rec))
+        if skipped_no_reg:
+            logger.warning(f"Skipped {skipped_no_reg} records without registry_number")
+        if not rows:
+            return 0
 
         cols = _TENDER_COLUMNS
         placeholders = ", ".join(f"%({c})s" for c in cols)
@@ -349,11 +360,19 @@ class PostgresTenderRepository(TenderRepository):
                 row,
             )
 
-    def fetch_filtered_registry_numbers(self) -> set[str]:
-        """Registry numbers of tenders that were notified (passed business filters)."""
+    def fetch_filtered_registry_numbers(self, days: int = 180) -> set[str]:
+        """Registry numbers of tenders that were notified (passed business filters).
+
+        Ограничено последними `days` днями: протоколы публикуются в течение
+        недель после извещения, а неограниченная выборка росла бы вечно.
+        """
         conn = self._get_conn()
         with conn.cursor() as cur:
-            cur.execute("SELECT registry_number FROM notified_tenders")
+            cur.execute(
+                "SELECT registry_number FROM notified_tenders "
+                "WHERE notified_at > now() - make_interval(days => %s)",
+                (days,),
+            )
             return {r[0] for r in cur.fetchall()}
 
     def stats_last_days(self, days: int = 30) -> dict[str, Any]:

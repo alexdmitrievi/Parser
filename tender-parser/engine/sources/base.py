@@ -7,15 +7,12 @@ It wires together: fetcher + parser + config → discover/fetch_page/parse_listi
 from __future__ import annotations
 
 import time
-from typing import Any
 from urllib.parse import urlencode
 
 from engine.types import (
-    SourceConfig, FetchMethod, FetchResult, ParsedRecord,
+    SourceConfig, FetchResult, ParsedRecord,
 )
 from engine.fetchers.http_fetcher import HttpFetcher
-from engine.parsers.html_parser import HtmlExtractor
-from engine.parsers.utils import parse_price, parse_date, clean_text
 from engine.resilience.rate_limiter import RateLimiter
 from engine.observability.logger import CrawlLogger
 

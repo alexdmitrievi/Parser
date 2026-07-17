@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from bs4 import BeautifulSoup, Tag
 
-from engine.parsers.utils import clean_text, parse_price, parse_date, parse_registry_number
+from engine.parsers.utils import clean_text, parse_registry_number
 from engine.observability.logger import get_logger
 
 logger = get_logger("parser.html")

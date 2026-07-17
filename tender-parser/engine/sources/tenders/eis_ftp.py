@@ -21,9 +21,8 @@ from __future__ import annotations
 
 import os
 import re
-import zipfile
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Optional
 from xml.etree import ElementTree as ET
 
@@ -32,7 +31,7 @@ from engine.types import (
     RateLimitConfig,
 )
 from engine.sources.base import BaseSourceAdapter
-from engine.fetchers.ftp_fetcher import FtpFetcher
+from engine.fetchers.ftp_fetcher import FtpFetcher, iter_local_zip_xml
 from engine.config.registry import get_registry
 from engine.observability.logger import get_logger
 
@@ -83,13 +82,22 @@ def _to_float(text: str | None) -> Optional[float]:
         return None
 
 
+_MSK = timezone(timedelta(hours=3))
+
+
 def _to_dt(text: str | None) -> Optional[datetime]:
+    """Parse EIS datetime. Naive values are treated as Moscow time (+03:00) —
+    выгрузки ЕИС публикуют даты по МСК; иначе naive-значение легло бы в
+    TIMESTAMPTZ как UTC и дедлайн в карточке уехал бы на 3 часа."""
     if not text:
         return None
     t = text.strip().replace("Z", "+00:00")
     for candidate in (t, t[:19]):
         try:
-            return datetime.fromisoformat(candidate)
+            dt = datetime.fromisoformat(candidate)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=_MSK)
+            return dt
         except ValueError:
             continue
     return None
@@ -193,9 +201,11 @@ def parse_44fz_notification(xml_content: str) -> Optional[dict[str, Any]]:
             url = el.text.strip()
             break
     if not url:
+        # Путь карточки зависит от способа закупки (ea44/ok504/…), угадать его
+        # нельзя — надёжнее универсальный поиск по номеру извещения.
         url = (
-            "https://zakupki.gov.ru/epz/order/notice/ea20/view/common-info.html"
-            f"?regNumber={registry_number}"
+            "https://zakupki.gov.ru/epz/order/extendedsearch/results.html"
+            f"?searchString={registry_number}"
         )
 
     return {
@@ -340,12 +350,18 @@ PROTOCOL_LAYOUT_223 = EisFtpLayout(
 
 
 def _region_match(entries: list[str], region: EisRegion) -> Optional[str]:
-    """Find the FTP dir entry matching a region, tolerant to transliteration."""
+    """Find the FTP dir entry matching a region, tolerant to transliteration.
+
+    Сравнение по началу токенов имени каталога, а не по подстроке:
+    "omsk" должен находить "Omskaja_obl"/"Omskaya_obl", но НЕ "Tomskaja_obl".
+    """
+    display_first = region.display_name.lower().split()[0]
     for entry in entries:
         name = entry.rstrip("/").rsplit("/", 1)[-1]
-        low = name.lower()
-        if region.match in low or region.display_name.lower().split()[0] in low:
-            return name
+        tokens = re.split(r"[_\-\s.]+", name.lower())
+        for token in tokens:
+            if token.startswith(region.match) or token.startswith(display_first):
+                return name
     return None
 
 
@@ -407,6 +423,7 @@ class EisFtpSourceAdapter(BaseSourceAdapter):
             raise RuntimeError(f"FTP dir {base} is empty or unreadable")
 
         archives: list[str] = []
+        matched_regions = 0
         for region in self._regions:
             region_dir = _region_match(entries, region)
             if not region_dir:
@@ -414,6 +431,7 @@ class EisFtpSourceAdapter(BaseSourceAdapter):
                     f"[{self.source_id}] Region '{region.display_name}' not found under {base}"
                 )
                 continue
+            matched_regions += 1
 
             for subdir in self._layout.subdir_candidates:
                 path = f"{base}/{region_dir}/{subdir}"
@@ -424,6 +442,12 @@ class EisFtpSourceAdapter(BaseSourceAdapter):
                     full = f"{path}/{fname.rsplit('/', 1)[-1]}"
                     archives.append(full)
                     self._region_by_path[full] = region.display_name
+
+        if matched_regions == 0:
+            raise RuntimeError(
+                f"None of the configured regions found under {base} — "
+                "FTP layout changed? Run scripts/eis_ftp_probe.py"
+            )
 
         archives = sorted(set(archives))
         if self._repo is not None:
@@ -457,36 +481,17 @@ class EisFtpSourceAdapter(BaseSourceAdapter):
         region = self._region_by_path.get(result.url)
         records: list[ParsedRecord] = []
 
-        try:
-            with zipfile.ZipFile(local_path) as zf:
-                for name in zf.namelist():
-                    if not name.endswith(".xml"):
-                        continue
-                    if any(skip in name for skip in _44_INNER_SKIP):
-                        continue
-                    xml_bytes = zf.read(name)
-                    try:
-                        xml_content = xml_bytes.decode("utf-8")
-                    except UnicodeDecodeError:
-                        xml_content = xml_bytes.decode("cp1251", errors="replace")
-
-                    fields = self._parse_document(xml_content)
-                    if not fields:
-                        continue
-                    records.append(ParsedRecord(
-                        source_id=self.config.source_id,
-                        category=SourceCategory.TENDERS,
-                        customer_region=region,
-                        raw_data={"archive": result.url, "inner_file": name},
-                        **fields,
-                    ))
-        except zipfile.BadZipFile:
-            logger.warning(f"[{self.source_id}] Bad ZIP: {result.url}")
-        finally:
-            try:
-                os.unlink(local_path)
-            except OSError:
-                pass
+        for name, xml_content in iter_local_zip_xml(local_path, _44_INNER_SKIP):
+            fields = self._parse_document(xml_content)
+            if not fields:
+                continue
+            records.append(ParsedRecord(
+                source_id=self.config.source_id,
+                category=SourceCategory.TENDERS,
+                customer_region=region,
+                raw_data={"archive": result.url, "inner_file": name},
+                **fields,
+            ))
 
         self.parsed_archives.append(result.url)
         return records

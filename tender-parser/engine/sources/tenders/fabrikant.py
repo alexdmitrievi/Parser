@@ -53,6 +53,9 @@ _SKIP_TITLES = re.compile(
 class FabrikantSourceAdapter(BaseSourceAdapter):
     """HTTP-адаптер публичного поиска fabrikant.ru."""
 
+    # Пустой discover — осознанный пропуск по robots.txt, не сбой источника
+    empty_discovery_ok = True
+
     def discover(self) -> list[str]:
         robots = get_robots_checker()
         urls: list[str] = []

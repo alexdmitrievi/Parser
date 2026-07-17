@@ -1,6 +1,5 @@
 """Tests for engine.resilience — rate_limiter, circuit_breaker."""
 
-import pytest
 from engine.resilience.circuit_breaker import CircuitBreaker
 from engine.resilience.rate_limiter import RateLimiter
 

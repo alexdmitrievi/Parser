@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import logging
 import os
-import zipfile
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 from xml.etree import ElementTree as ET
 
-from engine.fetchers.ftp_fetcher import FtpFetcher
+if TYPE_CHECKING:
+    from engine.persistence.postgres_repo import PostgresTenderRepository
+
+from engine.fetchers.ftp_fetcher import FtpFetcher, iter_local_zip_xml
 from engine.sources.tenders.eis_ftp import (
     DEFAULT_REGIONS,
     PROTOCOL_LAYOUT_44,
@@ -143,7 +145,7 @@ class ProtocolCollector:
 
     def __init__(
         self,
-        repo,
+        repo: "PostgresTenderRepository",
         regions: list[EisRegion] | None = None,
         tmp_dir: str | None = None,
         max_archives: int | None = None,
@@ -213,39 +215,28 @@ class ProtocolCollector:
         logger.info(f"Protocols: {stats}")
         return stats
 
-    def _process_archive(self, ftp: FtpFetcher, archive: str, parse_fn,
-                         region: Optional[str], filtered_regs: set[str]) -> int:
+    def _process_archive(
+        self,
+        ftp: FtpFetcher,
+        archive: str,
+        parse_fn: Callable[[str], Optional[dict[str, Any]]],
+        region: Optional[str],
+        filtered_regs: set[str],
+    ) -> int:
         stored = 0
         local_path = ftp.download_to_file(archive, dest_dir=self._tmp_dir)
-        try:
-            with zipfile.ZipFile(local_path) as zf:
-                for name in zf.namelist():
-                    if not name.endswith(".xml"):
-                        continue
-                    xml_bytes = zf.read(name)
-                    try:
-                        xml_content = xml_bytes.decode("utf-8")
-                    except UnicodeDecodeError:
-                        xml_content = xml_bytes.decode("cp1251", errors="replace")
+        for name, xml_content in iter_local_zip_xml(local_path):
+            protocol = parse_fn(xml_content)
+            if not protocol:
+                continue
+            if protocol["registry_number"] not in filtered_regs:
+                continue
 
-                    protocol = parse_fn(xml_content)
-                    if not protocol:
-                        continue
-                    if protocol["registry_number"] not in filtered_regs:
-                        continue
-
-                    self._enrich_with_nmck(protocol)
-                    protocol["region"] = region
-                    protocol["raw_data"] = {"archive": archive, "inner_file": name}
-                    self._repo.upsert_protocol(protocol)
-                    stored += 1
-        except zipfile.BadZipFile:
-            logger.warning(f"Bad protocol ZIP: {archive}")
-        finally:
-            try:
-                os.unlink(local_path)
-            except OSError:
-                pass
+            self._enrich_with_nmck(protocol)
+            protocol["region"] = region
+            protocol["raw_data"] = {"archive": archive, "inner_file": name}
+            self._repo.upsert_protocol(protocol)
+            stored += 1
         return stored
 
     def _enrich_with_nmck(self, protocol: dict[str, Any]) -> None:

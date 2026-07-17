@@ -7,10 +7,10 @@ Integrates all layers: fetchers, parsers, normalizers, dedup, persistence, obser
 from __future__ import annotations
 
 import time
+from datetime import datetime
 from typing import Any
 
 from engine.types import (
-    SourceConfig, SourceCategory, FetchMethod, FetchResult,
     ParsedRecord, CrawlStats, CrawlAction,
 )
 from engine.normalizers.tender_normalizer import TenderNormalizer
@@ -93,7 +93,7 @@ class PipelineOrchestrator:
                 log.info("Nothing new to fetch — success (incremental source)")
                 cb.record_success()
                 self._health.record_success(source_id)
-                stats.finished_at = __import__("datetime").datetime.utcnow()
+                stats.finished_at = datetime.utcnow()
                 return stats
 
             # Step 2: Fetch + Parse each URL
@@ -133,7 +133,7 @@ class PipelineOrchestrator:
                     log.warning("No records parsed — nothing to process")
                     cb.record_failure()
                     self._health.record_failure(source_id, "No records parsed")
-                stats.finished_at = __import__("datetime").datetime.utcnow()
+                stats.finished_at = datetime.utcnow()
                 return stats
 
             # Step 3: Normalize
@@ -187,7 +187,7 @@ class PipelineOrchestrator:
         # Finalize stats
         elapsed = (time.monotonic() - start_time) * 1000
         stats.duration_ms = elapsed
-        stats.finished_at = __import__("datetime").datetime.utcnow()
+        stats.finished_at = datetime.utcnow()
         self._metrics.record_run_end(source_id, elapsed, stats.success_rate)
         self._metrics.record_persist(
             source_id, stats.inserted, stats.updated, stats.skipped

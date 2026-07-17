@@ -1,6 +1,5 @@
 """Tests for engine.pipeline — deduplicator, versioner, tagger."""
 
-import pytest
 from engine.pipeline.deduplicator import Deduplicator
 from engine.pipeline.versioner import ChangeDetector
 from engine.pipeline.tagger import NicheTagger

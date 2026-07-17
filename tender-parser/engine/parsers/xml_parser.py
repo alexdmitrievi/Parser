@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Optional
+from typing import Any
 from xml.etree import ElementTree as ET
 
 from engine.parsers.utils import clean_text

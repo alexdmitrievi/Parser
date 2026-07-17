@@ -1,11 +1,9 @@
 """Tests for the EIS FTP source: XML parsing, region matching, adapter flow."""
 
-import io
 import os
 import sys
 import zipfile
 
-import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if ROOT not in sys.path:
@@ -64,7 +62,9 @@ class TestParse44fz:
         )
         rec = parse_44fz_notification(xml)
         assert rec is not None
-        assert "regNumber=0152300011926000042" in rec["original_url"]
+        # Без href — универсальная ссылка на поиск по номеру (путь карточки
+        # зависит от способа закупки и не угадывается)
+        assert "searchString=0152300011926000042" in rec["original_url"]
 
 
 class TestParse223fz:
@@ -86,12 +86,34 @@ class TestParse223fz:
         assert parse_223fz_notice("<purchaseNotice/>") is None
 
 
+class TestNaiveDatetime:
+    def test_naive_datetime_assumed_msk(self):
+        # Регрессия: naive-дата без смещения ложилась в TIMESTAMPTZ как UTC
+        # и дедлайн в карточке уезжал на 3 часа
+        from engine.sources.tenders.eis_ftp import _to_dt
+        dt = _to_dt("2026-07-22T08:00:00")
+        assert dt is not None and dt.tzinfo is not None
+        assert dt.utcoffset().total_seconds() == 3 * 3600
+
+    def test_explicit_offset_preserved(self):
+        from engine.sources.tenders.eis_ftp import _to_dt
+        dt = _to_dt("2026-07-22T08:00:00+05:00")
+        assert dt.utcoffset().total_seconds() == 5 * 3600
+
+
 class TestRegionMatch:
     def test_transliteration_variants(self):
         omsk = EisRegion(match="omsk", display_name="Омская область")
         assert _region_match(["Omskaja_obl", "Tomskaja_obl"], omsk) == "Omskaja_obl"
         assert _region_match(["Omskaya_obl"], omsk) == "Omskaya_obl"
         assert _region_match(["/fcs_regions/Omskaja_obl"], omsk) == "Omskaja_obl"
+
+    def test_tomsk_is_not_omsk(self):
+        # Регрессия: подстрочный матч находил "omsk" внутри "Tomskaja_obl"
+        omsk = EisRegion(match="omsk", display_name="Омская область")
+        assert _region_match(["Tomskaja_obl"], omsk) is None
+        assert _region_match(["Tomskaja_obl", "Omskaja_obl"], omsk) == "Omskaja_obl"
+        assert _region_match(["Томская_обл"], omsk) is None
 
     def test_russian_dir_names(self):
         omsk = EisRegion(match="omsk", display_name="Омская область")

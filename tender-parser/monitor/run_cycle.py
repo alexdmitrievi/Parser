@@ -103,8 +103,13 @@ def run_cycle() -> int:
         source_id = adapter.source_id
         with adapter:
             stats = orchestrator.run_source(adapter)
-            failed = stats.errors > 0 or (
-                stats.total_fetched == 0 and stats.fetch_errors > 0
+            # Неудача: ошибки пайплайна, ни одного скачанного архива при
+            # наличии ошибок сети, ЛИБО архивы скачаны, но ни одно извещение
+            # не разобрано — признак смены схемы XML (тихая деградация).
+            failed = (
+                stats.errors > 0
+                or (stats.total_fetched == 0 and stats.fetch_errors > 0)
+                or (stats.total_fetched > 0 and stats.total_parsed == 0)
             )
             if not failed:
                 adapter.commit_processed()
@@ -150,9 +155,18 @@ def run_cycle() -> int:
     try:
         notify_stats = notify_new_tenders(repo, business_filter)
         summary["notifier"] = dict(notify_stats)
+        # Telegram не доставляет карточки → алерт после 2 циклов подряд,
+        # пока 48-часовое окно ретраев не истекло молча.
+        notify_failed = notify_stats["matched"] > notify_stats["sent"]
+        _track_failures(
+            repo, "notifier", notify_failed,
+            "Карточки не доставляются в Telegram (проверьте токен/сеть) — "
+            "неотправленные закупки будут ретраиться 48 часов.",
+        )
     except Exception as e:
         logger.error(f"Notifier failed: {e}", exc_info=True)
         summary["notifier"] = {"error": str(e)}
+        _track_failures(repo, "notifier", True, f"Модуль уведомлений упал: {e}")
 
     # Протоколы итогов — только копим в БД
     try:

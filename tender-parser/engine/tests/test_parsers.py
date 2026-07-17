@@ -1,6 +1,5 @@
 """Tests for engine.parsers.utils — price, date, text parsing."""
 
-import pytest
 from datetime import datetime
 from engine.parsers.utils import parse_price, parse_date, clean_text, parse_registry_number
 

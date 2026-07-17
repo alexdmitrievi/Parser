@@ -51,6 +51,11 @@ class SupabaseTenderRepository(TenderRepository):
 
             # Serialize datetime fields
             row = dict(rec)
+            # Поля обеспечения есть только в локальной PG-схеме монитора;
+            # в таблице Supabase таких колонок нет — PostgREST отклонил бы
+            # весь батч.
+            row.pop("application_guarantee", None)
+            row.pop("contract_guarantee", None)
             for dt_field in ("publish_date", "submission_deadline", "auction_date"):
                 if isinstance(row.get(dt_field), datetime):
                     row[dt_field] = row[dt_field].isoformat()

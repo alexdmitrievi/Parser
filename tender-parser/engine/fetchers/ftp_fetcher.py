@@ -22,6 +22,35 @@ def _decode_xml_bytes(xml_bytes: bytes) -> str:
         return xml_bytes.decode("cp1251", errors="replace")
 
 
+def iter_local_zip_xml(
+    local_path: str,
+    skip_name_parts: tuple[str, ...] = (),
+    delete_after: bool = True,
+) -> Iterator[tuple[str, str]]:
+    """Yield (inner_name, xml_content) for each XML in a local ZIP archive.
+
+    Единая точка распаковки выгрузок ЕИС (извещения и протоколы). Битый ZIP
+    логируется и пропускается; при delete_after архив удаляется с диска
+    после обработки — XML тяжёлые, диск копить их не должен.
+    """
+    try:
+        with zipfile.ZipFile(local_path) as zf:
+            for name in zf.namelist():
+                if not name.endswith(".xml"):
+                    continue
+                if any(part in name for part in skip_name_parts):
+                    continue
+                yield name, _decode_xml_bytes(zf.read(name))
+    except zipfile.BadZipFile:
+        logger.warning(f"Bad ZIP: {local_path}")
+    finally:
+        if delete_after:
+            try:
+                os.unlink(local_path)
+            except OSError:
+                pass
+
+
 class FtpFetcher:
     """FTP fetcher for downloading XML feeds (primarily EIS/zakupki.gov.ru)."""
 
