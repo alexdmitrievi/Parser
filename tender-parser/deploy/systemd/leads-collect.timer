@@ -1,0 +1,19 @@
+# Расписание домена leads — отдельное от тендеров и грантов.
+#
+# Раз в неделю: каталоги поставщиков меняются медленно, а вежливый режим
+# делает частые обходы и бессмысленными, и невежливыми.
+
+[Unit]
+Description=Leads: еженедельный сбор китайских импортёров
+Documentation=file:///opt/tender-parser/docs/LEADS.md
+
+[Timer]
+OnCalendar=Mon 02:30
+# Догнать пропущенный запуск, если машина была выключена.
+Persistent=true
+# Разброс до часа, чтобы не бить по сайтам ровно в одну секунду.
+RandomizedDelaySec=1h
+Unit=leads-collect.service
+
+[Install]
+WantedBy=timers.target

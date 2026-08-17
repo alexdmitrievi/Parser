@@ -1,0 +1,36 @@
+# Профили продуктов для домена leads (китайские импортёры и потребители).
+#
+# Файл перечитывается на каждом запуске — правки применяются без изменения кода
+# и без перезапуска чего-либо. Добавить продукт = добавить блок в profiles.
+#
+# keywords_en / keywords_zh — поисковые запросы по каталогам и маркеры
+#   совпадения в карточке компании.
+# hs_codes — коды ТН ВЭД для адаптера таможенных данных (customs_api).
+# target_industries — отрасли-потребители; используются для industry_guess.
+
+profiles:
+  petcoke_fuel:                      # нефтяной кокс топливный, сера ~4%
+    keywords_en: ["petroleum coke", "pet coke", "petcoke", "green petroleum coke", "fuel grade coke"]
+    keywords_zh: ["石油焦", "生石油焦", "燃料级石油焦"]
+    hs_codes: ["2713.11"]
+    target_industries: ["cement", "glass", "ceramics", "power", "aluminium"]
+
+  petcoke_anode:                     # электродный / кальцинация, сера ~1.5%
+    keywords_en: ["calcined petroleum coke", "CPC", "anode grade coke", "calcining plant", "carbon additive"]
+    keywords_zh: ["煅烧石油焦", "预焙阳极", "碳素"]
+    hs_codes: ["2713.12"]
+    target_industries: ["aluminium", "graphite electrode", "carbon"]
+
+  grain:
+    keywords_en: ["wheat importer", "barley", "rapeseed", "grain trading", "feed grain", "flour mill"]
+    keywords_zh: ["小麦", "大麦", "油菜籽", "粮食贸易", "面粉厂"]
+    hs_codes: ["1001", "1003", "1205"]
+    target_industries: ["flour milling", "feed", "grain trading"]
+
+# Провинции в порядке приоритета: компании оттуда сортируются выше в экспорте.
+regions_priority: ["Shandong", "Hebei", "Henan", "Liaoning", "Tianjin", "Jiangsu", "Xinjiang", "Sichuan", "Chongqing"]
+
+limits:
+  max_pages_per_query: 20
+  request_delay_seconds: 3           # вежливая задержка
+  max_concurrency: 2

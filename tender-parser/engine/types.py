@@ -19,6 +19,7 @@ class SourceCategory(str, enum.Enum):
     TENDERS = "tenders"
     AUCTIONS = "auctions"
     GRANTS = "grants"
+    LEADS = "leads"
 
 
 class FetchMethod(str, enum.Enum):

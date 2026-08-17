@@ -34,8 +34,23 @@ class HttpFetcher:
         config: SourceConfig | None = None,
         proxy_pool: ProxyPool | None = None,
         rate_limiter: RateLimiter | None = None,
+        default_headers: dict[str, str] | None = None,
+        user_agent: str | None = None,
     ):
+        """Create a fetcher.
+
+        Args:
+            config: Source configuration (rate limit, retry, proxy, headers).
+            proxy_pool: Proxy pool override.
+            rate_limiter: Rate limiter override.
+            default_headers: Extra headers merged into every request.
+            user_agent: Pin a single User-Agent instead of rotating between
+                browser strings. Used by polite crawlers that must identify
+                themselves honestly. ``None`` keeps the historical rotation.
+        """
         self._config = config
+        self._default_headers = dict(default_headers or {})
+        self._user_agent = user_agent
         self._proxy_pool = proxy_pool or get_proxy_pool()
         self._rate_limiter = rate_limiter or RateLimiter(
             min_delay=config.rate_limit.min_delay if config else 2.0,
@@ -47,7 +62,7 @@ class HttpFetcher:
 
     def _build_headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         headers = {
-            "User-Agent": random.choice(USER_AGENTS),
+            "User-Agent": self._pick_user_agent(),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
             "Accept-Encoding": "gzip, deflate, br",
@@ -56,9 +71,15 @@ class HttpFetcher:
         }
         if self._config and self._config.headers:
             headers.update(self._config.headers)
+        if self._default_headers:
+            headers.update(self._default_headers)
         if extra:
             headers.update(extra)
         return headers
+
+    def _pick_user_agent(self) -> str:
+        """Pinned UA when configured, otherwise the historical rotation."""
+        return self._user_agent or random.choice(USER_AGENTS)
 
     def _get_client(self) -> httpx.Client:
         if self._client is None or self._client.is_closed:
@@ -89,8 +110,8 @@ class HttpFetcher:
         start = time.monotonic()
         client = self._get_client()
 
-        # Rotate User-Agent per request
-        client.headers["User-Agent"] = random.choice(USER_AGENTS)
+        # Rotate User-Agent per request (unless one was pinned)
+        client.headers["User-Agent"] = self._pick_user_agent()
 
         retry_config = self._config.retry if self._config else None
 

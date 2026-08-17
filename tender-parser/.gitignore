@@ -8,3 +8,8 @@ node_modules/
 dist/
 build/
 .pytest_cache/
+
+# Домен leads: локальная база и выгрузки не коммитятся
+data/
+*.sqlite3
+leads*.csv

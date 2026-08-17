@@ -1,0 +1,90 @@
+name: Parse Leads (China importers)
+
+# Отдельное расписание, не в общем цикле с тендерами: домен leads работает
+# медленно (вежливые задержки) и не должен задерживать парсинг закупок.
+#
+# Job не делает ничего, пока в репозитории не выставлена переменная
+# LEADS_ENABLED=true (Settings → Secrets and variables → Actions → Variables).
+# Пока её нет, workflow отрабатывает вхолостую за секунды.
+
+on:
+  schedule:
+    - cron: "30 2 * * 1"  # раз в неделю, понедельник 02:30 UTC
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Профиль из config/leads_profiles.yaml"
+        required: false
+        default: "petcoke_anode"
+      skip_enrich:
+        description: "Только collect, без обхода сайтов"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  parse-leads:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      LEADS_ENABLED: ${{ vars.LEADS_ENABLED }}
+      LEADS_STORAGE: ${{ vars.LEADS_STORAGE || 'supabase' }}
+      LEADS_CONTACT_EMAIL: ${{ vars.LEADS_CONTACT_EMAIL }}
+      LEADS_CUSTOMS_API_KEY: ${{ secrets.LEADS_CUSTOMS_API_KEY }}
+      LEADS_CUSTOMS_API_PROVIDER: ${{ vars.LEADS_CUSTOMS_API_PROVIDER }}
+      LEADS_CUSTOMS_API_BASE_URL: ${{ vars.LEADS_CUSTOMS_API_BASE_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Check feature flag
+        id: flag
+        run: |
+          if [ "${LEADS_ENABLED}" = "true" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "LEADS_ENABLED != true — домен выключен, пропускаю прогон."
+          fi
+
+      - name: Checkout
+        if: steps.flag.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        if: steps.flag.outputs.enabled == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        if: steps.flag.outputs.enabled == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-parser.txt
+
+      - name: Fail fast if the contact address was not configured
+        if: steps.flag.outputs.enabled == 'true'
+        run: |
+          if [ -z "${LEADS_CONTACT_EMAIL}" ] || \
+             [ "${LEADS_CONTACT_EMAIL}" = "parser-abuse@example.com" ]; then
+            echo "::error::Задайте переменную LEADS_CONTACT_EMAIL — краулер обязан"
+            echo "::error::сообщать рабочий контакт в User-Agent (вежливый режим)."
+            exit 1
+          fi
+
+      - name: Collect companies
+        if: steps.flag.outputs.enabled == 'true'
+        run: |
+          python -m leads collect --profile "${{ inputs.profile || 'petcoke_anode' }}"
+
+      - name: Enrich with emails
+        if: steps.flag.outputs.enabled == 'true' && inputs.skip_enrich != true
+        run: |
+          python -m leads enrich --profile "${{ inputs.profile || 'petcoke_anode' }}"
+
+      - name: Stats
+        if: steps.flag.outputs.enabled == 'true'
+        run: |
+          python -m leads stats --profile "${{ inputs.profile || 'petcoke_anode' }}"
