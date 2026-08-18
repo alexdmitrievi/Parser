@@ -26,7 +26,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-parser.txt
+          # Источник torgi_gov_pw работает через Playwright — без него
+          # он молча возвращает ноль лотов на каждом прогоне.
+          pip install -r requirements-playwright.txt
+
+      - name: Install Chromium for Playwright
+        run: python -m playwright install --with-deps chromium
 
       - name: Parse bankruptcy / government auctions
         env:

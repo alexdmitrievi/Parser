@@ -1,0 +1,12 @@
+# Зависимости для скрейперов на Playwright (JS-heavy площадки).
+#
+# Ставятся отдельно от requirements-parser.txt: браузер весит сотни мегабайт,
+# и большинству workflow он не нужен. Устанавливать так:
+#
+#   pip install -r requirements-playwright.txt
+#   python -m playwright install --with-deps chromium
+#
+# Кому нужен: scrapers/playwright_base.py и его наследники —
+# torgi_gov_pw (торги.гов.ру), tektorg_pw, fabrikant_pw, sberbank_ast_pw.
+-r requirements-parser.txt
+playwright==1.62.0
