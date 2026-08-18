@@ -23,9 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
 
-    defaults:
-      run:
-        working-directory: tender-parser
+    # working-directory здесь намеренно не задан: job только печатает данные
+    # упавшего workflow, файлы проекта ему не нужны и checkout не делается.
+    # С working-directory: tender-parser шаг падал бы с "No such file".
 
     steps:
       - name: Report failure

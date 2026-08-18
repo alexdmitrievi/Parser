@@ -39,9 +39,18 @@ jobs:
       LEADS_CUSTOMS_API_PROVIDER: ${{ vars.LEADS_CUSTOMS_API_PROVIDER }}
       LEADS_CUSTOMS_API_BASE_URL: ${{ vars.LEADS_CUSTOMS_API_BASE_URL }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      # Все три имени: supabase_key() берёт первое непустое.
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
     steps:
+      # Checkout идёт первым: defaults.run.working-directory указывает на
+      # tender-parser, и любой run-шаг до чекаута падает с "No such file or
+      # directory". Сам чекаут — uses-шаг, working-directory на него не влияет.
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Check feature flag
         id: flag
         run: |
@@ -51,10 +60,6 @@ jobs:
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "LEADS_ENABLED != true — домен выключен, пропускаю прогон."
           fi
-
-      - name: Checkout
-        if: steps.flag.outputs.enabled == 'true'
-        uses: actions/checkout@v4
 
       - name: Setup Python 3.12
         if: steps.flag.outputs.enabled == 'true'

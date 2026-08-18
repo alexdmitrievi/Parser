@@ -20,11 +20,33 @@ _db_url: str = ""
 
 
 def get_db() -> Client:
-    """Получить кешированный Supabase клиент (singleton)."""
+    """Получить кешированный Supabase клиент (singleton).
+
+    Raises:
+        RuntimeError: не заданы URL или ключ. Сообщение перечисляет конкретные
+            имена переменных — без него supabase-py роняет невнятный
+            ``SupabaseException: supabase_key is required`` из глубины
+            библиотеки, и непонятно, чего именно не хватает.
+    """
     global _db_client, _db_url
     cfg = get_config()
     url = cfg["supabase_url"]
     key = cfg["supabase_key"]
+
+    if not url:
+        raise RuntimeError(
+            "Не задан адрес Supabase. Задайте SUPABASE_URL "
+            "(или NEXT_PUBLIC_SUPABASE_URL). В GitHub Actions это секрет "
+            "репозитория: Settings → Secrets and variables → Actions."
+        )
+    if not key:
+        raise RuntimeError(
+            "Не задан ключ Supabase. Подойдёт любой из: "
+            "SUPABASE_SERVICE_ROLE_KEY, SUPABASE_KEY, SUPABASE_ANON_KEY "
+            "(берётся первый непустой). В GitHub Actions это секрет "
+            "репозитория: Settings → Secrets and variables → Actions."
+        )
+
     if _db_client is None or url != _db_url:
         _db_client = create_client(url, key)
         _db_url = url
