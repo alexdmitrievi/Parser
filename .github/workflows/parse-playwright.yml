@@ -41,5 +41,11 @@ jobs:
       - name: Parse JS-heavy platforms
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          # Ключ пробрасывается под всеми тремя именами: shared/config.supabase_key()
+          # берёт первое непустое. До коммита ffcc846 workflow использовали
+          # SUPABASE_KEY, после — SUPABASE_SERVICE_ROLE_KEY, который в репозитории
+          # так и не завели. Так работает при любом из заведённых секретов.
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: python scripts/run_parser.py --source playwright
