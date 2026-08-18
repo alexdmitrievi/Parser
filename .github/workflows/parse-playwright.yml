@@ -1,0 +1,45 @@
+name: Parse Playwright Platforms
+
+# Площадки, которые отдают выдачу только после исполнения JS: TekTorg,
+# Фабрикант, Сбербанк-АСТ. Отдельный workflow, потому что им нужен браузер
+# (~400 МБ), и тянуть его в каждый прогон парсера незачем.
+#
+# Группа playwright существовала в run_parser.py, но её ничто не запускало —
+# эти площадки не парсились вообще.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"  # каждые 6 часов, со смещением от остальных
+  workflow_dispatch:
+
+jobs:
+  parse-playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: tender-parser
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-playwright.txt
+
+      - name: Install Chromium for Playwright
+        run: python -m playwright install --with-deps chromium
+
+      - name: Parse JS-heavy platforms
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/run_parser.py --source playwright

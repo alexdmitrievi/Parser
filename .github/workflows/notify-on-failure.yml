@@ -8,6 +8,7 @@ on:
       # называется "Send Notifications".
       - "Parse Tenders"
       - "Parse Auctions"
+      - "Parse Playwright Platforms"
       - "Parse Funding Programs"
       - "Parse Leads (China importers)"
       - "Send Notifications"
