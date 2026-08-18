@@ -43,13 +43,21 @@ def main() -> None:
         sys.exit(1)
 
     # 1. DB connection
+    db_ok = False
     try:
         db = get_db()
         result = db.table("tenders").select("id", count="exact").limit(1).execute()
         n = result.count if result.count is not None else 0
         print(f"PASS: Supabase tenders count = {n}")
+        db_ok = True
     except Exception as e:
         print(f"FAIL: Supabase connection: {e}")
+        if "Name or service not known" in str(e) or "getaddrinfo" in str(e):
+            print(
+                "      Хост из SUPABASE_URL не резолвится. Обычно это значит, "
+                "что проект Supabase удалён либо приостановлен, или в секрете "
+                "SUPABASE_URL опечатка. Проверьте Supabase → Project Settings → API."
+            )
         errors += 1
 
     # 2. Stats RPC (DB-side aggregation)
@@ -63,11 +71,19 @@ def main() -> None:
         # Not critical — fallback works
 
     # 3. Scrape log
-    try:
-        logs = get_scrape_health()
-        print(f"PASS: Scrape log — {len(logs)} entries")
-    except Exception as e:
-        print(f"WARN: Scrape log: {e}")
+    #
+    # get_scrape_health() глушит ошибки внутри и возвращает пустой список,
+    # поэтому без проверки db_ok этот пункт печатал "PASS: 0 entries" даже
+    # когда база вообще недоступна — то есть health-проверка врала ровно в
+    # той ситуации, ради которой она и нужна.
+    if not db_ok:
+        print("SKIP: Scrape log — база недоступна, проверять нечего")
+    else:
+        try:
+            logs = get_scrape_health()
+            print(f"PASS: Scrape log — {len(logs)} entries")
+        except Exception as e:
+            print(f"WARN: Scrape log: {e}")
 
     # 4. Telegram Bot API
     try:
