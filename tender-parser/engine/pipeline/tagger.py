@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from shared.config import ALL_NICHES, NichePreset
+from shared.keyword_match import any_matches, okpd2_matches
 from engine.observability.logger import get_logger
 
 logger = get_logger("pipeline.tagger")
@@ -28,29 +29,16 @@ class NicheTagger:
         2. Keyword matches in title + description
         """
         tags: list[str] = []
-        text = f"{record.get('title', '')} {record.get('description', '')}".lower()
+        text = f"{record.get('title', '')} {record.get('description', '')}"
         okpd2_codes = record.get("okpd2_codes") or []
 
         for niche in self._niches:
-            matched = False
-
-            # Check OKPD2 prefixes
-            for code in okpd2_codes:
-                for prefix in niche.okpd2_prefixes:
-                    if code.startswith(prefix):
-                        matched = True
-                        break
-                if matched:
-                    break
-
-            # Check keywords
-            if not matched:
-                for keyword in niche.keywords:
-                    if keyword.lower() in text:
-                        matched = True
-                        break
-
-            if matched:
+            # Keywords must start on a word boundary — otherwise short
+            # abbreviations ("КТ", "ТО", "ИИ") match inside unrelated words and
+            # produce junk tags. See shared/keyword_match.py.
+            if okpd2_matches(okpd2_codes, niche.okpd2_prefixes) or any_matches(
+                niche.keywords, text
+            ):
                 tags.append(niche.tag)
 
         return sorted(tags)

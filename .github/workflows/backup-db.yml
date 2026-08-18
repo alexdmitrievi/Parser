@@ -1,14 +1,18 @@
-name: Smoke Test
+name: Backup Database
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # каждые 30 минут
+    - cron: "0 2 * * *"  # ежедневно в 02:00 UTC
   workflow_dispatch:
 
 jobs:
-  smoke-test:
+  backup:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: tender-parser
 
     steps:
       - name: Checkout
@@ -22,9 +26,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run smoke test
+      - name: Run backup
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        run: python scripts/smoke_test.py
+          BACKUP_DIR: /tmp/backups
+        run: python scripts/backup_db.py
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup
+          path: /tmp/backups/*.zip
+          retention-days: 30

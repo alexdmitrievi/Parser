@@ -31,7 +31,11 @@ shared/             → config, db, models, constants, rate_limiter, logging_con
 scripts/            → entry points для GitHub Actions + миграции + build_frontend.py
 web/                → Статический фронтенд (PWA)
 tests/              → Unit + интеграционные тесты
-.github/workflows/  → 8 workflow: parse, notify, backup, smoke-test, test
+(корень репо)/.github/workflows/ → 10 workflow: parse (tenders/auctions/funding/leads),
+                    notify, backup, smoke-test, status-update, test.
+                    Лежат в КОРНЕ репозитория (GitHub читает только оттуда),
+                    а шаги выполняются в tender-parser через
+                    defaults.run.working-directory
 ```
 
 ## Ключевые изменения (v4)

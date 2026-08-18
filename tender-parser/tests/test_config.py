@@ -43,7 +43,12 @@ class TestConfig:
         assert "подряд" in NICHE_CONSTRUCTION.keywords
         assert "41.2" in NICHE_CONSTRUCTION.okpd2_prefixes
 
-        assert len(ALL_NICHES) == 2
+        # Ниш стало больше двух — проверяем состав, а не жёсткое число,
+        # чтобы добавление ниши не роняло тест.
+        tags = [n.tag for n in ALL_NICHES]
+        assert {"furniture", "construction"} <= set(tags)
+        assert len(tags) == len(set(tags)), "теги ниш должны быть уникальны"
+        assert all(n.name and n.keywords and n.okpd2_prefixes for n in ALL_NICHES)
 
 
 class TestRateLimiter:
