@@ -33,5 +33,10 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Потолок сообщений на подписку за прогон. Пусто — берётся значение
+          # по умолчанию (10). Настраивается без правки кода:
+          # Settings → Secrets and variables → Actions → Variables.
+          # На первых прогонах после долгой паузы имеет смысл поставить 1-3.
+          MAX_NOTIFICATIONS_PER_SUBSCRIPTION: ${{ vars.MAX_NOTIFICATIONS_PER_SUBSCRIPTION }}
         run: |
           python scripts/run_notifier.py
