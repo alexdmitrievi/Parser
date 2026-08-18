@@ -1,0 +1,55 @@
+name: Tests
+
+# Единый прогон всех наборов: tenders/funding (tests/), движок (engine/tests/)
+# и домен leads (engine/tests/leads/).
+#
+# Ставится requirements-parser.txt — он включает requirements.txt и добавляет
+# bs4, lxml и PyYAML, без которых не импортируются engine и leads.
+#
+# Шага с ruff здесь намеренно нет: в коде накопилось 78 замечаний (в основном
+# неиспользуемые импорты), существовавших до включения Actions. Линтер в CI
+# сделал бы сборку красной с первого дня и не относился бы к тому, что
+# проверяет этот workflow. Чистить их стоит отдельным проходом:
+#   ruff check . --ignore E501 --fix
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: tender-parser
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-parser.txt pytest pytest-cov
+
+      - name: Run unit tests
+        run: |
+          pytest tests/ engine/tests/ --ignore=tests/test_db.py -v --tb=short
+
+      - name: Run integration tests (if Supabase configured)
+        if: env.SUPABASE_URL != '' && env.SUPABASE_SERVICE_ROLE_KEY != ''
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          pytest tests/test_db.py -v --tb=short

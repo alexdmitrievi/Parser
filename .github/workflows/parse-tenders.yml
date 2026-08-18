@@ -15,6 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
+    defaults:
+      run:
+        working-directory: tender-parser
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

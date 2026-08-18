@@ -1,0 +1,53 @@
+# Прогон домена leads: сбор компаний + обогащение почтами.
+#
+# В текущем деплое проекта расписание живёт в GitHub Actions
+# (.github/workflows/parse-leads.yml) — эти юниты нужны, только если вы
+# поднимаете парсер на своём VPS.
+#
+# Установка:
+#   sudo cp deploy/systemd/leads-collect.{service,timer} /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now leads-collect.timer
+#
+# Проверка:
+#   systemctl list-timers leads-collect.timer
+#   journalctl -u leads-collect.service -f
+
+[Unit]
+Description=Leads: сбор китайских компаний-импортёров
+Documentation=file:///opt/tender-parser/docs/LEADS.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=tender
+Group=tender
+WorkingDirectory=/opt/tender-parser
+
+# Флаг и контакт краулера. LEADS_CONTACT_EMAIL обязателен: вежливый режим
+# требует, чтобы владелец сайта мог с нами связаться.
+Environment=LEADS_ENABLED=true
+Environment=LEADS_STORAGE=sqlite
+Environment=LEADS_DB_PATH=/var/lib/tender-parser/leads.sqlite3
+Environment=PYTHONUNBUFFERED=1
+# Секреты и LEADS_CONTACT_EMAIL — в отдельном файле с правами 0600.
+EnvironmentFile=-/etc/tender-parser/leads.env
+
+# Два шага одного прогона: каталоги дают домены, enrich добирает почты.
+ExecStart=/opt/tender-parser/.venv/bin/python -m leads collect --profile petcoke_anode
+ExecStart=/opt/tender-parser/.venv/bin/python -m leads enrich --profile petcoke_anode
+
+# Вежливые задержки делают прогон долгим — это нормально.
+TimeoutStartSec=6h
+
+# Ограничение прав: домен ходит в интернет и пишет только свою базу.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/tender-parser
+RestrictAddressFamilies=AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

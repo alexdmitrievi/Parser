@@ -421,3 +421,89 @@ def _safe_int(val: str, default: int) -> int:
         return int(val)
     except (ValueError, TypeError):
         return default
+
+
+# ──────────────────────── Домен leads (китайские импортёры) ────────────────────────
+#
+# Весь домен закрыт фиче-флагом LEADS_ENABLED (по умолчанию false).
+# При выключенном флаге ни CLI, ни бот, ни расписание ничего не делают.
+
+# Контактная почта в User-Agent краулера. Обязательна по вежливому режиму:
+# владелец сайта должен иметь возможность с нами связаться.
+LEADS_DEFAULT_CONTACT = "parser-abuse@example.com"
+
+LEADS_DEFAULT_PROFILES_PATH = "config/leads_profiles.yaml"
+LEADS_DEFAULT_BLACKLIST_PATH = "config/leads_blacklist.txt"
+LEADS_DEFAULT_DB_PATH = "data/leads.sqlite3"
+
+
+def _env_flag(key: str, default: bool = False) -> bool:
+    """Прочитать булев флаг из окружения ('1', 'true', 'yes', 'on')."""
+    raw = get_env(key, "").strip().lower()
+    if not raw:
+        return default
+    return raw in ("1", "true", "yes", "on")
+
+
+def leads_enabled() -> bool:
+    """Включён ли домен leads. По умолчанию — нет."""
+    return _env_flag("LEADS_ENABLED", False)
+
+
+def leads_storage() -> str:
+    """Бэкенд хранения: 'sqlite' (по умолчанию) или 'supabase'."""
+    return (get_env("LEADS_STORAGE", "sqlite") or "sqlite").strip().lower()
+
+
+def leads_db_path() -> str:
+    """Путь к локальной SQLite-базе лидов."""
+    return get_env("LEADS_DB_PATH", LEADS_DEFAULT_DB_PATH) or LEADS_DEFAULT_DB_PATH
+
+
+def leads_profiles_path() -> str:
+    """Путь к YAML с профилями продуктов."""
+    return get_env("LEADS_PROFILES_PATH", LEADS_DEFAULT_PROFILES_PATH) or LEADS_DEFAULT_PROFILES_PATH
+
+
+def leads_blacklist_path() -> str:
+    """Путь к списку исключений (домены и почты)."""
+    return get_env("LEADS_BLACKLIST_PATH", LEADS_DEFAULT_BLACKLIST_PATH) or LEADS_DEFAULT_BLACKLIST_PATH
+
+
+def leads_contact_email() -> str:
+    """Контактная почта, которую краулер сообщает о себе в User-Agent."""
+    return get_env("LEADS_CONTACT_EMAIL", LEADS_DEFAULT_CONTACT) or LEADS_DEFAULT_CONTACT
+
+
+def leads_user_agent() -> str:
+    """Честный User-Agent краулера: имя бота, версия, контакт.
+
+    Никакой маскировки под браузер — по требованию вежливого режима.
+    """
+    override = get_env("LEADS_USER_AGENT", "").strip()
+    if override:
+        return override
+    return f"TenderProLeadsBot/1.0 (+mailto:{leads_contact_email()})"
+
+
+def leads_customs_api_key() -> str:
+    """Ключ платного источника таможенных данных. Пусто — адаптер пропускается."""
+    return get_env("LEADS_CUSTOMS_API_KEY", "")
+
+
+def leads_customs_api_provider() -> str:
+    """Провайдер таможенных данных: volza | importgenius | panjiva."""
+    return (get_env("LEADS_CUSTOMS_API_PROVIDER", "volza") or "volza").strip().lower()
+
+
+def leads_customs_api_base_url() -> str:
+    """Базовый URL API таможенных данных (задаётся под конкретную подписку)."""
+    return get_env("LEADS_CUSTOMS_API_BASE_URL", "")
+
+
+def leads_enabled_sources() -> list[str]:
+    """Какие leads-адаптеры включены. Пусто = все зарегистрированные."""
+    raw = get_env("LEADS_SOURCES", "").strip()
+    if not raw:
+        return []
+    return [s.strip() for s in raw.split(",") if s.strip()]

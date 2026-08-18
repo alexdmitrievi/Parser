@@ -18,7 +18,7 @@ from telegram.ext import (
 )
 
 from bot.messages import format_tender_card
-from shared.config import supabase_key, supabase_url
+from shared.config import leads_enabled, supabase_key, supabase_url
 from shared.db import (
     clear_user_state,
     count_tenders,
@@ -282,12 +282,75 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
 
+async def cmd_leads_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/leads_stats — сводка по собранным китайским компаниям-импортёрам.
+
+    Уведомлений по каждой найденной компании нет и не планируется: домен leads
+    работает пачками, а не потоком событий. Это сводка по запросу.
+    """
+    if update.message is None:
+        return
+
+    try:
+        from leads.storage import get_leads_repository
+
+        repository = get_leads_repository()
+        try:
+            data = repository.stats()
+        finally:
+            repository.close()
+    except Exception as e:  # noqa: BLE001 - команда не должна ронять бота
+        logger.warning("leads_stats failed: %s", e)
+        await update.message.reply_text(
+            "Не удалось получить сводку по лидам. "
+            "Проверьте LEADS_STORAGE и что миграция применена."
+        )
+        return
+
+    await update.message.reply_text(_format_leads_stats(data), parse_mode="HTML")
+
+
+def _format_leads_stats(data: dict[str, Any]) -> str:
+    """Собрать текст сводки: компании, почты, разбивка по профилям и провинциям."""
+    if not data.get("companies"):
+        return "<b>Лиды</b>\n\nПока ничего не собрано."
+
+    lines = [
+        "<b>Лиды: китайские импортёры</b>",
+        "",
+        f"Компаний: <b>{data['companies']}</b> "
+        f"(с почтами: {data.get('companies_with_emails', 0)})",
+        f"Почт: <b>{data.get('emails', 0)}</b> "
+        f"(ролевых {data.get('emails_role', 0)}, "
+        f"персональных {data.get('emails_personal', 0)})",
+    ]
+
+    by_profile = data.get("by_profile") or {}
+    if by_profile:
+        lines += ["", "<b>По профилям</b>"]
+        lines += [f"  {name}: {count}" for name, count in by_profile.items()]
+
+    by_province = data.get("by_province") or {}
+    if by_province:
+        top = list(by_province.items())[:10]
+        lines += ["", "<b>По провинциям</b>"]
+        lines += [f"  {name}: {count}" for name, count in top]
+        if len(by_province) > len(top):
+            lines.append(f"  … и ещё {len(by_province) - len(top)}")
+
+    return "\n".join(lines)
+
+
 def build_application() -> Application:
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is not set")
     app = Application.builder().token(token).build()
     app.add_handler(CommandHandler("start", cmd_start))
+    # Домен leads закрыт фиче-флагом: при LEADS_ENABLED=false команда не
+    # регистрируется вовсе, и набор команд бота остаётся прежним.
+    if leads_enabled():
+        app.add_handler(CommandHandler("leads_stats", cmd_leads_stats))
     app.add_handler(CallbackQueryHandler(on_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     return app

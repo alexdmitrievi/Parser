@@ -16,6 +16,8 @@
 ## Архитектура
 
 ```
+leads/              → домен leads: CLI, профили, почты, дедуп, экспорт, хранилище (см. docs/LEADS.md)
+engine/sources/leads/ → адаптеры leads: каталоги, сайты компаний, таможенные данные
 scrapers/           → парсеры площадок (наследуют BaseScraper / PlaywrightScraper / FundingBaseScraper)
 pipeline/           → normalizer → tagger → deduplicator → notifier
 bot/                → Telegram handler (webhook + polling), messages (format_tender_card)
@@ -29,7 +31,11 @@ shared/             → config, db, models, constants, rate_limiter, logging_con
 scripts/            → entry points для GitHub Actions + миграции + build_frontend.py
 web/                → Статический фронтенд (PWA)
 tests/              → Unit + интеграционные тесты
-.github/workflows/  → 8 workflow: parse, notify, backup, smoke-test, test
+(корень репо)/.github/workflows/ → 10 workflow: parse (tenders/auctions/funding/leads),
+                    notify, backup, smoke-test, status-update, test.
+                    Лежат в КОРНЕ репозитория (GitHub читает только оттуда),
+                    а шаги выполняются в tender-parser через
+                    defaults.run.working-directory
 ```
 
 ## Ключевые изменения (v4)
@@ -66,6 +72,26 @@ npm run build    # Сборка фронтенда (bundle JS + minify CSS)
 npm test         # Запуск тестов
 npm run lint     # Проверка кода (ruff)
 ```
+
+### Домен leads (китайские импортёры)
+
+Закрыт фиче-флагом `LEADS_ENABLED` (по умолчанию `false`) — при выключенном
+флаге поведение проекта не меняется. Отдельная точка входа и отдельное
+расписание, не в общем цикле с тендерами.
+
+```bash
+python -m leads collect --profile petcoke_anode   # сбор из каталогов
+python -m leads enrich                            # обход сайтов, сбор почт
+python -m leads export --profile petcoke_anode --out leads.csv
+python -m leads stats
+pytest engine/tests/leads/ -v                     # тесты домена
+```
+
+Правила домена (подробно — `docs/LEADS.md`): соблюдается `robots.txt`,
+задержка не меньше конфига, конкурентность не выше 2, честный User-Agent с
+контактом, антибот-защита не обходится, по PIPL в экспорт идут только ролевые
+адреса. Прокси и ротация User-Agent в этом домене запрещены — используется
+`PoliteFetcher`, а не `HttpFetcher`.
 
 ## Парсеры — правила
 
@@ -126,6 +152,7 @@ GET  /api/health/full           — расширенный мониторинг
 - `funding_programs` — программы финансирования МСП
 - `scrape_log` — мониторинг парсеров
 - `rate_limits` — DB-based rate limiting
+- `leads_companies`, `leads_emails`, `leads_runs` — домен leads (только при `LEADS_STORAGE=supabase`)
 
 ## Миграции
 
@@ -133,3 +160,4 @@ GET  /api/health/full           — расширенный мониторинг
 - `scripts/migration_v2.sql` — v2 изменения
 - `scripts/migration_v3_production.sql` — v3 изменения
 - `scripts/migration_v4.sql` — RPC функции + RLS + scrape_log + rate_limits + обновлённый FTS
+- `scripts/migration_leads.sql` — таблицы домена leads (идемпотентна, нужна только при `LEADS_STORAGE=supabase`)

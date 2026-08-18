@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from shared.config import ALL_NICHES, NichePreset
+from shared.keyword_match import any_matches, okpd2_matches
 from shared.models import TenderCreate
 
 logger = logging.getLogger(__name__)
@@ -21,26 +22,16 @@ def tag_tender(tender: TenderCreate, niches: list[NichePreset] | None = None) ->
         niches = ALL_NICHES
 
     tags = []
-    text = f"{tender.title or ''} {tender.description or ''}".lower()
+    text = f"{tender.title or ''} {tender.description or ''}"
 
     for niche in niches:
-        matched = False
-
-        # Проверка по ОКПД2
-        for code in tender.okpd2_codes:
-            for prefix in niche.okpd2_prefixes:
-                if code.startswith(prefix):
-                    matched = True
-                    break
-            if matched:
-                break
-
-        # Проверка по ключевым словам (если ОКПД2 не совпал)
-        if not matched:
-            for keyword in niche.keywords:
-                if keyword.lower() in text:
-                    matched = True
-                    break
+        # Проверка по ОКПД2, затем по ключевым словам.
+        # Ключевое слово должно начинаться на границе слова — иначе короткие
+        # аббревиатуры («КТ», «ТО», «ИИ») ловятся внутри обычных слов и дают
+        # мусорные теги. Подробности — shared/keyword_match.py.
+        matched = okpd2_matches(tender.okpd2_codes, niche.okpd2_prefixes) or any_matches(
+            niche.keywords, text
+        )
 
         if matched:
             tags.append(niche.tag)

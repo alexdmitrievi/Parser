@@ -3,10 +3,16 @@ name: Notify on Failure
 on:
   workflow_run:
     workflows:
+      # Имена должны совпадать с полем name внутри workflow, иначе триггер
+      # молча не срабатывает. "Notify" здесь был опечаткой: workflow
+      # называется "Send Notifications".
       - "Parse Tenders"
       - "Parse Auctions"
       - "Parse Funding Programs"
-      - "Notify"
+      - "Parse Leads (China importers)"
+      - "Send Notifications"
+      - "Update Tender Statuses"
+      - "Backup Database"
     types:
       - completed
 
@@ -15,6 +21,10 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
+
+    defaults:
+      run:
+        working-directory: tender-parser
 
     steps:
       - name: Report failure
