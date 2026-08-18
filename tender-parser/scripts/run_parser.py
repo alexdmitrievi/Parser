@@ -370,6 +370,31 @@ GROUPS = {
 }
 
 
+def preflight_db() -> bool:
+    """Проверить, что база доступна, до запуска скрейперов.
+
+    Без этой проверки прогон при недоступной базе не падает быстро: каждый
+    источник честно скачивает выдачу, а затем спотыкается на сохранении,
+    ретраит с бэкоффом и идёт к следующему. На полном наборе это выедает
+    весь timeout-minutes и job убивается по таймауту, ничего не сохранив.
+    Дешевле проверить один раз и выйти с понятным сообщением.
+    """
+    from shared.db import get_db
+
+    try:
+        get_db().table("tenders").select("id", count="exact").limit(1).execute()
+        return True
+    except Exception as e:
+        logger.error("База недоступна, парсинг не запускается: %s", e)
+        if "Name or service not known" in str(e) or "getaddrinfo" in str(e):
+            logger.error(
+                "Хост из SUPABASE_URL не резолвится — проект Supabase удалён "
+                "или приостановлен, либо в секрете опечатка. "
+                "Проверьте Supabase → Project Settings → API."
+            )
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Tender Parser Runner")
     parser.add_argument(
@@ -379,6 +404,9 @@ def main():
         help="Parser group to run",
     )
     args = parser.parse_args()
+
+    if not preflight_db():
+        return 1
 
     total = 0
     group = args.source
