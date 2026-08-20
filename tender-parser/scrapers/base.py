@@ -43,11 +43,18 @@ class BaseScraper(ABC):
     max_delay: float = 6.0
     timeout: float = 30.0
 
+    # Отдельный таймаут на установку соединения. Живой сайт отвечает на
+    # рукопожатие за доли секунды; 30 секунд ожидания имеют смысл только для
+    # медленного ОТВЕТА, а не для подключения. Площадки, закрытые для
+    # зарубежных адресов, просто не отвечают на SYN — и без этого разделения
+    # каждая проверка стоила полминуты на пустом месте.
+    connect_timeout: float = 8.0
+
     # Сколько полных провалов подряд считать признаком недоступности площадки.
-    # Один провал — это уже 3 попытки с таймаутом, то есть ~2.5 минуты; без
-    # предохранителя прогон упирался в timeout-minutes и остальные группы
-    # источников не запускались вовсе.
-    max_consecutive_failures: int = 3
+    # Один провал — это 3 попытки, то есть при недоступном хосте примерно
+    # connect_timeout × 3 плюс задержки. Порог 2 достаточен: если площадка не
+    # отдала ни одной страницы с двух заходов, дальше идти незачем.
+    max_consecutive_failures: int = 2
 
     def __init__(self) -> None:
         self._client: Optional[httpx.Client] = None
@@ -63,7 +70,10 @@ class BaseScraper(ABC):
     def client(self) -> httpx.Client:
         if self._client is None or self._client.is_closed:
             self._client = httpx.Client(
-                timeout=self.timeout,
+                timeout=httpx.Timeout(
+                    self.timeout,
+                    connect=min(self.connect_timeout, self.timeout),
+                ),
                 headers=self._build_headers(),
                 follow_redirects=True,
             )

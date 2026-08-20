@@ -101,3 +101,34 @@ class TestCircuitBreaker:
         with pytest.raises(RetryError):
             s.fetch("https://dead.example/x")
         assert s.unreachable is True
+
+
+class TestConnectTimeout:
+    """Подключение и чтение таймаутятся отдельно.
+
+    Площадки, закрытые для зарубежных адресов, не отвечают на рукопожатие.
+    Общий таймаут 30 с тратился на них целиком; отдельный connect-таймаут
+    выясняет это за секунды, не мешая медленным, но живым ответам.
+    """
+
+    def test_connect_timeout_is_shorter_than_read(self):
+        s = DeadSiteScraper()
+        timeout = s.client.timeout
+        assert timeout.connect == s.connect_timeout
+        assert timeout.read == s.timeout
+        assert timeout.connect < timeout.read
+
+    def test_connect_timeout_never_exceeds_total(self):
+        class Odd(DeadSiteScraper):
+            timeout = 5.0
+            connect_timeout = 60.0
+
+        assert Odd().client.timeout.connect == 5.0
+
+    def test_budget_fits_the_workflow_limit(self):
+        """Девять мёртвых площадок должны укладываться в timeout-minutes: 25."""
+        s = DeadSiteScraper()
+        attempts_per_failure = 3
+        worst_attempt = s.connect_timeout + s.max_delay
+        per_scraper = worst_attempt * attempts_per_failure * s.max_consecutive_failures
+        assert per_scraper * 9 < 25 * 60, "группа all не укладывается в лимит"
