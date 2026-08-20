@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import RetryError, retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from shared.models import TenderCreate
 
@@ -25,6 +25,15 @@ USER_AGENTS = [
 ]
 
 
+class HostUnreachable(Exception):
+    """Площадка не отвечает — дальнейшие запросы к ней бессмысленны.
+
+    Поднимается предохранителем в :class:`BaseScraper` после нескольких
+    провалов подряд, чтобы скрейпер не перебирал весь список запросов,
+    упираясь в один и тот же недоступный хост.
+    """
+
+
 class BaseScraper(ABC):
     """Абстрактный скрапер. Все конкретные скраперы наследуют от него."""
 
@@ -34,8 +43,21 @@ class BaseScraper(ABC):
     max_delay: float = 6.0
     timeout: float = 30.0
 
+    # Сколько полных провалов подряд считать признаком недоступности площадки.
+    # Один провал — это уже 3 попытки с таймаутом, то есть ~2.5 минуты; без
+    # предохранителя прогон упирался в timeout-minutes и остальные группы
+    # источников не запускались вовсе.
+    max_consecutive_failures: int = 3
+
     def __init__(self) -> None:
         self._client: Optional[httpx.Client] = None
+        self._consecutive_failures: int = 0
+        self._unreachable: bool = False
+
+    @property
+    def unreachable(self) -> bool:
+        """Признана ли площадка недоступной в этом прогоне."""
+        return self._unreachable
 
     @property
     def client(self) -> httpx.Client:
@@ -69,12 +91,42 @@ class BaseScraper(ABC):
             f"Retry {retry_state.attempt_number} for {retry_state.fn.__name__}"
         ),
     )
-    def fetch(self, url: str, **kwargs) -> httpx.Response:
-        """HTTP GET с retry и rate limiting."""
+    def _fetch_once(self, url: str, **kwargs) -> httpx.Response:
+        """HTTP GET с retry и rate limiting (без предохранителя)."""
         self._delay()
         logger.debug(f"[{self.platform}] GET {url}")
         response = self.client.get(url, **kwargs)
         response.raise_for_status()
+        return response
+
+    def fetch(self, url: str, **kwargs) -> httpx.Response:
+        """HTTP GET с retry, rate limiting и предохранителем.
+
+        Raises:
+            HostUnreachable: площадка уже признана недоступной — запрос даже
+                не делается.
+            RetryError: попытки исчерпаны (поведение прежнее).
+        """
+        if self._unreachable:
+            raise HostUnreachable(
+                f"[{self.platform}] площадка недоступна, пропускаю {url}"
+            )
+
+        try:
+            response = self._fetch_once(url, **kwargs)
+        except RetryError:
+            self._consecutive_failures += 1
+            if self._consecutive_failures >= self.max_consecutive_failures:
+                self._unreachable = True
+                logger.error(
+                    "[%s] %d провала подряд — считаю площадку недоступной "
+                    "и прекращаю запросы к ней в этом прогоне",
+                    self.platform,
+                    self._consecutive_failures,
+                )
+            raise
+
+        self._consecutive_failures = 0
         return response
 
     @retry(
