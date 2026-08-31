@@ -356,6 +356,10 @@ GROUPS = {
     "eis_api": [run_eis_api],
     "eis_api_extra": [run_eis_api_extra],
     "roseltorg": [run_roseltorg],
+    # Три источника ЕИС одной группой. Нужна для матричного прогона: вместе
+    # с etp/commercial/corporate покрывает всё, что раньше делал "all", но
+    # без пересечений — иначе параллельные задания дублировали бы работу.
+    "eis": [run_eis_ftp, run_eis_api, run_eis_api_extra],
     "etp": [run_roseltorg, run_sberbank_ast, run_rts_tender, run_tektorg],
     "commercial": [run_b2b_center, run_rostender, run_tenderguru],
     "corporate": [run_gazprom, run_rosatom, run_rosneft, run_lukoil, run_nornickel, run_mts, run_sberb2b],
@@ -403,10 +407,19 @@ def main():
         default="all",
         help="Parser group to run",
     )
+    parser.add_argument(
+        "--hero-only",
+        action="store_true",
+        help="Только пересчитать web/hero.json, не запуская парсеры",
+    )
     args = parser.parse_args()
 
     if not preflight_db():
         return 1
+
+    if args.hero_only:
+        generate_hero_json()
+        return 0
 
     total = 0
     group = args.source

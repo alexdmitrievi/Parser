@@ -1,19 +1,65 @@
 name: Parse Tenders
 
+# Группы источников запускаются ПАРАЛЛЕЛЬНО, каждая своим заданием.
+#
+# Раньше это были четыре последовательных шага одного job с общим
+# timeout-minutes: 25. Часть площадок (zakupki.gov.ru, sberbank-ast.ru) не
+# отвечает раннерам GitHub, и время, потраченное на выяснение их
+# недоступности, отъедалось у живых: прогон 21.08 01:26 успел отработать
+# "all" (11 мин) и "etp" (4.5 мин), но был обрезан на "commercial" — ровно
+# там, где rostender.info отдавал по 20 тендеров со страницы.
+#
+# Матрица это развязывает: мёртвая группа падает быстро в своём задании и
+# ни у кого ничего не отнимает, живая получает свои полчаса целиком.
+#
+# Группы в матрице не пересекаются. Прежний набор шагов гонял "all", а он
+# включает в себя всю группу etp и два источника из commercial — то есть
+# половина работы делалась дважды. Вместо "all" здесь группа "eis" (три
+# источника ЕИС), и вместе eis+etp+commercial+corporate дают то же покрытие
+# без дублей.
+
 on:
   schedule:
     - cron: "0 */3 * * *"  # каждые 3 часа
   workflow_dispatch:
     inputs:
       source:
-        description: "Группа парсеров (all / eis_ftp / etp / commercial / corporate)"
+        description: "Группа парсеров (all / eis / etp / commercial / corporate / rostender / ...)"
         required: false
         default: "all"
 
 jobs:
-  parse:
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 2
+    outputs:
+      groups: ${{ steps.pick.outputs.groups }}
+
+    # working-directory здесь не задан намеренно: чекаута нет, файлы проекта
+    # не нужны, а с ним шаг упал бы с "No such file or directory".
+    steps:
+      - name: Выбрать группы для прогона
+        id: pick
+        env:
+          REQUESTED: ${{ github.event.inputs.source }}
+        run: |
+          if [ -n "$REQUESTED" ] && [ "$REQUESTED" != "all" ]; then
+            # Ручной запуск конкретной группы — гоняем только её.
+            echo "groups=[\"$REQUESTED\"]" >> "$GITHUB_OUTPUT"
+          else
+            echo 'groups=["eis","etp","commercial","corporate"]' >> "$GITHUB_OUTPUT"
+          fi
+
+  parse:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      # Недоступность одной группы не должна отменять остальные.
+      fail-fast: false
+      matrix:
+        group: ${{ fromJSON(needs.prepare.outputs.groups) }}
 
     defaults:
       run:
@@ -33,63 +79,61 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-parser.txt
 
-      - name: Parse tenders (all main sources)
+      - name: Parse ${{ matrix.group }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           # Ключ пробрасывается под всеми тремя именами: shared/config.supabase_key()
-          # берёт первое непустое. До коммита ffcc846 workflow использовали
-          # SUPABASE_KEY, после — SUPABASE_SERVICE_ROLE_KEY, который в репозитории
-          # так и не завели. Так работает при любом из заведённых секретов.
+          # берёт первое непустое, так что работает с любым заведённым секретом.
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: |
-          python scripts/run_parser.py --source ${{ github.event.inputs.source || 'all' }}
+        run: python scripts/run_parser.py --source ${{ matrix.group }}
 
-      - name: Parse ETP platforms
+  hero:
+    # Статистика для лендинга. Отдельным заданием, потому что при матрице
+    # каждая группа иначе коммитила бы hero.json и они конфликтовали бы.
+    needs: parse
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        working-directory: tender-parser
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        # requirements-parser.txt, а не requirements.txt: run_parser.py на
+        # уровне модуля импортирует все скрейперы, а им нужны bs4/tenacity/lxml.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-parser.txt
+
+      - name: Обновить hero.json
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          # Ключ пробрасывается под всеми тремя именами: shared/config.supabase_key()
-          # берёт первое непустое. До коммита ffcc846 workflow использовали
-          # SUPABASE_KEY, после — SUPABASE_SERVICE_ROLE_KEY, который в репозитории
-          # так и не завели. Так работает при любом из заведённых секретов.
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: |
-          python scripts/run_parser.py --source etp
+        run: python scripts/run_parser.py --hero-only
 
-      - name: Parse commercial aggregators
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          # Ключ пробрасывается под всеми тремя именами: shared/config.supabase_key()
-          # берёт первое непустое. До коммита ffcc846 workflow использовали
-          # SUPABASE_KEY, после — SUPABASE_SERVICE_ROLE_KEY, который в репозитории
-          # так и не завели. Так работает при любом из заведённых секретов.
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: |
-          python scripts/run_parser.py --source commercial
-
-      - name: Parse corporate platforms
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          # Ключ пробрасывается под всеми тремя именами: shared/config.supabase_key()
-          # берёт первое непустое. До коммита ffcc846 workflow использовали
-          # SUPABASE_KEY, после — SUPABASE_SERVICE_ROLE_KEY, который в репозитории
-          # так и не завели. Так работает при любом из заведённых секретов.
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: |
-          python scripts/run_parser.py --source corporate
-
-      - name: Commit updated hero.json
-        if: success()
+      - name: Закоммитить, если изменилось
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add web/hero.json
-          git diff --cached --quiet || git commit -m "chore: update hero.json stats [skip ci]"
-          git push
+          git diff --cached --quiet || {
+            git commit -m "chore: update hero.json stats [skip ci]"
+            git push
+          }
