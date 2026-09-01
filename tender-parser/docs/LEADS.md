@@ -52,6 +52,8 @@ python -m leads stats
 | `LEADS_CUSTOMS_API_KEY` | пусто | Ключ платной таможенной подписки |
 | `LEADS_CUSTOMS_API_PROVIDER` | `volza` | `volza` / `importgenius` / `panjiva` |
 | `LEADS_CUSTOMS_API_BASE_URL` | пусто | Эндпоинт вашей подписки |
+| `FIRECRAWL_API_KEY` | пусто | Ключ Firecrawl для Cloudflare-защищённых источников (all.biz) |
+| `LEADS_FIRECRAWL_SOURCES` | пусто (никто) | Источники через Firecrawl, через запятую (обычно `allbiz`) |
 
 Что именно даёт выключенный флаг:
 
