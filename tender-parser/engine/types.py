@@ -9,7 +9,7 @@ from __future__ import annotations
 import enum
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 
 # ─────────────────────── Enums ───────────────────────
@@ -28,6 +28,18 @@ class FetchMethod(str, enum.Enum):
     FTP = "ftp"
     API_JSON = "api_json"
     API_XML = "api_xml"
+
+
+class AccessMode(str, enum.Enum):
+    """How a source is reached, per docs/SCRAPING_POLICY.md section 2.
+
+    DIRECT: reachable from any egress, no proxy or special CA needed.
+    GEO:    needs a legal exit point in a specific jurisdiction (RU VPS).
+    PROXY:  needs proxy rotation / ScrapingBee (anti-bot, owner-approved).
+    """
+    DIRECT = "direct"
+    GEO = "geo"
+    PROXY = "proxy"
 
 
 class CrawlAction(str, enum.Enum):
@@ -232,9 +244,10 @@ class SourceConfig:
     retry: RetryConfig = field(default_factory=RetryConfig)
     law_type_default: str = "commercial"
     enabled: bool = True
-    # Proxy
+    # Proxy / access classification (see docs/SCRAPING_POLICY.md section 2)
     use_proxy: bool = False
     proxy_group: str = "default"
+    access_mode: AccessMode = AccessMode.DIRECT
     # Browser-specific
     wait_selector: str = ""
     block_resources: list[str] = field(default_factory=lambda: ["image", "font", "media"])
