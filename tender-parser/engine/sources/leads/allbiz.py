@@ -21,7 +21,7 @@ from engine.fetchers.polite_fetcher import PoliteResponse
 from engine.parsers.utils import clean_text
 from engine.sources.leads.base import LeadsSourceAdapter
 from engine.types import FetchMethod, RateLimitConfig, RetryConfig, SourceCategory, SourceConfig
-from leads.models import LeadCompany, utcnow
+from leads.models import LeadCompany, LeadEmail, utcnow
 from leads.normalizer import is_company_domain, normalize_domain, normalize_website
 
 BASE_URL = "https://all.biz"
@@ -100,25 +100,26 @@ class AllBizAdapter(LeadsSourceAdapter):
                 continue  # страна из JSON-LD вне приоритета
 
             domain = self._derive_domain(info.get("email", ""))
-            companies.append(
-                LeadCompany(
-                    company_name_en=info["name"],
-                    website=normalize_website(domain) if domain else "",
-                    domain=domain,
-                    emails=[info["email"]] if info.get("email") else [],
-                    country=info.get("country", ""),
-                    city=info.get("city", ""),
-                    province=info.get("region", ""),
-                    activity=info.get("description", "")[:300],
-                    offers=[info.get("description", "")[:300]] if info.get("description") else [],
-                    profile=self.profile.name if self.profile else "",
-                    source_url=offer_url,
-                    source_name=SOURCE_ID,
-                    first_seen=now,
-                    last_seen=now,
-                    enrich_status="pending" if domain else "no_site",
-                )
+            email = info.get("email", "")
+            company = LeadCompany(
+                company_name_en=info["name"],
+                website=normalize_website(domain) if domain else "",
+                domain=domain,
+                country=info.get("country", ""),
+                city=info.get("city", ""),
+                province=info.get("region", ""),
+                activity=info.get("description", "")[:300],
+                offers=[info.get("description", "")[:300]] if info.get("description") else [],
+                profile=self.profile.name if self.profile else "",
+                source_url=offer_url,
+                source_name=SOURCE_ID,
+                first_seen=now,
+                last_seen=now,
+                enrich_status="pending" if domain else "no_site",
             )
+            if email:
+                company.add_emails([LeadEmail(email=email.lower(), source_url=offer_url)])
+            companies.append(company)
 
         return companies
 

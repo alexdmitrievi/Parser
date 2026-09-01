@@ -35,13 +35,13 @@ profiles:
     target_industries: ["agricultural machinery", "farm equipment", "spare parts"]
 
   agri_export_grain_cn_tr_kz:        # экспорт зерна (пшеница, ячмень, кукуруза)
-    keywords_en: ["wheat importer", "grain trading", "flour mill", "feed grain", "corn importer", "barley importer", "grain importer", "flour milling", "grain buyer"]
+    keywords_en: ["flour mill", "animal feed", "feed mill", "brewery", "malt", "grain", "wheat", "barley", "corn"]
     keywords_zh: ["小麦", "大麦", "玉米", "粮食贸易", "面粉厂", "饲料"]
     hs_codes: ["1001", "1003", "1005", "1101"]
     target_industries: ["flour milling", "feed", "grain trading", "food processing"]
 
   agri_export_meat_cn_kz:            # экспорт мяса и субпродуктов
-    keywords_en: ["meat importer", "pork importer", "beef importer", "poultry importer", "frozen meat", "meat trading", "offal importer", "meat distributor"]
+    keywords_en: ["meat processing", "frozen meat", "sausage", "poultry", "pork", "beef", "meat packing", "meat"]
     keywords_zh: ["肉类进口", "猪肉", "牛肉", "禽肉", "冷冻肉", "肉制品", "副食品"]
     hs_codes: ["0203", "0207", "0201", "0202", "0206"]
     target_industries: ["meat processing", "meat trading", "food distribution"]
