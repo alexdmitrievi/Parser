@@ -46,6 +46,13 @@ CREATE INDEX IF NOT EXISTS idx_leads_companies_province  ON leads_companies (pro
 CREATE INDEX IF NOT EXISTS idx_leads_companies_status    ON leads_companies (enrich_status);
 CREATE INDEX IF NOT EXISTS idx_leads_companies_domain    ON leads_companies (domain);
 
+-- Колонки вида деятельности и предложений/запросов — отдельными ALTER,
+-- чтобы миграция оставалась идемпотентной для уже существующих таблиц.
+ALTER TABLE leads_companies ADD COLUMN IF NOT EXISTS country text NOT NULL DEFAULT '';
+ALTER TABLE leads_companies ADD COLUMN IF NOT EXISTS activity text NOT NULL DEFAULT '';
+ALTER TABLE leads_companies ADD COLUMN IF NOT EXISTS offers   text[] NOT NULL DEFAULT '{}';
+ALTER TABLE leads_companies ADD COLUMN IF NOT EXISTS requests text[] NOT NULL DEFAULT '{}';
+
 -- ──────────────── Почты ────────────────
 
 CREATE TABLE IF NOT EXISTS leads_emails (

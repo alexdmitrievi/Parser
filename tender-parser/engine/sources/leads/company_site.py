@@ -26,6 +26,7 @@ from engine.fetchers.polite_fetcher import PoliteResponse, SourceBlocked
 from engine.parsers.utils import clean_text
 from engine.sources.leads.base import LeadsSourceAdapter
 from engine.types import FetchMethod, RateLimitConfig, RetryConfig, SourceCategory, SourceConfig
+from leads.activity import extract_activity, extract_offers, extract_requests
 from leads.emails import emails_for_domain, extract_emails
 from leads.models import LeadCompany, utcnow
 from leads.normalizer import detect_city, detect_province, split_name_by_script
@@ -218,6 +219,7 @@ class CompanySiteAdapter(LeadsSourceAdapter):
             text = self._page_text(page.text)
             self._harvest_messengers(company, text)
             self._harvest_phones(company, text)
+            self._harvest_activity(company, page.text, text)
 
             if not company.province:
                 company.province = detect_province(text)
@@ -282,6 +284,33 @@ class CompanySiteAdapter(LeadsSourceAdapter):
             company.phones.append(digits)
             if len(company.phones) >= 5:
                 return
+
+    @staticmethod
+    def _meta_description(html: str) -> str:
+        """Description из <meta name="description"> — готовое описание компании."""
+        if not html:
+            return ""
+        soup = BeautifulSoup(html, "html.parser")
+        meta = soup.find("meta", attrs={"name": re.compile(r"^description$", re.IGNORECASE)})
+        if not meta or not meta.get("content"):
+            return ""
+        return clean_text(str(meta["content"]))[:300]
+
+    @staticmethod
+    def _harvest_activity(company: LeadCompany, html: str, text: str) -> None:
+        """Вид деятельности и предложения/запросы с текста страницы."""
+        if not company.activity:
+            company.activity = CompanySiteAdapter._meta_description(html) or extract_activity(text)
+        for phrase in extract_offers(text):
+            if len(company.offers) >= 10:
+                break
+            if phrase not in company.offers:
+                company.offers.append(phrase)
+        for phrase in extract_requests(text):
+            if len(company.requests) >= 10:
+                break
+            if phrase not in company.requests:
+                company.requests.append(phrase)
 
     def parse_companies(self, response: PoliteResponse) -> list[LeadCompany]:
         """Не применимо: адаптер обогащает существующие карточки."""

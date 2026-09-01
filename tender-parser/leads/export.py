@@ -27,8 +27,12 @@ from leads.profiles import ProfileConfig
 
 logger = get_logger("leads.export")
 
-# Порядок колонок менять нельзя: файл грузится в Coldy как есть.
-CSV_COLUMNS = ("Company", "Email", "Website", "Province", "City", "Profile", "Source")
+# Первые семь колонок — формат Coldy, порядок менять нельзя. Дальше добавлены
+# вид деятельности и предложения/запросы (см. docs/LEADS.md).
+CSV_COLUMNS = (
+    "Company", "Email", "Website", "Province", "City", "Country", "Profile", "Source",
+    "Activity", "Offers", "Requests",
+)
 
 # utf-8-sig — чтобы Excel не ломал китайские названия при открытии файла.
 DEFAULT_ENCODING = "utf-8-sig"
@@ -107,8 +111,12 @@ def build_rows(
                     "Website": company.website,
                     "Province": company.province,
                     "City": company.city,
+                    "Country": company.country,
                     "Profile": company.profile,
                     "Source": company.source_name,
+                    "Activity": company.activity,
+                    "Offers": " | ".join(company.offers),
+                    "Requests": " | ".join(company.requests),
                 },
             ))
 

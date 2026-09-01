@@ -35,8 +35,10 @@ Environment=PYTHONUNBUFFERED=1
 EnvironmentFile=-/etc/tender-parser/leads.env
 
 # Два шага одного прогона: каталоги дают домены, enrich добирает почты.
-ExecStart=/opt/tender-parser/.venv/bin/python -m leads collect --profile petcoke_anode
-ExecStart=/opt/tender-parser/.venv/bin/python -m leads enrich --profile petcoke_anode
+ExecStart=/opt/tender-parser/.venv/bin/python -m leads collect --profile agri_import_machinery_cn
+ExecStart=/opt/tender-parser/.venv/bin/python -m leads collect --profile agri_export_grain_cn_tr_kz
+ExecStart=/opt/tender-parser/.venv/bin/python -m leads collect --profile agri_export_meat_cn_kz
+ExecStart=/opt/tender-parser/.venv/bin/python -m leads enrich
 
 # Вежливые задержки делают прогон долгим — это нормально.
 TimeoutStartSec=6h
