@@ -13,9 +13,9 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: "Профиль из config/leads_profiles.yaml"
+        description: "Профиль из config/leads_profiles.yaml (пусто = все пилотные АПК)"
         required: false
-        default: "petcoke_anode"
+        default: ""
       skip_enrich:
         description: "Только collect, без обхода сайтов"
         type: boolean
@@ -25,7 +25,7 @@ on:
 jobs:
   parse-leads:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
 
     defaults:
       run:
@@ -34,13 +34,17 @@ jobs:
     env:
       LEADS_ENABLED: ${{ vars.LEADS_ENABLED }}
       LEADS_STORAGE: ${{ vars.LEADS_STORAGE || 'supabase' }}
+      # all.biz — основной источник; made_in_china (404) и customs_api (без
+      # ключа) не запускаем. Переменная LEADS_SOURCES может переопределить.
+      LEADS_SOURCES: ${{ vars.LEADS_SOURCES || 'allbiz,tradekey' }}
       LEADS_CONTACT_EMAIL: ${{ vars.LEADS_CONTACT_EMAIL }}
       LEADS_CUSTOMS_API_KEY: ${{ secrets.LEADS_CUSTOMS_API_KEY }}
       LEADS_CUSTOMS_API_PROVIDER: ${{ vars.LEADS_CUSTOMS_API_PROVIDER }}
       LEADS_CUSTOMS_API_BASE_URL: ${{ vars.LEADS_CUSTOMS_API_BASE_URL }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      # Все три имени: supabase_key() берёт первое непустое.
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # Все три имени: supabase_key() берёт первое непустое. Исторический
+      # секрет назывался SUPABASE_SERVICE_ROLE_TOKEN — подхватываем и его.
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_TOKEN }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
@@ -83,17 +87,34 @@ jobs:
             exit 1
           fi
 
+      - name: Resolve profiles
+        id: profiles
+        if: steps.flag.outputs.enabled == 'true'
+        run: |
+          if [ -n "${{ inputs.profile }}" ]; then
+            PROFILES="${{ inputs.profile }}"
+          else
+            PROFILES="agri_import_machinery_cn agri_export_grain_cn_tr_kz agri_export_meat_cn_kz"
+          fi
+          echo "list=${PROFILES}" >> "$GITHUB_OUTPUT"
+
       - name: Collect companies
         if: steps.flag.outputs.enabled == 'true'
         run: |
-          python -m leads collect --profile "${{ inputs.profile || 'petcoke_anode' }}"
+          for p in ${{ steps.profiles.outputs.list }}; do
+            python -m leads collect --profile "$p"
+          done
 
       - name: Enrich with emails
         if: steps.flag.outputs.enabled == 'true' && inputs.skip_enrich != true
         run: |
-          python -m leads enrich --profile "${{ inputs.profile || 'petcoke_anode' }}"
+          for p in ${{ steps.profiles.outputs.list }}; do
+            python -m leads enrich --profile "$p"
+          done
 
       - name: Stats
         if: steps.flag.outputs.enabled == 'true'
         run: |
-          python -m leads stats --profile "${{ inputs.profile || 'petcoke_anode' }}"
+          for p in ${{ steps.profiles.outputs.list }}; do
+            python -m leads stats --profile "$p"
+          done

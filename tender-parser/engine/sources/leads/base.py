@@ -80,6 +80,21 @@ class LeadsSourceAdapter(BaseSourceAdapter):
             max_concurrent=1,
         )
 
+        if fetcher is None:
+            from shared.config import firecrawl_api_key, leads_firecrawl_sources
+
+            fk = firecrawl_api_key()
+            if fk and config.source_id in leads_firecrawl_sources():
+                from engine.fetchers.firecrawl_fetcher import FirecrawlFetcher
+
+                fetcher = FirecrawlFetcher(
+                    api_key=fk,
+                    rate_limiter=self._rate_limiter,
+                    retry_config=config.retry or RetryConfig(),
+                    source_id=config.source_id,
+                    user_agent=self._user_agent,
+                )
+
         self._polite = fetcher or PoliteFetcher(
             user_agent=self._user_agent,
             rate_limiter=self._rate_limiter,

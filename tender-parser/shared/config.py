@@ -507,3 +507,19 @@ def leads_enabled_sources() -> list[str]:
     if not raw:
         return []
     return [s.strip() for s in raw.split(",") if s.strip()]
+
+def firecrawl_api_key() -> str:
+    """Ключ Firecrawl для Cloudflare-защищённых источников leads. Пусто — выключено."""
+    return get_env("FIRECRAWL_API_KEY", "")
+
+
+def leads_firecrawl_sources() -> list[str]:
+    """Какие leads-источники ходить через Firecrawl (Cloudflare-защита).
+
+    Пусто — ни один; обычно "allbiz". Применяется только при заданном
+    FIRECRAWL_API_KEY.
+    """
+    raw = get_env("LEADS_FIRECRAWL_SOURCES", "").strip()
+    if not raw:
+        return []
+    return [s.strip() for s in raw.split(",") if s.strip()]

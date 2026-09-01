@@ -55,6 +55,15 @@
 Там используется `PoliteFetcher`, а не `HttpFetcher`. Это сильнее общего
 правила и остаётся в силе.
 
+**Исключение (решение владельца, 2026-09): Firecrawl для all.biz.** Каталог
+`all.biz` сидит за Cloudflare и адресно отдаёт 403 датацентровым диапазонам
+(проверено: Яндекс.Облако и Azure/GitHub Actions). Для него разрешён **только**
+управляемый сервис Firecrawl — рендер JS с чистых IP, без подмены `User-Agent`
+и без капча-солверов. Включается точечно: `FIRECRAWL_API_KEY` +
+`LEADS_FIRECRAWL_SOURCES=allbiz`. Реализация — `FirecrawlFetcher`
+(`engine/fetchers/firecrawl_fetcher.py`). Прокси-ротация и подмена `User-Agent`
+в домене `leads` по-прежнему запрещены.
+
 ---
 
 ## 3. Режимы персональных данных по гео
