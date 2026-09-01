@@ -49,6 +49,6 @@ profiles:
 regions_priority: ["Shandong", "Hebei", "Henan", "Liaoning", "Tianjin", "Jiangsu", "Xinjiang", "Sichuan", "Chongqing"]
 
 limits:
-  max_pages_per_query: 20
+  max_pages_per_query: 3
   request_delay_seconds: 3           # вежливая задержка
   max_concurrency: 2

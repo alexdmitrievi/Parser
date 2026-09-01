@@ -56,10 +56,28 @@ class AllBizAdapter(LeadsSourceAdapter):
         if not keywords:
             self._log.warning("У профиля нет английских ключевых слов — обходить нечего")
             return []
-        return [
-            f"{BASE_URL}/search/goods?q={quote_plus(keyword)}"
-            for keyword in keywords
-        ]
+        max_pages = min(
+            self.limits.max_pages_per_query,
+            self.config.max_pages or self.limits.max_pages_per_query,
+        )
+        urls: list[str] = []
+        for keyword in keywords:
+            search = f"{BASE_URL}/search/goods?q={quote_plus(keyword)}"
+            category = self._resolve_category(search) or search
+            for page in range(1, max_pages + 1):
+                urls.append(f"{category}?page={page}" if page > 1 else category)
+        return urls
+
+    def _resolve_category(self, search_url: str) -> str:
+        """Финальный URL категории после редиректа поиска; '' при неудаче."""
+        try:
+            response = self._polite.fetch(search_url)
+        except Exception as exc:  # noqa: BLE001 - редирект-резолв не роняет прогон
+            self._log.fetch_fail(search_url, str(exc))
+            return ""
+        if not response.ok:
+            return ""
+        return response.url or ""
 
     def _keywords(self) -> list[str]:
         if self.profile:
