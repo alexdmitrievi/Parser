@@ -25,6 +25,7 @@ from engine.observability.health import get_health_tracker
 from engine.observability.logger import CrawlLogger, new_correlation_id
 from engine.observability.metrics import get_metrics
 from engine.resilience.circuit_breaker import CircuitBreaker
+from engine.sources.leads.allbiz import get_allbiz_adapter
 from engine.sources.leads.base import LeadsSourceAdapter, SourceUnavailable
 from engine.sources.leads.company_site import get_company_site_adapter
 from engine.sources.leads.customs_api import get_customs_api_adapter
@@ -41,6 +42,7 @@ from leads.storage.base import LeadsRepository
 # Фабрики адаптеров-каталогов: дают карточки компаний.
 CATALOG_FACTORIES: dict[str, Callable[..., LeadsSourceAdapter]] = {
     "made_in_china": get_made_in_china_adapter,
+    "allbiz": get_allbiz_adapter,
     "tradekey": get_tradekey_adapter,
     "customs_api": get_customs_api_adapter,
 }
