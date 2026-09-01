@@ -40,6 +40,9 @@ CREATE TABLE IF NOT EXISTS {TABLE_COMPANIES} (
     matched_keywords TEXT   NOT NULL DEFAULT '[]',
     profile         TEXT    NOT NULL DEFAULT '',
     industry_guess  TEXT    NOT NULL DEFAULT '',
+    activity        TEXT    NOT NULL DEFAULT '',
+    offers          TEXT    NOT NULL DEFAULT '[]',
+    requests        TEXT    NOT NULL DEFAULT '[]',
     source_url      TEXT    NOT NULL DEFAULT '',
     source_name     TEXT    NOT NULL DEFAULT '',
     enrich_status   TEXT    NOT NULL DEFAULT 'pending',
@@ -115,8 +118,21 @@ class SqliteLeadsRepository(LeadsRepository):
         """Создать схему, если её нет. Безопасно вызывать многократно."""
         conn = self._connect()
         conn.executescript(SCHEMA)
+        self._ensure_columns(conn)
         conn.commit()
         logger.debug(f"Схема leads_* готова ({self.path})")
+
+    @staticmethod
+    def _ensure_columns(conn: sqlite3.Connection) -> None:
+        """Добавить колонки, которых нет в существующей базе (идемпотентно)."""
+        existing = {row[1] for row in conn.execute(f"PRAGMA table_info({TABLE_COMPANIES})")}
+        for name, ddl in (
+            ("activity", "TEXT NOT NULL DEFAULT ''"),
+            ("offers", "TEXT NOT NULL DEFAULT '[]'"),
+            ("requests", "TEXT NOT NULL DEFAULT '[]'"),
+        ):
+            if name not in existing:
+                conn.execute(f"ALTER TABLE {TABLE_COMPANIES} ADD COLUMN {name} {ddl}")
 
     def close(self) -> None:
         if self._conn is not None:
@@ -186,6 +202,9 @@ class SqliteLeadsRepository(LeadsRepository):
             "matched_keywords": json.dumps(company.matched_keywords, ensure_ascii=False),
             "profile": company.profile,
             "industry_guess": company.industry_guess,
+            "activity": company.activity,
+            "offers": json.dumps(company.offers, ensure_ascii=False),
+            "requests": json.dumps(company.requests, ensure_ascii=False),
             "source_url": company.source_url,
             "source_name": company.source_name,
             "enrich_status": company.enrich_status,
@@ -329,6 +348,9 @@ class SqliteLeadsRepository(LeadsRepository):
             matched_keywords=json.loads(row["matched_keywords"] or "[]"),
             profile=row["profile"],
             industry_guess=row["industry_guess"],
+            activity=row["activity"],
+            offers=json.loads(row["offers"] or "[]"),
+            requests=json.loads(row["requests"] or "[]"),
             source_url=row["source_url"],
             source_name=row["source_name"],
             first_seen=_parse_dt(row["first_seen"]),

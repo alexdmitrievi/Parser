@@ -78,6 +78,10 @@ class LeadCompany:
     matched_keywords: list[str] = field(default_factory=list)
     profile: str = ""                # какой профиль сработал
     industry_guess: str = ""
+    # Обогащение с сайта: вид деятельности и предложения/запросы.
+    activity: str = ""
+    offers: list[str] = field(default_factory=list)
+    requests: list[str] = field(default_factory=list)
     source_url: str = ""
     source_name: str = ""
     first_seen: datetime = field(default_factory=utcnow)
@@ -130,6 +134,9 @@ class LeadCompany:
             "matched_keywords": list(self.matched_keywords),
             "profile": self.profile,
             "industry_guess": self.industry_guess,
+            "activity": self.activity,
+            "offers": list(self.offers),
+            "requests": list(self.requests),
             "source_url": self.source_url,
             "source_name": self.source_name,
             "first_seen": self.first_seen.isoformat(),
