@@ -22,6 +22,7 @@ from typing import Sequence
 from engine.observability.logger import setup_logging
 from leads.blacklist import Blacklist
 from leads.export import DEFAULT_ENCODING, export_csv
+from leads.seed import parse_seed_file
 from leads.pipeline import LeadsPipeline
 from leads.profiles import ProfileError, load_profiles
 from leads.storage import get_leads_repository
@@ -165,21 +166,21 @@ def main(argv: Sequence[str] | None = None) -> int:
 # ── команды ──
 
 def _cmd_collect(args, profiles, repository) -> int:
-    seed_domains = None
+    seed_records = None
     if args.from_file:
         path = Path(args.from_file)
         if not path.exists():
             print(f"Файл не найден: {path}", file=sys.stderr)
             return EXIT_USAGE
-        seed_domains = [
-            line.split("#", 1)[0].strip()
-            for line in path.read_text(encoding="utf-8").splitlines()
-            if line.split("#", 1)[0].strip()
-        ]
+        try:
+            seed_records = parse_seed_file(path)
+        except (ValueError, RuntimeError, FileNotFoundError) as exc:
+            print(f"Ошибка файла-сида: {exc}", file=sys.stderr)
+            return EXIT_USAGE
 
     pipeline = LeadsPipeline(repository, profiles)
     result = pipeline.collect(
-        args.profile, sources=args.source, seed_domains=seed_domains
+        args.profile, sources=args.source, seed_records=seed_records
     )
     print(result.summary())
     return EXIT_OK if result.status == "success" else EXIT_ERROR

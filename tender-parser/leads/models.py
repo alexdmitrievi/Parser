@@ -69,6 +69,7 @@ class LeadCompany:
     company_name_zh: str = ""
     province: str = ""
     city: str = ""
+    country: str = ""
     website: str = ""                # нормализованный https://domain
     domain: str = ""                 # нормализованный домен — ключ дедупликации
     emails: list[LeadEmail] = field(default_factory=list)
@@ -126,6 +127,7 @@ class LeadCompany:
             "company_name_zh": self.company_name_zh,
             "province": self.province,
             "city": self.city,
+            "country": self.country,
             "website": self.website,
             "domain": self.domain,
             "phones": list(self.phones),

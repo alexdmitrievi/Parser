@@ -48,6 +48,7 @@ CREATE INDEX IF NOT EXISTS idx_leads_companies_domain    ON leads_companies (dom
 
 -- Колонки вида деятельности и предложений/запросов — отдельными ALTER,
 -- чтобы миграция оставалась идемпотентной для уже существующих таблиц.
+ALTER TABLE leads_companies ADD COLUMN IF NOT EXISTS country text NOT NULL DEFAULT '';
 ALTER TABLE leads_companies ADD COLUMN IF NOT EXISTS activity text NOT NULL DEFAULT '';
 ALTER TABLE leads_companies ADD COLUMN IF NOT EXISTS offers   text[] NOT NULL DEFAULT '{}';
 ALTER TABLE leads_companies ADD COLUMN IF NOT EXISTS requests text[] NOT NULL DEFAULT '{}';

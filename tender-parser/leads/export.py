@@ -30,7 +30,7 @@ logger = get_logger("leads.export")
 # Первые семь колонок — формат Coldy, порядок менять нельзя. Дальше добавлены
 # вид деятельности и предложения/запросы (см. docs/LEADS.md).
 CSV_COLUMNS = (
-    "Company", "Email", "Website", "Province", "City", "Profile", "Source",
+    "Company", "Email", "Website", "Province", "City", "Country", "Profile", "Source",
     "Activity", "Offers", "Requests",
 )
 
@@ -111,6 +111,7 @@ def build_rows(
                     "Website": company.website,
                     "Province": company.province,
                     "City": company.city,
+                    "Country": company.country,
                     "Profile": company.profile,
                     "Source": company.source_name,
                     "Activity": company.activity,

@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS {TABLE_COMPANIES} (
     company_name_zh TEXT    NOT NULL DEFAULT '',
     province        TEXT    NOT NULL DEFAULT '',
     city            TEXT    NOT NULL DEFAULT '',
+    country         TEXT    NOT NULL DEFAULT '',
     website         TEXT    NOT NULL DEFAULT '',
     domain          TEXT    NOT NULL DEFAULT '',
     phones          TEXT    NOT NULL DEFAULT '[]',
@@ -127,6 +128,7 @@ class SqliteLeadsRepository(LeadsRepository):
         """Добавить колонки, которых нет в существующей базе (идемпотентно)."""
         existing = {row[1] for row in conn.execute(f"PRAGMA table_info({TABLE_COMPANIES})")}
         for name, ddl in (
+            ("country", "TEXT NOT NULL DEFAULT ''"),
             ("activity", "TEXT NOT NULL DEFAULT ''"),
             ("offers", "TEXT NOT NULL DEFAULT '[]'"),
             ("requests", "TEXT NOT NULL DEFAULT '[]'"),
@@ -194,6 +196,7 @@ class SqliteLeadsRepository(LeadsRepository):
             "company_name_zh": company.company_name_zh,
             "province": company.province,
             "city": company.city,
+            "country": company.country,
             "website": company.website,
             "domain": company.domain,
             "phones": json.dumps(company.phones, ensure_ascii=False),
@@ -339,6 +342,7 @@ class SqliteLeadsRepository(LeadsRepository):
             company_name_zh=row["company_name_zh"],
             province=row["province"],
             city=row["city"],
+            country=row["country"],
             website=row["website"],
             domain=row["domain"],
             emails=emails,

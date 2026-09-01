@@ -33,8 +33,9 @@ from engine.sources.leads.tradekey import get_tradekey_adapter
 from engine.types import CrawlAction
 from leads.dedup import LeadsDeduplicator, company_key, dedupe_batch
 from leads.models import LeadCompany, utcnow
-from leads.normalizer import is_company_domain, normalize_domain, normalize_website
+from leads.normalizer import is_company_domain, normalize_domain, normalize_website, split_name_by_script
 from leads.profiles import Profile, ProfileConfig
+from leads.seed import SeedRecord
 from leads.storage.base import LeadsRepository
 
 # Фабрики адаптеров-каталогов: дают карточки компаний.
@@ -132,6 +133,7 @@ class LeadsPipeline:
         profile_name: str,
         sources: Iterable[str] | None = None,
         seed_domains: Iterable[str] | None = None,
+        seed_records: Iterable[SeedRecord] | None = None,
     ) -> RunResult:
         """Обойти каталоги и сохранить найденные компании.
 
@@ -148,8 +150,12 @@ class LeadsPipeline:
 
         companies: list[LeadCompany] = []
 
-        if seed_domains is not None:
+        seeded: list[LeadCompany] = []
+        if seed_records is not None:
+            seeded = self._companies_from_seed(seed_records, profile)
+        elif seed_domains is not None:
             seeded = self._companies_from_domains(seed_domains, profile)
+        if seeded:
             companies.extend(seeded)
             result.sources.append(
                 SourceOutcome(source_id=SEED_SOURCE_NAME, found=len(seeded))
@@ -257,6 +263,39 @@ class LeadsPipeline:
                 LeadCompany(
                     website=normalize_website(domain),
                     domain=domain,
+                    profile=profile.name,
+                    source_name=SEED_SOURCE_NAME,
+                    source_url="",
+                    first_seen=now,
+                    last_seen=now,
+                    enrich_status="pending",
+                )
+            )
+        return companies
+
+    def _companies_from_seed(
+        self, records: Iterable[SeedRecord], profile: Profile
+    ) -> list[LeadCompany]:
+        """Собрать карточки из файла-сида с названием, сайтом и страной."""
+        now = utcnow()
+        companies: list[LeadCompany] = []
+        for rec in records:
+            domain = normalize_domain(rec.website)
+            if not domain:
+                self._log.warning(f"Сид: не разобрал сайт '{rec.website}' — пропускаю")
+                continue
+            if not is_company_domain(domain):
+                self._log.warning(f"Сид: '{domain}' — агрегатор или почтовик, пропускаю")
+                continue
+            name_en, name_zh = split_name_by_script(rec.name) if rec.name else ("", "")
+            companies.append(
+                LeadCompany(
+                    company_name_en=name_en,
+                    company_name_zh=name_zh,
+                    website=normalize_website(domain),
+                    domain=domain,
+                    country=rec.country,
+                    matched_keywords=[rec.hs_code] if rec.hs_code else [],
                     profile=profile.name,
                     source_name=SEED_SOURCE_NAME,
                     source_url="",
