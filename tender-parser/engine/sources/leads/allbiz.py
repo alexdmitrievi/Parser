@@ -63,7 +63,10 @@ class AllBizAdapter(LeadsSourceAdapter):
         urls: list[str] = []
         for keyword in keywords:
             search = f"{BASE_URL}/search/goods?q={quote_plus(keyword)}"
-            category = self._resolve_category(search) or search
+            category = self._resolve_category(search)
+            if not category:
+                urls.append(search)  # не резолвится — берём только 1-ю страницу
+                continue
             for page in range(1, max_pages + 1):
                 urls.append(f"{category}?page={page}" if page > 1 else category)
         return urls
