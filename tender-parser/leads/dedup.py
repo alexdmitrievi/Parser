@@ -20,7 +20,7 @@ from leads.normalizer import company_name_key
 logger = get_logger("leads.dedup")
 
 # Источники по убыванию доверия: данные из первого перекрывают остальные.
-SOURCE_PRIORITY = ("customs_api", "seed_file", "made_in_china", "company_site")
+SOURCE_PRIORITY = ("customs_api", "seed_file", "made_in_china", "tradekey", "company_site")
 
 
 def source_rank(source_name: str) -> int:
