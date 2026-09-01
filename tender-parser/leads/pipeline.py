@@ -179,13 +179,14 @@ class LeadsPipeline:
         """Какие каталоги запускать с учётом LEADS_SOURCES и явного списка."""
         if sources is not None:
             requested = [s for s in sources if s]
+            if not requested:
+                return []  # явно пустой список — каталоги не запускаем
         else:
             from shared.config import leads_enabled_sources
 
             requested = leads_enabled_sources()
-
-        if not requested:
-            return list(CATALOG_FACTORIES)
+            if not requested:
+                return list(CATALOG_FACTORIES)  # ничего не задано — все
 
         selected = [s for s in requested if s in CATALOG_FACTORIES]
         unknown = [s for s in requested if s not in CATALOG_FACTORIES and s != "company_site"]
