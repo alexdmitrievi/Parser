@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import json
+import re
 from urllib.parse import quote_plus, urljoin
 
 from bs4 import BeautifulSoup
@@ -39,6 +40,12 @@ _FREEMAIL_DOMAINS = {
     "yandex.ru", "inbox.ru", "list.ru", "bk.ru", "icloud.com", "aol.com",
     "protonmail.com", "qq.com", "163.com", "126.com", "sina.com",
 }
+
+# Приоритетные страны лидогена (решение владельца): КНР, Турция, Казахстан.
+# Страна продавца кодируется в суффиксе URL оферты (…-gNNNNNNCN) и в
+# JSON-LD addressCountry. Фильтруем по обоим, чтобы не фетчить лишнее.
+TARGET_COUNTRY_CODES = frozenset({"CN", "TR", "KZ"})
+_COUNTRY_SUFFIX_RE = re.compile(r"-g\d+([A-Z]{2})$")
 
 
 class AllBizAdapter(LeadsSourceAdapter):
@@ -74,6 +81,9 @@ class AllBizAdapter(LeadsSourceAdapter):
             offer_url = self._offer_url(card, response.url)
             if not offer_url:
                 continue
+            country_code = self._country_code(offer_url)
+            if country_code and country_code not in TARGET_COUNTRY_CODES:
+                continue  # страна вне приоритета — не фетчим детальную страницу
 
             try:
                 detail = self._polite.fetch(offer_url)
@@ -86,6 +96,8 @@ class AllBizAdapter(LeadsSourceAdapter):
             info = self._parse_ld(detail.text)
             if not info.get("name"):
                 continue
+            if info.get("country") and not self._is_target_country(info["country"]):
+                continue  # страна из JSON-LD вне приоритета
 
             domain = self._derive_domain(info.get("email", ""))
             companies.append(
@@ -115,6 +127,18 @@ class AllBizAdapter(LeadsSourceAdapter):
         if not link or not link.get("href"):
             return ""
         return urljoin(page_url, str(link["href"]))
+
+    @staticmethod
+    def _country_code(url: str) -> str:
+        """ISO-код страны продавца из суффикса URL оферты (…-gNNNNNNKZ)."""
+        match = _COUNTRY_SUFFIX_RE.search(url)
+        return match.group(1) if match else ""
+
+    @staticmethod
+    def _is_target_country(name: str) -> bool:
+        """Принадлежит ли имя страны из JSON-LD приоритетной тройке."""
+        normalized = name.lower().replace("ü", "u")
+        return any(key in normalized for key in ("china", "kazakhstan", "turk"))
 
     @staticmethod
     def _parse_ld(html: str) -> dict[str, str]:

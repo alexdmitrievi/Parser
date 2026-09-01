@@ -37,3 +37,18 @@ def test_derive_domain_corporate_and_freemail():
     assert AllBizAdapter._derive_domain("sales@exportgrain.ru") == "exportgrain.ru"
     assert AllBizAdapter._derive_domain("foo@gmail.com") == ""
     assert AllBizAdapter._derive_domain("no-at-sign") == ""
+
+
+def test_country_code_from_url():
+    assert AllBizAdapter._country_code("https://all.biz/wheat-1-2-3-class-g3973608KZ") == "KZ"
+    assert AllBizAdapter._country_code("https://all.biz/x-g123CN") == "CN"
+    assert AllBizAdapter._country_code("https://all.biz/fertilizer-bgc1452") == ""
+
+
+def test_is_target_country():
+    assert AllBizAdapter._is_target_country("Kazakhstan") is True
+    assert AllBizAdapter._is_target_country("China") is True
+    assert AllBizAdapter._is_target_country("Turkey") is True
+    assert AllBizAdapter._is_target_country("Türkiye") is True
+    assert AllBizAdapter._is_target_country("Ukraine") is False
+    assert AllBizAdapter._is_target_country("Republic of South Africa") is False
