@@ -1,0 +1,50 @@
+# Прогон одной группы тендерных парсеров (eis / etp / commercial / ...).
+#
+# Шаблон: имя экземпляра = группа. Примеры:
+#   tenders-parse@eis.service        -> run_parser.py --source eis
+#   tenders-parse@commercial.service -> run_parser.py --source commercial
+#
+# Установка (таймеры лежат рядом):
+#   sudo cp deploy/systemd/tenders-parse@.service \
+#          deploy/systemd/tenders-parse-*.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now tenders-parse-eis.timer \
+#        tenders-parse-etp.timer tenders-parse-commercial.timer
+#
+# Проверка:
+#   systemctl list-timers 'tenders-parse-*'
+#   journalctl -u tenders-parse@eis.service -f
+
+[Unit]
+Description=Тендер-парсер: прогон группы %i
+Documentation=file:///opt/tender-parser/docs/ARCHITECTURE.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=tender
+Group=tender
+WorkingDirectory=/opt/tender-parser
+
+# Секреты (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) — отдельный файл 0600.
+EnvironmentFile=/etc/tender-parser/tenders.env
+
+# ЕИС отдаёт сертификат Минцифры, которого нет в certifi. Направляем httpx
+# в системное хранилище с российскими корневыми сертификатами.
+Environment=SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+Environment=PYTHONUNBUFFERED=1
+
+# Обёртка ставит тот же SSL_CERT_FILE и запускает run_parser.py.
+ExecStart=/opt/tender-parser/deploy/systemd/run_tenders.sh --source %i
+TimeoutStartSec=6h
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/tender-parser/web
+RestrictAddressFamilies=AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

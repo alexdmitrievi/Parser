@@ -10,9 +10,16 @@ The registry is the single source of truth for what sources exist and how they'r
 from __future__ import annotations
 
 import threading
-from typing import Any, Callable, Type
+from typing import Any
 
-from engine.types import SourceConfig, SourceCategory, FetchMethod, RateLimitConfig, RetryConfig
+from engine.types import (
+    AccessMode,
+    FetchMethod,
+    RateLimitConfig,
+    RetryConfig,
+    SourceCategory,
+    SourceConfig,
+)
 from engine.observability.logger import get_logger
 
 logger = get_logger("config.registry")
@@ -113,6 +120,7 @@ def make_config(
     max_concurrent: int = 1,
     law_type_default: str = "commercial",
     use_proxy: bool = False,
+    access_mode: AccessMode = AccessMode.DIRECT,
     wait_selector: str = "",
     enabled: bool = True,
     **kwargs: Any,
@@ -137,6 +145,7 @@ def make_config(
         law_type_default=law_type_default,
         enabled=enabled,
         use_proxy=use_proxy,
+        access_mode=access_mode,
         wait_selector=wait_selector,
         **kwargs,
     )
