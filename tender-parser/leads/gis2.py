@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote_plus
 
+from leads.dedup import dedupe_batch
 from leads.emails import classify, is_junk, normalize_email
 from leads.models import LeadCompany, LeadEmail, utcnow
 from leads.normalizer import is_company_domain, normalize_domain, normalize_website
@@ -280,7 +281,7 @@ def _scrape_url(
         subprocess.run(cmd, check=False, capture_output=True, timeout=3600)
         if not os.path.exists(path):
             return []
-        with open(path, encoding="utf-8") as fh:
+        with open(path, encoding="utf-8-sig") as fh:
             data = json.load(fh)
         return data if isinstance(data, list) else []
     finally:
@@ -322,6 +323,9 @@ def collect_gis2(
                 if (c := catalog_item_to_company(item, country=target.country, profile=profile))
                 is not None
             ]
+            # Филиалы одной компании (офис + склад) дают один домен — схлопываем,
+            # иначе upsert падает на ON CONFLICT (дубль dedup_key в одной пачке).
+            companies = dedupe_batch(companies)
             if not companies:
                 continue
             ins, upd = repository.upsert_companies(companies)

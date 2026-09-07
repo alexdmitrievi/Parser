@@ -135,7 +135,7 @@ def test_catalog_item_to_company_unwraps_2gis_redirect():
 def test_scrape_url_parses_json(monkeypatch):
     def fake_run(cmd, check=False, capture_output=True, timeout=3600):
         out_path = cmd[cmd.index("-o") + 1]
-        with open(out_path, "w", encoding="utf-8") as fh:
+        with open(out_path, "w", encoding="utf-8-sig") as fh:
             json.dump([{"id": "1_x", "name": "Фирма"}], fh)
         return subprocess.CompletedProcess(cmd, 0)
 
@@ -160,6 +160,34 @@ def test_scrape_url_builds_max_records_flag(monkeypatch):
     assert captured["cmd"][0] == "/opt/p2g/bin/parser-2gis"
     assert "--chrome.headless" in captured["cmd"]
     assert captured["cmd"][captured["cmd"].index("--parser.max-records") + 1] == "50"
+
+
+def test_collect_gis2_dedupes_branches(monkeypatch):
+    from leads import gis2
+    from leads.gis2 import collect_gis2
+
+    items = [
+        {"id": "1_x", "name": "Фирма офис", "city_alias": "omsk",
+         "contact_groups": [{"contacts": [{"type": "website", "value": "http://firma.ru"}]}], "rubrics": []},
+        {"id": "2_x", "name": "Фирма склад", "city_alias": "omsk",
+         "contact_groups": [{"contacts": [{"type": "website", "value": "http://firma.ru"}]}], "rubrics": []},
+    ]
+    monkeypatch.setattr(gis2, "_scrape_url", lambda url, parser_bin="", max_records=0: items)
+
+    class FakeRepo:
+        def __init__(self):
+            self.companies = []
+
+        def upsert_companies(self, companies):
+            self.companies = companies
+            return len(companies), 0
+
+    repo = FakeRepo()
+    targets = [Gis2Target(country="Russia", city_code="omsk", domain="ru",
+                          rubrics=[{"code": "614", "name": "x"}])]
+    ins, _ = collect_gis2(targets, repo, profile="p", parser_bin="x")
+    assert ins == 1  # два филиала схлопнуты в одну компанию
+    assert len(repo.companies) == 1
 
 
 def test_load_targets_reads_yaml(tmp_path):
