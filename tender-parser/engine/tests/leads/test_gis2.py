@@ -1,15 +1,18 @@
 """Тесты модуля сбора компаний из 2ГИС (leads.gis2).
 
-Проверяются только чистые функции — построение URL и маппинг карточки 2ГИС в
-``LeadCompany``. Оркестрация ``collect_gis2`` требует Chrome и parser-2gis,
-поэтому здесь не запускается (покрывается на хосте с браузером).
+Проверяются чистые функции — построение URL, маппинг карточки 2ГИС в
+``LeadCompany`` и разбор JSON-вывода CLI. Сам обход 2ГИС требует Chrome и
+parser-2gis, поэтому здесь не запускается (покрывается на хосте с браузером).
 """
 
 from __future__ import annotations
 
+import json
+import subprocess
+
 from leads.gis2 import (
     Gis2Target,
-    _ListWriter,
+    _scrape_url,
     build_search_url,
     catalog_item_to_company,
     load_targets,
@@ -114,13 +117,49 @@ def test_catalog_item_to_company_ignores_non_company_domain():
     assert company.enrich_status == "no_site"
 
 
-def test_list_writer_collects_items():
-    sink = []
-    writer = _ListWriter(sink)
-    writer.write({"result": {"items": [{"id": "1"}, {"id": "2"}]}})
-    writer.write({"result": {"items": "не список"}})
-    writer.write("не документ")
-    assert sink == [{"id": "1"}, {"id": "2"}]
+def test_catalog_item_to_company_unwraps_2gis_redirect():
+    item = dict(SAMPLE_ITEM)
+    item["contact_groups"] = [
+        {
+            "contacts": [
+                {"type": "website", "value": "http://link.2gis.ru/1.2/ABC?http://www.deltasvar.ru"},
+            ],
+        }
+    ]
+    company = catalog_item_to_company(item, country="Russia")
+    assert company is not None
+    assert company.domain == "deltasvar.ru"
+    assert company.website == "https://deltasvar.ru"
+
+
+def test_scrape_url_parses_json(monkeypatch):
+    def fake_run(cmd, check=False, capture_output=True, timeout=3600):
+        out_path = cmd[cmd.index("-o") + 1]
+        with open(out_path, "w", encoding="utf-8") as fh:
+            json.dump([{"id": "1_x", "name": "Фирма"}], fh)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    items = _scrape_url("https://2gis.ru/omsk/search/фрезерные-станки")
+    assert items == [{"id": "1_x", "name": "Фирма"}]
+
+
+def test_scrape_url_builds_max_records_flag(monkeypatch):
+    captured = {}
+
+    def fake_run(cmd, check=False, capture_output=True, timeout=3600):
+        captured["cmd"] = cmd
+        out_path = cmd[cmd.index("-o") + 1]
+        with open(out_path, "w", encoding="utf-8") as fh:
+            json.dump([], fh)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    _scrape_url("https://2gis.ru/omsk/search/x", parser_bin="/opt/p2g/bin/parser-2gis", max_records=50)
+
+    assert captured["cmd"][0] == "/opt/p2g/bin/parser-2gis"
+    assert "--chrome.headless" in captured["cmd"]
+    assert captured["cmd"][captured["cmd"].index("--parser.max-records") + 1] == "50"
 
 
 def test_load_targets_reads_yaml(tmp_path):

@@ -3,12 +3,14 @@
 В отличие от каталогов импортёров (allbiz / made-in-china / tradekey), 2ГИС —
 гео-каталог организаций: компании ищутся по рубрике и городу, а не по ключевому
 слову товара. Обход идёт через браузер (Chrome), поэтому запускается на машине
-с установленным Chrome и пакетом ``parser-2gis`` (VM / GitHub Actions), а не на
-Vercel и не в окружении тендерного парсера.
+с установленным Chrome и CLI ``parser-2gis`` (VM / GitHub Actions), а не на
+Vercel.
 
-Модуль разделён на чистые функции (построение URL и маппинг карточки 2ГИС в
-``LeadCompany``) и оркестрацию :func:`collect_gis2`, которая тянет parser-2gis
-лениво — поэтому модуль импортируется и тестируется без браузера.
+parser-2gis требует pydantic v1, тогда как этот проект — v2, поэтому парсер
+вызывается как внешний процесс (его собственный venv), а не импортируется.
+Слой модуля разделён на чистые функции (построение URL и маппинг карточки 2ГИС
+в ``LeadCompany``) и оркестрацию :func:`collect_gis2`, которая ходит в CLI
+через ``subprocess`` — модуль импортируется и тестируется без Chrome.
 
 См. config/gis2_targets.yaml.
 """
@@ -17,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 from urllib.parse import quote_plus
 
 from leads.emails import classify, is_junk, normalize_email
@@ -97,6 +99,20 @@ def _first_contact(item: dict[str, Any], type_: str) -> str:
     return values[0] if values else ""
 
 
+def _extract_real_website(raw: str) -> str:
+    """Достать настоящий сайт из redirect-обёртки 2ГИС.
+
+    2ГИС отдаёт сайт компании как ``http://link.2gis.ru/<hash>?<реальный_url>``:
+    настоящий адрес лежит в query-строке. Если ``?`` есть и после него идёт
+    URL — возвращаем часть после ``?``; иначе строку как есть.
+    """
+    if "?" in raw:
+        _, _, query = raw.partition("?")
+        if query.startswith(("http://", "https://")):
+            return query
+    return raw
+
+
 def _region(item: dict[str, Any]) -> str:
     """Название региона из административного деления (best-effort)."""
     for div in item.get("adm_div") or []:
@@ -135,7 +151,7 @@ def catalog_item_to_company(
         ни сайта (неидентифицируемая запись отбрасывается).
     """
     name = _company_name(item)
-    website_raw = _first_contact(item, "website")
+    website_raw = _extract_real_website(_first_contact(item, "website"))
     website = normalize_website(website_raw) if website_raw else ""
     domain = normalize_domain(website_raw) if website_raw else ""
     if domain and not is_company_domain(domain):
@@ -230,43 +246,46 @@ def load_targets(path: str | Path | None = None) -> tuple[str, list[Gis2Target]]
     return profile, targets
 
 
-class _ListWriter:
-    """Минимальный writer, собирающий карточки в список вместо файла.
-
-    Повторяет интерфейс ``parser_2gis.writer.FileWriter`` (метод ``write`` +
-    контекстный менеджер), который использует ``MainParser.parse``.
-    """
-
-    def __init__(self, sink: list[dict[str, Any]]) -> None:
-        self._sink = sink
-
-    def write(self, catalog_doc: Any) -> None:
-        try:
-            items = catalog_doc["result"]["items"]
-        except (KeyError, TypeError):
-            return
-        if isinstance(items, list):
-            self._sink.extend(i for i in items if isinstance(i, dict))
-
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(self, *exc_info: object) -> bool:
-        return False
-
-
 def _scrape_url(
     url: str,
-    chrome_options: Any,
-    parser_options: Any,
+    *,
+    parser_bin: str = "parser-2gis",
+    max_records: int = 0,
 ) -> list[dict[str, Any]]:
-    """Обойти один URL выдачи 2ГИС и вернуть сырые карточки."""
-    from parser_2gis.parser import get_parser
+    """Обойти один URL выдачи 2ГИС через CLI parser-2gis и вернуть карточки.
 
-    items: list[dict[str, Any]] = []
-    with _ListWriter(items) as writer, get_parser(url, chrome_options, parser_options) as parser:
-        parser.parse(writer)
-    return items
+    parser-2gis пишет результат в JSON-файл (массив сырых карточек каталога).
+    Вызов идёт через ``subprocess``, потому что parser-2gis тянет pydantic v1 и
+    живёт в отдельном venv.
+
+    Args:
+        url: URL выдачи 2ГИС.
+        parser_bin: Путь к исполняемому файлу parser-2gis (по умолчанию в PATH).
+        max_records: Максимум записей с URL; ``0`` — лимит parser-2gis.
+
+    Returns:
+        Список сырых карточек (пустой при ошибке/отсутствии результата).
+    """
+    import json
+    import os
+    import subprocess
+    import tempfile
+
+    fd, path = tempfile.mkstemp(prefix="gis2_", suffix=".json")
+    os.close(fd)
+    try:
+        cmd = [parser_bin, "-i", url, "-o", path, "-f", "json", "--chrome.headless", "yes"]
+        if max_records > 0:
+            cmd += ["--parser.max-records", str(max_records)]
+        subprocess.run(cmd, check=False, capture_output=True, timeout=3600)
+        if not os.path.exists(path):
+            return []
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        return data if isinstance(data, list) else []
+    finally:
+        if os.path.exists(path):
+            os.unlink(path)
 
 
 def collect_gis2(
@@ -274,41 +293,29 @@ def collect_gis2(
     repository: Any,
     *,
     profile: str = "",
+    parser_bin: str = "parser-2gis",
     max_records: int = 0,
-    headless: bool = True,
 ) -> tuple[int, int]:
     """Обойти цели 2ГИС и записать компании в хранилище лидов.
+
+    Скрейпинг идёт через CLI parser-2gis (Chrome в отдельном venv), затем
+    карточки маппятся в :class:`LeadCompany` и пишутся в хранилище.
 
     Args:
         targets: Список целей (:class:`Gis2Target`).
         repository: Хранилище лидов (``get_leads_repository``).
         profile: Имя ниши, под которое записываются компании.
+        parser_bin: Путь к CLI parser-2gis (по умолчанию ``parser-2gis`` в PATH).
         max_records: Максимум записей с одного URL; ``0`` — лимит parser-2gis.
-        headless: Запускать Chrome без окна (обязательно на сервере).
 
     Returns:
         Кортеж ``(вставлено, обновлено)``.
-
-    Raises:
-        RuntimeError: parser-2gis не установлен (нужен Chrome-хост).
     """
-    try:
-        from parser_2gis.chrome.options import ChromeOptions
-        from parser_2gis.parser.options import ParserOptions
-    except ImportError as e:
-        raise RuntimeError(
-            "parser-2gis не установлен. Сбор 2ГИС запускается только на хосте "
-            "с Chrome: pip install parser-2gis"
-        ) from e
-
-    chrome_options = ChromeOptions(headless=headless, disable_images=True, silent_browser=True)
-    parser_options = ParserOptions(max_records=max_records) if max_records > 0 else ParserOptions()
-
     inserted = updated = 0
     for target in targets:
         for rubric in target.rubrics:
             url = build_search_url(target.domain, target.city_code, rubric["name"], rubric["code"])
-            items = _scrape_url(url, chrome_options, parser_options)
+            items = _scrape_url(url, parser_bin=parser_bin, max_records=max_records)
             companies = [
                 c
                 for item in items
