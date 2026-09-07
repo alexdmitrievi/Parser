@@ -29,24 +29,21 @@ def profile_config(petcoke_profile: Profile) -> ProfileConfig:
 
 @pytest.fixture
 def catalog_html() -> str:
-    """Страница выдачи каталога, повторяющая ожидаемую разметку."""
+    """Страница выдачи made-in-china (актуальная разметка hot-china-products)."""
     return """
-    <html><body><div class="prod-list">
-      <div class="item">
-        <div class="company-name">
-          <a href="/company/hongyun.html">山东宏运 Shandong Hongyun Carbon Co., Ltd.</a>
-        </div>
-        <div class="company-location">Zibo, Shandong, China</div>
-        <div class="prod-name">Calcined Petroleum Coke for aluminium smelters</div>
-        <div class="company-website"><a href="http://www.hongyun-carbon.cn/">site</a></div>
+    <html><body>
+      <div class="products-item">
+        <a href="https://hongyun.en.made-in-china.com">Shandong Hongyun Carbon Co., Ltd.</a>
+        <div>calcined petroleum coke for aluminium smelters, Zibo, Shandong, China</div>
       </div>
-      <div class="item">
-        <div class="company-name"><a href="/company/kaifeng.html">Kaifeng Anode Materials Ltd</a></div>
-        <div class="company-location">Kaifeng, Henan</div>
-        <div class="prod-name">anode grade coke, carbon additive</div>
+      <div class="products-item">
+        <a href="https://jiongtaicnc.en.made-in-china.com">Zhejiang Jiongtai Numerical Control Equipment Co., Ltd.</a>
+        <div>Zhejiang, China</div>
       </div>
-      <div class="item"><div class="company-location">карточка без названия</div></div>
-    </div></body></html>
+      <div class="products-item">
+        <div>карточка без названия</div>
+      </div>
+    </body></html>
     """
 
 
