@@ -46,6 +46,12 @@ profiles:
     hs_codes: ["0203", "0207", "0201", "0202", "0206"]
     target_industries: ["meat processing", "meat trading", "food distribution"]
 
+  industrial_equipment_cn:           # станки, пром. оборудование, комплектующие из КНР
+    keywords_en: ["cnc machine", "machine tool", "lathe", "milling machine", "machining center", "metalworking machinery", "industrial equipment", "machine parts", "spare parts"]
+    keywords_zh: ["机床", "数控机床", "车床", "铣床", "加工中心", "工业设备", "机床配件", "零部件"]
+    hs_codes: ["8456", "8457", "8458", "8459", "8460", "8462", "8466"]
+    target_industries: ["machine tools", "industrial equipment", "metalworking", "spare parts"]
+
 regions_priority: ["Shandong", "Hebei", "Henan", "Liaoning", "Tianjin", "Jiangsu", "Xinjiang", "Sichuan", "Chongqing"]
 
 limits:
