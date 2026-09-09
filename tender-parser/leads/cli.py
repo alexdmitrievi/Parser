@@ -16,15 +16,16 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from engine.observability.logger import setup_logging
 from leads.blacklist import Blacklist
 from leads.export import DEFAULT_ENCODING, export_csv
-from leads.seed import parse_seed_file
 from leads.pipeline import LeadsPipeline
 from leads.profiles import ProfileError, load_profiles
+from leads.scoring import heat_breakdown, score_heat
+from leads.seed import parse_seed_file
 from leads.storage import get_leads_repository
 
 EXIT_OK = 0
@@ -109,6 +110,16 @@ def build_parser() -> argparse.ArgumentParser:
     stats = sub.add_parser("stats", help="Сводка по собранным лидам")
     stats.add_argument("--profile", default="", help="Ограничить профилем")
 
+    score = sub.add_parser("score", help="Оценить лидов по теплоте (cold/warm/hot)")
+    score.add_argument("--profile", default="", help="Ограничить профилем")
+    score.add_argument(
+        "--countries",
+        default="",
+        help="Целевые страны через запятую (перекрывает страны профиля)",
+    )
+    score.add_argument("--out", default="", help="Выгрузить отчёт в CSV (опционально)")
+    score.add_argument("--top", type=int, default=20, help="Показать N самых горячих лидов")
+
     return parser
 
 
@@ -149,6 +160,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "enrich": _cmd_enrich,
         "export": _cmd_export,
         "stats": _cmd_stats,
+        "score": _cmd_score,
     }
 
     try:
@@ -249,4 +261,75 @@ def _print_breakdown(title: str, values: dict[str, int] | None, top: int = 0) ->
         print(f"  … и ещё {len(items) - top}")
 
 
-__all__ = ["main", "build_parser", "DISABLED_MESSAGE"]
+def _cmd_score(args, profiles, repository) -> int:
+    """Оценить лидов по теплоте и вывести разбивку cold/warm/hot."""
+    companies = repository.iter_companies(profile=args.profile or None)
+
+    countries: set[str] | None = None
+    if args.countries:
+        countries = {c.strip() for c in args.countries.split(",") if c.strip()}
+    elif args.profile:
+        countries = set(profiles.get(args.profile).countries)
+
+    breakdown = heat_breakdown(companies, countries=countries)
+    print(f"Всего лидов: {len(companies)}")
+    print(
+        f"Горячих: {breakdown['hot']}, тёплых: {breakdown['warm']}, "
+        f"холодных: {breakdown['cold']}"
+    )
+    if countries:
+        print(f"Целевые страны: {', '.join(sorted(countries))}")
+
+    ordered = sorted(
+        ((score_heat(c, countries=countries), c) for c in companies),
+        key=lambda pair: -pair[0].score,
+    )
+    shown = min(args.top, len(ordered))
+    print(f"\nТоп-{shown} по баллу:")
+    for heat, company in ordered[: args.top]:
+        contact = company.emails[0].email if company.emails else "—"
+        print(
+            f"  [{heat.heat:<4} {heat.score:>2}] {company.display_name:<38} "
+            f"{company.country or '—':<12} {contact}"
+        )
+
+    if args.out:
+        _write_scored_csv(ordered, args.out)
+
+    return EXIT_OK
+
+
+def _write_scored_csv(scored, path: str) -> None:
+    """Сохранить отчёт по теплоте в CSV (utf-8-sig для Excel)."""
+    import csv
+
+    with open(path, "w", newline="", encoding="utf-8-sig") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(
+            [
+                "name", "country", "province", "city", "website",
+                "emails", "phones", "wechat", "whatsapp",
+                "heat", "score", "reasons",
+            ]
+        )
+        for heat, company in scored:
+            writer.writerow(
+                [
+                    company.display_name,
+                    company.country,
+                    company.province,
+                    company.city,
+                    company.website,
+                    ", ".join(e.email for e in company.emails),
+                    ", ".join(company.phones),
+                    company.wechat,
+                    company.whatsapp,
+                    heat.heat,
+                    heat.score,
+                    ", ".join(heat.reasons),
+                ]
+            )
+    print(f"Отчёт сохранён: {path}")
+
+
+__all__ = ["DISABLED_MESSAGE", "build_parser", "main"]

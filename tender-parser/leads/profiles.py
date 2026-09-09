@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from shared.config import leads_profiles_path
 from engine.observability.logger import get_logger
+from shared.config import leads_profiles_path
 
 logger = get_logger("leads.profiles")
 
@@ -69,6 +69,10 @@ class Profile:
     keywords_zh: list[str] = field(default_factory=list)
     hs_codes: list[str] = field(default_factory=list)
     target_industries: list[str] = field(default_factory=list)
+    # Настройки кампании: направление сделки, язык общения и целевые страны.
+    direction: str = "import"              # import | export
+    language: str = "ru"                   # язык коммуникации с лидами: ru | en | zh
+    countries: list[str] = field(default_factory=list)  # целевые страны
 
     @property
     def all_keywords(self) -> list[str]:
@@ -196,6 +200,9 @@ def load_profiles(path: str | Path | None = None) -> ProfileConfig:
             keywords_zh=_as_str_list(body.get("keywords_zh")),
             hs_codes=_as_str_list(body.get("hs_codes")),
             target_industries=_as_str_list(body.get("target_industries")),
+            direction=str(body.get("direction") or "import").strip().lower(),
+            language=str(body.get("language") or "ru").strip().lower(),
+            countries=_as_str_list(body.get("countries")),
         )
 
     if not profiles:
@@ -211,4 +218,4 @@ def load_profiles(path: str | Path | None = None) -> ProfileConfig:
     return config
 
 
-__all__ = ["Profile", "ProfileConfig", "Limits", "ProfileError", "load_profiles"]
+__all__ = ["Limits", "Profile", "ProfileConfig", "ProfileError", "load_profiles"]

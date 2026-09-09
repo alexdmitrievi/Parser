@@ -39,6 +39,7 @@ JUNK_LOCAL_PARTS = frozenset({
     "name", "yourname", "email", "user", "username", "someone", "somebody",
     "firstname", "lastname", "john.doe", "jane.doe", "foo", "bar",
     "sentry", "webmaster@localhost",
+    "2gis", "info2gis",
 })
 
 # Домены, чьи адреса — телеметрия, шаблоны и хостинг, а не живые контакты.

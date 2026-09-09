@@ -1,4 +1,4 @@
-# Профили продуктов для домена leads (китайские импортёры и потребители).
+# Профили продуктов для домена leads.
 #
 # Файл перечитывается на каждом запуске — правки применяются без изменения кода
 # и без перезапуска чего-либо. Добавить продукт = добавить блок в profiles.
@@ -7,6 +7,11 @@
 #   совпадения в карточке компании.
 # hs_codes — коды ТН ВЭД для адаптера таможенных данных (customs_api).
 # target_industries — отрасли-потребители; используются для industry_guess.
+#
+# Поля кампании (задают нишу + гео + язык + направление):
+#   direction — import | export (сторона сделки, по которой ищем лидов).
+#   language  — язык коммуникации с лидами: ru | en | zh.
+#   countries — целевые страны (канонические английские имена).
 
 profiles:
   petcoke_fuel:                      # нефтяной кокс топливный, сера ~4%
@@ -14,43 +19,72 @@ profiles:
     keywords_zh: ["石油焦", "生石油焦", "燃料级石油焦"]
     hs_codes: ["2713.11"]
     target_industries: ["cement", "glass", "ceramics", "power", "aluminium"]
+    direction: import
+    language: en
+    countries: ["China"]
 
   petcoke_anode:                     # электродный / кальцинация, сера ~1.5%
     keywords_en: ["calcined petroleum coke", "CPC", "anode grade coke", "calcining plant", "carbon additive"]
     keywords_zh: ["煅烧石油焦", "预焙阳极", "碳素"]
     hs_codes: ["2713.12"]
     target_industries: ["aluminium", "graphite electrode", "carbon"]
+    direction: import
+    language: en
+    countries: ["China"]
 
   grain:
     keywords_en: ["wheat importer", "barley", "rapeseed", "grain trading", "feed grain", "flour mill"]
     keywords_zh: ["小麦", "大麦", "油菜籽", "粮食贸易", "面粉厂"]
     hs_codes: ["1001", "1003", "1205"]
     target_industries: ["flour milling", "feed", "grain trading"]
+    direction: import
+    language: en
+    countries: ["China"]
 
-# Провинции в порядке приоритета: компании оттуда сортируются выше в экспорте.
   agri_import_machinery_cn:          # импорт с/х техники и запчастей из КНР
     keywords_en: ["agricultural machinery", "farm tractor", "combine harvester", "tractor spare parts", "harvester parts", "farm equipment", "irrigation equipment", "greenhouse equipment", "tillage equipment"]
     keywords_zh: ["农业机械", "拖拉机", "联合收割机", "农机配件", "拖拉机配件", "灌溉设备", "播种机", "收割机"]
     hs_codes: ["8432", "8433", "8701", "8424"]
     target_industries: ["agricultural machinery", "farm equipment", "spare parts"]
+    direction: import
+    language: en
+    countries: ["China"]
 
   agri_export_grain_cn_tr_kz:        # экспорт зерна (пшеница, ячмень, кукуруза)
     keywords_en: ["flour mill", "animal feed", "feed mill", "brewery", "malt", "grain", "wheat", "barley", "corn"]
     keywords_zh: ["小麦", "大麦", "玉米", "粮食贸易", "面粉厂", "饲料"]
     hs_codes: ["1001", "1003", "1005", "1101"]
     target_industries: ["flour milling", "feed", "grain trading", "food processing"]
+    direction: export
+    language: en
+    countries: ["China", "Turkey", "Kazakhstan"]
 
   agri_export_meat_cn_kz:            # экспорт мяса и субпродуктов
     keywords_en: ["meat processing", "frozen meat", "sausage", "poultry", "pork", "beef", "meat packing", "meat"]
     keywords_zh: ["肉类进口", "猪肉", "牛肉", "禽肉", "冷冻肉", "肉制品", "副食品"]
     hs_codes: ["0203", "0207", "0201", "0202", "0206"]
     target_industries: ["meat processing", "meat trading", "food distribution"]
+    direction: export
+    language: en
+    countries: ["China", "Kazakhstan"]
 
   industrial_equipment_cn:           # станки, пром. оборудование, комплектующие из КНР
     keywords_en: ["cnc machine", "machine tool", "lathe", "milling machine", "machining center", "metalworking machinery", "industrial equipment", "machine parts", "spare parts"]
     keywords_zh: ["机床", "数控机床", "车床", "铣床", "加工中心", "工业设备", "机床配件", "零部件"]
     hs_codes: ["8456", "8457", "8458", "8459", "8460", "8462", "8466"]
     target_industries: ["machine tools", "industrial equipment", "metalworking", "spare parts"]
+    direction: import
+    language: en
+    countries: ["China"]
+
+  industrial_equipment:              # станки/промоборудование, РФ + Казахстан (2ГИС)
+    keywords_en: ["machine tool", "cnc machine", "lathe", "milling machine", "metalworking", "industrial equipment", "spare parts"]
+    keywords_zh: []
+    hs_codes: ["8456", "8457", "8458", "8459", "8460", "8462", "8466"]
+    target_industries: ["machine tools", "industrial equipment", "metalworking"]
+    direction: import
+    language: ru
+    countries: ["Russia", "Kazakhstan"]
 
 regions_priority: ["Shandong", "Hebei", "Henan", "Liaoning", "Tianjin", "Jiangsu", "Xinjiang", "Sichuan", "Chongqing"]
 
