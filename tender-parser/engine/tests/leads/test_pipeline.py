@@ -257,6 +257,38 @@ class TestEnrich:
         assert result.status == "success"
 
 
+class TestEnrichIncrementalPersistence:
+    def test_results_flushed_in_batches(self, pipeline, repo, monkeypatch):
+        """Результаты пишутся пачками, а не одним блоком в конце прогона."""
+        repo.upsert_companies(
+            [sample_company(domain=f"c{i}.cn", enrich_status="pending") for i in range(15)]
+        )
+
+        class Recorder:
+            def enrich(self, company):
+                company.enrich_status = "done"
+                return company
+
+            _polite = type("X", (), {"close": lambda self: None})()
+
+        monkeypatch.setattr("leads.pipeline.get_company_site_adapter", lambda **kw: Recorder())
+
+        original_persist = pipeline._persist
+        flush_sizes: list[int] = []
+
+        def spy(companies, result):
+            flush_sizes.append(len(companies))
+            return original_persist(companies, result)
+
+        monkeypatch.setattr(pipeline, "_persist", spy)
+
+        pipeline.enrich()
+
+        # 15 компаний при flush_every=10 → пачки 10 и 5.
+        assert flush_sizes == [10, 5]
+        assert len(repo.iter_companies()) == 15
+
+
 class TestUnknownProfile:
     def test_unknown_profile_raises_with_available_names(self, pipeline):
         from leads.profiles import ProfileError

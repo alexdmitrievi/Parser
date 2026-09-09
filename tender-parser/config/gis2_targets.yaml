@@ -1,0 +1,113 @@
+# Цели обхода 2ГИС (РФ + Казахстан).
+#
+# code рубрик и городов берутся из данных parser-2gis:
+#   data/rubrics.json (рубрики) и data/cities.json (города).
+# Файл перечитывается на каждом запуске — правки применяются без изменения кода.
+#
+# Ниша Батча 2: промышленное оборудование (станки, комплектующие).
+# Рубрики 2ГИС:
+#   614  — Металлообрабатывающее оборудование (станки)
+#   112  — Промышленное оборудование
+#   8743 — Оборудование для автоматизации промышленных предприятий
+
+profile: industrial_equipment
+
+targets:
+  - country: Russia
+    city_code: moscow
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+      - {code: "112", name: "Промышленное оборудование"}
+      - {code: "8743", name: "Оборудование для автоматизации промышленных предприятий"}
+
+  - country: Russia
+    city_code: spb
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+      - {code: "112", name: "Промышленное оборудование"}
+
+  - country: Russia
+    city_code: ekaterinburg
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+      - {code: "112", name: "Промышленное оборудование"}
+
+  - country: Russia
+    city_code: novosibirsk
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+      - {code: "112", name: "Промышленное оборудование"}
+
+  - country: Russia
+    city_code: chelyabinsk
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+      - {code: "112", name: "Промышленное оборудование"}
+
+  - country: Russia
+    city_code: omsk
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+      - {code: "112", name: "Промышленное оборудование"}
+
+  - country: Russia
+    city_code: kazan
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+
+  - country: Russia
+    city_code: n_novgorod
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+
+  - country: Russia
+    city_code: perm
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+
+  - country: Russia
+    city_code: ufa
+    domain: ru
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+
+  - country: Kazakhstan
+    city_code: almaty
+    domain: kz
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+      - {code: "112", name: "Промышленное оборудование"}
+
+  - country: Kazakhstan
+    city_code: nur_sultan
+    domain: kz
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+      - {code: "112", name: "Промышленное оборудование"}
+
+  - country: Kazakhstan
+    city_code: shymkent
+    domain: kz
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+
+  - country: Kazakhstan
+    city_code: karaganda
+    domain: kz
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}
+
+  - country: Kazakhstan
+    city_code: aktobe
+    domain: kz
+    rubrics:
+      - {code: "614", name: "Металлообрабатывающее оборудование"}

@@ -4,7 +4,10 @@
 
 * тянет адреса из ``mailto:`` и из текста страницы регуляркой;
 * раскрывает обфускацию: ``name (at) domain (dot) com``, ``name[at]domain[dot]com``,
-  ``name#domain.com``, ``name AT domain DOT com``;
+  ``name#domain.com``, ``name AT domain DOT com``, а также русские формы
+  ``name[собака]domain[точка]com`` и ``name собака domain точка com``;
+* раскрывает Cloudflare email protection (адрес закодирован XOR-ом и в тексте
+  отсутствует — ``data-cfemail`` и ``/cdn-cgi/l/email-protection#``);
 * отсеивает мусор: ``noreply@``, ``@example.com``, трекеры, плейсхолдеры,
   адреса, вшитые в имена файлов картинок;
 * классифицирует ``role`` (info@, sales@, export@…) против ``personal``;
@@ -18,7 +21,13 @@ import re
 from html import unescape
 from urllib.parse import unquote, urlsplit
 
-from leads.models import EMAIL_KIND_PERSONAL, EMAIL_KIND_ROLE, ROLE_LOCAL_PARTS, LeadEmail, utcnow
+from leads.models import (
+    EMAIL_KIND_PERSONAL,
+    EMAIL_KIND_ROLE,
+    ROLE_LOCAL_PARTS,
+    LeadEmail,
+    utcnow,
+)
 
 # ── Мусорные адреса ──
 
@@ -30,6 +39,7 @@ JUNK_LOCAL_PARTS = frozenset({
     "name", "yourname", "email", "user", "username", "someone", "somebody",
     "firstname", "lastname", "john.doe", "jane.doe", "foo", "bar",
     "sentry", "webmaster@localhost",
+    "2gis", "info2gis",
 })
 
 # Домены, чьи адреса — телеметрия, шаблоны и хостинг, а не живые контакты.
@@ -82,6 +92,12 @@ _DOT_SYMBOLIC = r"\s*(?:\(\s*dot\s*\)|\[\s*dot\s*\]|\{\s*dot\s*\}|&#46;|\.)\s*"
 _AT_SPELLED = r"\s+at\s+"
 _DOT_SPELLED = r"\s+dot\s+"
 
+# Русские формы обфускации: «name[собака]domain[точка]com» и «name собака domain точка com».
+_AT_RU_SYMBOLIC = r"\s*(?:\[\s*собака\s*\]|\(\s*собака\s*\)|\{\s*собака\s*\}|\[\s*собачка\s*\]|\(\s*собачка\s*\))\s*"
+_DOT_RU_SYMBOLIC = r"\s*(?:\[\s*точка\s*\]|\(\s*точка\s*\)|\{\s*точка\s*\})\s*"
+_AT_RU_SPELLED = r"\s+(?:собака|собачка)\s+"
+_DOT_RU_SPELLED = r"\s+точка\s+"
+
 
 def _obfuscated_pattern(at_token: str, dot_token: str) -> re.Pattern[str]:
     """Собрать шаблон ``local AT label (DOT label)* DOT tld``."""
@@ -98,18 +114,52 @@ def _obfuscated_pattern(at_token: str, dot_token: str) -> re.Pattern[str]:
 _OBFUSCATED_PATTERNS = (
     _obfuscated_pattern(_AT_SYMBOLIC, _DOT_SYMBOLIC),
     _obfuscated_pattern(_AT_SPELLED, _DOT_SPELLED),
+    _obfuscated_pattern(_AT_RU_SYMBOLIC, _DOT_RU_SYMBOLIC),
+    _obfuscated_pattern(_AT_RU_SPELLED, _DOT_RU_SPELLED),
 )
 
 _MAILTO_RE = re.compile(r"""mailto:\s*([^"'\s>?]+)""", re.IGNORECASE)
 
-_DEOBF_DOT_RE = re.compile(r"\(\s*dot\s*\)|\[\s*dot\s*\]|\{\s*dot\s*\}|\s+dot\s+|&#46;", re.IGNORECASE)
-_DEOBF_AT_RE = re.compile(r"\(\s*at\s*\)|\[\s*at\s*\]|\{\s*at\s*\}|\s+at\s+|&#64;|%40", re.IGNORECASE)
+_DEOBF_DOT_RE = re.compile(
+    r"\(\s*dot\s*\)|\[\s*dot\s*\]|\{\s*dot\s*\}|\s+dot\s+|&#46;"
+    r"|\(\s*точка\s*\)|\[\s*точка\s*\]|\{\s*точка\s*\}|\s+точка\s+",
+    re.IGNORECASE,
+)
+_DEOBF_AT_RE = re.compile(
+    r"\(\s*at\s*\)|\[\s*at\s*\]|\{\s*at\s*\}|\s+at\s+|&#64;|%40"
+    r"|\(\s*собач?ка\s*\)|\[\s*собач?ка\s*\]|\{\s*собач?ка\s*\}|\s+собач?ка\s+",
+    re.IGNORECASE,
+)
+
+# ── Cloudflare email protection ──
+#
+# Cloudflare прячет адрес в виде шестнадцатеричной строки, где первый байт —
+# ключ, а каждый следующий байт — символ адреса, XOR-нутый этим ключом.
+# В тексте страницы самого адреса нет, поэтому обычной регуляркой его не взять.
+
+_CF_EMAIL_RE = re.compile(r'data-cfemail\s*=\s*["\']([0-9a-f]{4,})["\']', re.IGNORECASE)
+_CF_HREF_RE = re.compile(r"/cdn-cgi/l/email-protection#([0-9a-f]{4,})", re.IGNORECASE)
+
+
+def _decode_cf_email(hex_string: str) -> str:
+    """Декодировать Cloudflare email protection (XOR по первому байту)."""
+    if not hex_string or len(hex_string) < 4 or len(hex_string) % 2:
+        return ""
+    try:
+        key = int(hex_string[:2], 16)
+        return "".join(
+            chr(int(hex_string[i:i + 2], 16) ^ key) for i in range(2, len(hex_string), 2)
+        )
+    except ValueError:
+        return ""
 
 
 def deobfuscate(text: str) -> str:
     """Развернуть текстовую обфускацию адресов в обычный вид.
 
         >>> deobfuscate("sales (at) example (dot) cn")
+        'sales@example.cn'
+        >>> deobfuscate("sales (собака) example (точка) cn")
         'sales@example.cn'
     """
     if not text:
@@ -162,9 +212,7 @@ def is_junk(email: str) -> bool:
     if len(local) > 40:
         return True
     # Домен верхнего уровня из одного сегмента отсеян регуляркой, но проверим
-    if "." not in domain:
-        return True
-    return False
+    return "." not in domain
 
 
 def classify(email: str) -> str:
@@ -238,12 +286,18 @@ def extract_emails(html: str, source_url: str = "") -> list[LeadEmail]:
     for match in _EMAIL_RE.finditer(text):
         remember(match.group(0))
 
-    # 3. Обфусцированные записи.
+    # 3. Обфусцированные записи (включая русские собака/точка).
     for pattern in _OBFUSCATED_PATTERNS:
         for match in pattern.finditer(text):
             local, domain_body, tld = match.groups()
             candidate = f"{local}@{deobfuscate(domain_body)}.{tld}"
             remember(candidate)
+
+    # 4. Cloudflare email protection — адрес закодирован XOR, в тексте его нет.
+    for match in _CF_EMAIL_RE.finditer(html):
+        remember(_decode_cf_email(match.group(1)))
+    for match in _CF_HREF_RE.finditer(html):
+        remember(_decode_cf_email(match.group(1)))
 
     return list(found.values())
 
@@ -278,15 +332,15 @@ def domain_from_url(url: str) -> str:
 
 
 __all__ = [
-    "extract_emails",
-    "normalize_email",
-    "deobfuscate",
-    "is_junk",
-    "classify",
-    "emails_for_domain",
-    "domain_from_url",
-    "JUNK_LOCAL_PARTS",
-    "JUNK_DOMAINS",
-    "EMAIL_KIND_ROLE",
     "EMAIL_KIND_PERSONAL",
+    "EMAIL_KIND_ROLE",
+    "JUNK_DOMAINS",
+    "JUNK_LOCAL_PARTS",
+    "classify",
+    "deobfuscate",
+    "domain_from_url",
+    "emails_for_domain",
+    "extract_emails",
+    "is_junk",
+    "normalize_email",
 ]

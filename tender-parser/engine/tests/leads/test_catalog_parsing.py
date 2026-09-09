@@ -30,7 +30,7 @@ def adapter(petcoke_profile, profile_config) -> MadeInChinaAdapter:
 
 def _response(html: str) -> PoliteResponse:
     return PoliteResponse(
-        url="https://www.made-in-china.com/productdirectory.do?word=cpc&page=1",
+        url="https://www.made-in-china.com/products-search/hot-china-products/calcined_petroleum_coke.html",
         status_code=200,
         text=html,
     )
@@ -44,17 +44,18 @@ class TestCardParsing:
     def test_splits_latin_and_chinese_names(self, adapter, catalog_html):
         first = adapter.parse_companies(_response(catalog_html))[0]
         assert first.company_name_en == "Shandong Hongyun Carbon Co., Ltd."
-        assert first.company_name_zh == "山东宏运"
+        assert first.company_name_zh == ""
 
     def test_extracts_province_and_city(self, adapter, catalog_html):
         companies = adapter.parse_companies(_response(catalog_html))
         assert (companies[0].province, companies[0].city) == ("Shandong", "Zibo")
-        assert companies[1].province == "Henan"
+        assert companies[1].province == "Zhejiang"
 
-    def test_extracts_company_website(self, adapter, catalog_html):
-        first = adapter.parse_companies(_response(catalog_html))[0]
-        assert first.domain == "hongyun-carbon.cn"
-        assert first.website == "https://hongyun-carbon.cn"
+    def test_catalog_does_not_expose_website(self, adapter, catalog_html):
+        """Витрина made-in-china сайтом компании не считается — домен пустой."""
+        companies = adapter.parse_companies(_response(catalog_html))
+        assert all(c.domain == "" for c in companies)
+        assert all(c.enrich_status == "no_site" for c in companies)
 
     def test_records_matched_keywords_and_industry(self, adapter, catalog_html):
         first = adapter.parse_companies(_response(catalog_html))[0]
@@ -64,26 +65,9 @@ class TestCardParsing:
     def test_records_source(self, adapter, catalog_html):
         first = adapter.parse_companies(_response(catalog_html))[0]
         assert first.source_name == "made_in_china"
-        assert first.source_url.endswith("/company/hongyun.html")
+        assert first.source_url.endswith("/calcined_petroleum_coke.html")
         assert first.profile == "petcoke_anode"
-
-    def test_card_without_website_is_marked_no_site(self, adapter, catalog_html):
-        second = adapter.parse_companies(_response(catalog_html))[1]
-        assert second.domain == ""
-        assert second.enrich_status == "no_site"
-
-    def test_catalog_showcase_is_not_a_company_website(self, adapter):
-        """Ссылка на витрину внутри каталога сайтом компании не считается."""
-        html = """
-        <div class="prod-list"><div class="item">
-          <div class="company-name">
-            <a href="https://hongyun.en.made-in-china.com/">Hongyun Carbon</a>
-          </div>
-          <div class="company-location">Zibo, Shandong</div>
-        </div></div>
-        """
-        company = adapter.parse_companies(_response(html))[0]
-        assert company.domain == ""
+        assert first.country == "China"
 
     def test_empty_page_yields_nothing(self, adapter):
         assert adapter.parse_companies(_response("<html><body></body></html>")) == []
@@ -96,25 +80,26 @@ class TestCardParsing:
             platform_name=config.platform_name,
             category=config.category,
             base_url=config.base_url,
-            selectors={"list_item": ".row", "company_name": ".n a", "company_link": ".n a"},
+            selectors={"list_item": ".row", "company_name": ".n a"},
         )
         adapter = MadeInChinaAdapter(
             custom, profile=petcoke_profile, limits=profile_config.limits, user_agent="T/1.0"
         )
-        html = '<div class="row"><div class="n"><a href="/c/1">New Layout Co Ltd</a></div></div>'
+        html = '<div class="row"><div class="n"><a href="https://x.en.made-in-china.com">New Layout Co Ltd</a></div><div>Jiangsu, China</div></div>'
         assert adapter.parse_companies(_response(html))[0].company_name_en == "New Layout Co Ltd"
 
 
 class TestDiscovery:
-    def test_builds_urls_for_keywords_and_pages(self, adapter):
+    def test_builds_one_url_per_english_keyword(self, adapter):
         urls = adapter.discover()
-        # 4 английских + 2 китайских ключа × 2 страницы (max_pages_per_query=2)
-        assert len(urls) == len(adapter.profile.all_keywords) * 2
+        # только английские ключи (slug латинский), по одному URL на ключ
+        assert len(urls) == len(adapter.profile.keywords_en)
         assert all("made-in-china.com" in u for u in urls)
-        assert any("page=2" in u for u in urls)
+        assert all("/products-search/hot-china-products/" in u for u in urls)
+        assert any("calcined_petroleum_coke" in u for u in urls)
 
-    def test_respects_profile_page_limit(self, adapter):
-        assert not any("page=3" in u for u in adapter.discover())
+    def test_no_pagination_in_urls(self, adapter):
+        assert not any("page=" in u for u in adapter.discover())
 
 
 class TestGeography:
