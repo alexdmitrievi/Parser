@@ -332,7 +332,7 @@ class LeadsPipeline:
             return result
 
         self._log.info(f"Обогащаю {len(targets)} компаний")
-        enriched, robots_skipped, blocked = self._enrich_all(targets)
+        enriched, robots_skipped, blocked = self._enrich_all(targets, result)
 
         result.enriched = sum(1 for c in enriched if c.enrich_status == "done")
         result.emails_added = sum(len(c.emails) for c in enriched)
@@ -346,7 +346,6 @@ class LeadsPipeline:
             )
         )
 
-        self._persist(enriched, result)
         result.duration_ms = int((time.monotonic() - started) * 1000)
         self._log_run(result)
         return result
@@ -374,8 +373,14 @@ class LeadsPipeline:
                 )
         return targets
 
-    def _enrich_all(self, targets: list[LeadCompany]) -> tuple[list[LeadCompany], int, int]:
-        """Обойти сайты, соблюдая потолок конкурентности.
+    def _enrich_all(
+        self, targets: list[LeadCompany], result: RunResult, flush_every: int = 10
+    ) -> tuple[list[LeadCompany], int, int]:
+        """Обойти сайты, соблюдая потолок конкурентности, и персистировать пачками.
+
+        Результаты пишутся по ``flush_every`` компаний, а не одним блоком в
+        конце прогона: зависший домен или прерывание больше не теряют уже
+        обработанные карточки.
 
         Один домен всегда обрабатывается одним воркером целиком, поэтому
         параллельных запросов к одному хосту не бывает.
@@ -398,16 +403,32 @@ class LeadsPipeline:
             return adapter_for_thread().enrich(company)
 
         enriched: list[LeadCompany] = []
+        pending: list[LeadCompany] = []
+
+        def flush() -> None:
+            if pending:
+                self._persist(pending, result)
+                pending.clear()
+
         try:
             if workers == 1:
                 for company in targets:
-                    enriched.append(self._safe_enrich(work, company))
+                    done = self._safe_enrich(work, company)
+                    enriched.append(done)
+                    pending.append(done)
+                    if len(pending) >= flush_every:
+                        flush()
             else:
                 with ThreadPoolExecutor(max_workers=workers) as pool:
                     futures = {pool.submit(self._safe_enrich, work, c): c for c in targets}
                     for future in as_completed(futures):
-                        enriched.append(future.result())
+                        done = future.result()
+                        enriched.append(done)
+                        pending.append(done)
+                        if len(pending) >= flush_every:
+                            flush()
         finally:
+            flush()
             for adapter in adapters:
                 try:
                     adapter._polite.close()

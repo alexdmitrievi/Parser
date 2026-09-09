@@ -18,6 +18,7 @@ logger = get_logger("leads.profiles")
 DEFAULT_MAX_PAGES = 20
 DEFAULT_DELAY_SECONDS = 3.0
 DEFAULT_MAX_CONCURRENCY = 2
+DEFAULT_ENRICH_TIMEOUT_SECONDS = 60.0
 
 # Вежливый режим — нижние границы, которые конфиг не может ослабить.
 MIN_DELAY_SECONDS = 1.0
@@ -35,6 +36,7 @@ class Limits:
     max_pages_per_query: int = DEFAULT_MAX_PAGES
     request_delay_seconds: float = DEFAULT_DELAY_SECONDS
     max_concurrency: int = DEFAULT_MAX_CONCURRENCY
+    enrich_timeout_seconds: float = DEFAULT_ENRICH_TIMEOUT_SECONDS
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any] | None) -> Limits:
@@ -57,6 +59,9 @@ class Limits:
             max_pages_per_query=max(1, _as_int(raw.get("max_pages_per_query"), DEFAULT_MAX_PAGES)),
             request_delay_seconds=delay,
             max_concurrency=max(1, concurrency),
+            enrich_timeout_seconds=max(
+                1.0, _as_float(raw.get("enrich_timeout_seconds"), DEFAULT_ENRICH_TIMEOUT_SECONDS)
+            ),
         )
 
 

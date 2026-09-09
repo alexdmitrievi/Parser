@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import re
+import time
 from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
@@ -53,6 +54,9 @@ FALLBACK_PATHS = ("/contact", "/contact-us", "/about", "/about-us", "/contactus"
 
 DEFAULT_MAX_PAGES_PER_DOMAIN = 5
 
+# Пометка в enrich_note, когда компания не уложилась в бюджет времени.
+TIMEOUT_NOTE = "timeout: превышен бюджет времени обогащения"
+
 _PHONE_RE = re.compile(r"(?:\+?86[\s\-]?)?(?:\d[\s\-()]?){7,15}\d")
 _WECHAT_RE = re.compile(
     r"(?:wechat|weixin|微信)\s*(?:id|ID|号|:|：|-)?\s*([A-Za-z0-9_\-]{5,30})", re.IGNORECASE
@@ -79,12 +83,14 @@ class CompanySiteAdapter(LeadsSourceAdapter):
             ``skipped_robots`` — обход запрещён robots.txt;
             ``blocked`` — сайт нас заблокировал.
         """
+        deadline = time.monotonic() + getattr(self.limits, "enrich_timeout_seconds", 60.0)
+
         if not company.domain:
             company.enrich_status = "no_site"
             company.enrich_note = "домен компании неизвестен"
             return company
 
-        root, status, note = self._resolve_root(company.domain)
+        root, status, note = self._resolve_root(company.domain, deadline)
         if root is None:
             company.enrich_status = status
             company.enrich_note = note
@@ -98,6 +104,8 @@ class CompanySiteAdapter(LeadsSourceAdapter):
                 pages.append(home)
                 for url in self._contact_urls(home, company.domain, root):
                     if len(pages) >= self.max_pages_per_domain:
+                        break
+                    if time.monotonic() > deadline:
                         break
                     try:
                         page = self.fetch_page(url)
@@ -122,7 +130,10 @@ class CompanySiteAdapter(LeadsSourceAdapter):
 
         if not pages:
             company.enrich_status = "blocked"
-            company.enrich_note = "не удалось скачать ни одной страницы"
+            company.enrich_note = (
+                TIMEOUT_NOTE if time.monotonic() > deadline
+                else "не удалось скачать ни одной страницы"
+            )
             return company
 
         self._harvest(company, pages)
@@ -132,7 +143,9 @@ class CompanySiteAdapter(LeadsSourceAdapter):
 
     # ── внутреннее ──
 
-    def _resolve_root(self, domain: str) -> tuple[str | None, str, str]:
+    def _resolve_root(
+        self, domain: str, deadline: float | None = None
+    ) -> tuple[str | None, str, str]:
         """Найти рабочий origin сайта: сначала https, при недоступности — http.
 
         Множество китайских сайтов до сих пор без TLS, поэтому одной только
@@ -142,12 +155,18 @@ class CompanySiteAdapter(LeadsSourceAdapter):
         Явный ``Disallow`` останавливает сразу — вторую схему не пробуем.
         Нечитаемый robots.txt (сеть, TLS, 5xx) — повод проверить другую схему.
 
+        ``deadline`` (монотонное время) останавливает проверку, когда бюджет
+        времени обогащения исчерпан.
+
         Returns:
             ``(origin | None, статус, пояснение)``.
         """
         status, note = "blocked", "не удалось открыть сайт"
 
         for scheme in ("https", "http"):
+            if deadline is not None and time.monotonic() > deadline:
+                return None, "blocked", TIMEOUT_NOTE
+
             root = f"{scheme}://{domain}/"
 
             if self._robots.can_fetch(root):
@@ -356,4 +375,5 @@ __all__ = [
     "get_company_site_adapter",
     "SOURCE_ID",
     "CONTACT_MARKERS",
+    "TIMEOUT_NOTE",
 ]
