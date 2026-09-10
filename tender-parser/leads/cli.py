@@ -22,6 +22,7 @@ from pathlib import Path
 from engine.observability.logger import setup_logging
 from leads.blacklist import Blacklist
 from leads.campaigns import CampaignError, load_campaigns
+from leads.outreach import CrmBridge
 from leads.export import DEFAULT_ENCODING, export_csv
 from leads.gis2 import collect_gis2
 from leads.pipeline import LeadsPipeline
@@ -148,6 +149,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Путь к CLI parser-2gis (по умолчанию parser-2gis в PATH)",
     )
 
+    sync_crm = sub.add_parser(
+        "sync-crm",
+        help="Синхронизировать обогащённые лиды в CRM и создать черновики КП",
+    )
+    sync_crm.add_argument("--profile", default="", help="Ограничить профилем/кампанией")
+    sync_crm.add_argument(
+        "--limit", type=int, default=0, help="Максимум компаний за прогон"
+    )
+    sync_crm.add_argument(
+        "--no-llm",
+        action="store_true",
+        help="Не использовать LLM: черновики по детерминированному шаблону",
+    )
+
     return parser
 
 
@@ -190,6 +205,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "stats": _cmd_stats,
         "score": _cmd_score,
         "campaign": _cmd_campaign,
+        "sync-crm": _cmd_sync_crm,
     }
 
     try:
@@ -393,6 +409,46 @@ def _cmd_campaign(args, profiles, repository) -> int:
     )
     print(f"Компаний: вставлено {inserted}, обновлено {updated}")
     print("Дальше: python -m leads enrich  (обход сайтов, добор почт)")
+    return EXIT_OK
+
+
+
+def _cmd_sync_crm(args, profiles, repository) -> int:
+    """Синхронизировать лиды в CRM (crm_leads) и создать черновики КП."""
+    companies = repository.iter_companies(
+        profile=args.profile or None,
+        enrich_status="done",
+        limit=args.limit,
+    )
+    if not companies:
+        print("Нет обогащённых компаний (enrich_status=done) — сначала python -m leads enrich")
+        return EXIT_OK
+
+    llm = None
+    if not args.no_llm:
+        from leads.llm import AgentRouterClient
+
+        llm = AgentRouterClient()
+        if not llm.api_key:
+            print("AGENT_ROUTER_API_KEY не задан — черновики по шаблону (--no-llm режим)")
+            llm = None
+
+    from shared.config import supabase_key, supabase_url
+
+    if not supabase_url() or not supabase_key():
+        print("SUPABASE_URL/SUPABASE_KEY не заданы — CRM-мост требует Supabase", file=sys.stderr)
+        return EXIT_ERROR
+
+    from supabase import create_client
+
+    bridge = CrmBridge(client=create_client(supabase_url(), supabase_key()), llm=llm)
+
+    created = bridge.sync_leads(companies, profile=args.profile)
+    tasks = bridge.draft_email_tasks(companies)
+    print(f"CRM-лидов создано: {created}")
+    print(f"Черновиков КП создано: {len(tasks)} (статус draft — отправка после вашего «ОК»)")
+    if llm is not None:
+        print(f"LLM токенов израсходовано: {llm.tokens_used}")
     return EXIT_OK
 
 
