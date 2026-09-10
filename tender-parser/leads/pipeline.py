@@ -32,6 +32,7 @@ from engine.sources.leads.customs_api import get_customs_api_adapter
 from engine.sources.leads.made_in_china import get_made_in_china_adapter
 from engine.sources.leads.tradekey import get_tradekey_adapter
 from engine.sources.leads.yell import get_yell_adapter
+from engine.sources.leads.zoon import get_zoon_adapter
 from engine.types import CrawlAction
 from leads.dedup import LeadsDeduplicator, company_key, dedupe_batch
 from leads.models import LeadCompany, utcnow
@@ -47,6 +48,7 @@ CATALOG_FACTORIES: dict[str, Callable[..., LeadsSourceAdapter]] = {
     "tradekey": get_tradekey_adapter,
     "customs_api": get_customs_api_adapter,
     "yell": get_yell_adapter,
+    "zoon": get_zoon_adapter,
 }
 
 SEED_SOURCE_NAME = "seed_file"
