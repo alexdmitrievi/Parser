@@ -87,6 +87,8 @@ class AgentRouterClient:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
+            # Agent Router гейтит по User-Agent — обязателен идентифицируемый UA.
+            "User-Agent": "hermes-agent/1.0",
         }
         self._last_auth_header = headers["Authorization"]
 
