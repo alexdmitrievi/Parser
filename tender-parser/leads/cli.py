@@ -21,7 +21,9 @@ from pathlib import Path
 
 from engine.observability.logger import setup_logging
 from leads.blacklist import Blacklist
+from leads.campaigns import CampaignError, load_campaigns
 from leads.export import DEFAULT_ENCODING, export_csv
+from leads.gis2 import collect_gis2
 from leads.pipeline import LeadsPipeline
 from leads.profiles import ProfileError, load_profiles
 from leads.scoring import heat_breakdown, score_heat
@@ -50,6 +52,8 @@ def build_parser() -> argparse.ArgumentParser:
             "  python -m leads enrich --limit 50\n"
             "  python -m leads export --profile petcoke_anode --out leads.csv\n"
             "  python -m leads stats\n"
+            "  python -m leads campaign list\n"
+            "  python -m leads campaign run omsk_machines\n"
         ),
     )
     parser.add_argument("--log-level", default="INFO", help="Уровень логирования (по умолчанию INFO)")
@@ -57,6 +61,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--profiles-config",
         default="",
         help="Путь к YAML с профилями (по умолчанию config/leads_profiles.yaml)",
+    )
+    parser.add_argument(
+        "--campaigns-config",
+        default="",
+        help="Путь к YAML с кампаниями (по умолчанию config/lead_campaigns.yaml)",
     )
     parser.add_argument(
         "--storage",
@@ -120,6 +129,25 @@ def build_parser() -> argparse.ArgumentParser:
     score.add_argument("--out", default="", help="Выгрузить отчёт в CSV (опционально)")
     score.add_argument("--top", type=int, default=20, help="Показать N самых горячих лидов")
 
+
+    campaign = sub.add_parser("campaign", help="Кампании лидогенерации (ниша × гео)")
+    campaign_sub = campaign.add_subparsers(dest="campaign_command", required=True)
+
+    campaign_sub.add_parser("list", help="Показать доступные кампании")
+    campaign_run = campaign_sub.add_parser("run", help="Собрать лидов по кампании (2ГИС)")
+    campaign_run.add_argument("name", help="Имя кампании из lead_campaigns.yaml")
+    campaign_run.add_argument(
+        "--max-records",
+        type=int,
+        default=0,
+        help="Максимум записей с одного URL 2ГИС (0 — лимит parser-2gis)",
+    )
+    campaign_run.add_argument(
+        "--parser-bin",
+        default="parser-2gis",
+        help="Путь к CLI parser-2gis (по умолчанию parser-2gis в PATH)",
+    )
+
     return parser
 
 
@@ -161,11 +189,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         "export": _cmd_export,
         "stats": _cmd_stats,
         "score": _cmd_score,
+        "campaign": _cmd_campaign,
     }
 
     try:
         return handlers[args.command](args, profiles, repository)
-    except ProfileError as e:
+    except (ProfileError, CampaignError) as e:
         print(f"Ошибка: {e}", file=sys.stderr)
         return EXIT_USAGE
     except KeyboardInterrupt:
@@ -330,6 +359,41 @@ def _write_scored_csv(scored, path: str) -> None:
                 ]
             )
     print(f"Отчёт сохранён: {path}")
+
+
+
+def _cmd_campaign(args, profiles, repository) -> int:
+    """Команды слоя кампаний: list и run."""
+    config = load_campaigns(args.campaigns_config or None)
+    if args.campaign_command == "list":
+        for name in config.names:
+            campaign = config.campaigns[name]
+            geo = ", ".join(campaign.countries) or "—"
+            print(f"{name:<32} {campaign.niche_name:<40} {geo}")
+        return EXIT_OK
+
+    campaign = config.get(args.name)
+    targets = campaign.to_gis2_targets()
+    if not targets:
+        print(
+            "Кампания без целей 2ГИС: в секции gis2 не заданы города/рубрики. "
+            "Нечего обходить.",
+            file=sys.stderr,
+        )
+        return EXIT_OK
+
+    print(f"Кампания: {campaign.name} ({campaign.niche_name})")
+    print(f"Целей 2ГИС: {len(targets)} (город × рубрики)")
+    inserted, updated = collect_gis2(
+        targets,
+        repository,
+        profile=campaign.name,
+        parser_bin=args.parser_bin,
+        max_records=args.max_records,
+    )
+    print(f"Компаний: вставлено {inserted}, обновлено {updated}")
+    print("Дальше: python -m leads enrich  (обход сайтов, добор почт)")
+    return EXIT_OK
 
 
 __all__ = ["DISABLED_MESSAGE", "build_parser", "main"]

@@ -433,6 +433,7 @@ def _safe_int(val: str, default: int) -> int:
 LEADS_DEFAULT_CONTACT = "parser-abuse@example.com"
 
 LEADS_DEFAULT_PROFILES_PATH = "config/leads_profiles.yaml"
+LEADS_DEFAULT_CAMPAIGNS_PATH = "config/lead_campaigns.yaml"
 LEADS_DEFAULT_BLACKLIST_PATH = "config/leads_blacklist.txt"
 LEADS_DEFAULT_DB_PATH = "data/leads.sqlite3"
 
@@ -463,6 +464,11 @@ def leads_db_path() -> str:
 def leads_profiles_path() -> str:
     """Путь к YAML с профилями продуктов."""
     return get_env("LEADS_PROFILES_PATH", LEADS_DEFAULT_PROFILES_PATH) or LEADS_DEFAULT_PROFILES_PATH
+
+
+def leads_campaigns_path() -> str:
+    """Путь к YAML с кампаниями лидогенерации."""
+    return get_env("LEADS_CAMPAIGNS_PATH", LEADS_DEFAULT_CAMPAIGNS_PATH) or LEADS_DEFAULT_CAMPAIGNS_PATH
 
 
 def leads_blacklist_path() -> str:

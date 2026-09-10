@@ -1,0 +1,57 @@
+# Кампании лидогенерации: «лидогенерация как сервис» под конкретного заказчика.
+#
+# Одна кампания = ниша × гео × язык × направление. Файл перечитывается на
+# каждом запуске — правки применяются без изменения кода.
+#
+# Поля кампании:
+#   niche_name       — человекочитаемое название ниши (для отчётов/CRM).
+#   keywords_en      — поисковые запросы/маркеры латиницей.
+#   keywords_ru      — русские маркеры (в Profile ложатся в «не-латиницу»-слот).
+#   hs_codes         — коды ТН ВЭД (для таможенного адаптера).
+#   target_industries— отрасли-потребители (industry_guess).
+#   direction        — import | export.
+#   language         — язык коммуникации с лидами: ru | en | zh.
+#   countries        — целевые страны (канонические английские имена).
+#   gis2             — секция обхода 2ГИС: domain (ru|kz), cities (коды городов),
+#                      rubrics ({code, name} — код и название рубрики 2ГИС).
+
+campaigns:
+  # Пилот: промышленное оборудование, РФ (те же города, что в gis2_targets.yaml).
+  rf_industrial_equipment:
+    niche_name: "Промышленное оборудование"
+    keywords_en: ["machine tool", "cnc machine", "lathe", "milling machine", "metalworking", "industrial equipment", "spare parts"]
+    keywords_ru: ["станки", "промышленное оборудование", "металлообработка", "станкостроение"]
+    hs_codes: ["8456", "8457", "8458", "8459", "8460", "8462", "8466"]
+    target_industries: ["machine tools", "industrial equipment", "metalworking"]
+    direction: import
+    language: ru
+    countries: ["Russia"]
+    gis2:
+      domain: ru
+      cities: ["moscow", "spb", "ekaterinburg", "novosibirsk", "chelyabinsk", "omsk", "kazan", "krasnoyarsk", "nnovgorod", "samara", "ufa", "rostov", "voronezh", "perm", "volgograd"]
+      rubrics:
+        - {code: "614", name: "Металлообрабатывающее оборудование"}
+        - {code: "112", name: "Промышленное оборудование"}
+        - {code: "8743", name: "Оборудование для автоматизации промышленных предприятий"}
+
+  # РФ + Казахстан: та же ниша, гео шире.
+  rf_kz_industrial_equipment:
+    niche_name: "Промышленное оборудование (РФ + Казахстан)"
+    keywords_en: ["machine tool", "cnc machine", "lathe", "milling machine", "metalworking", "industrial equipment", "spare parts"]
+    keywords_ru: ["станки", "промышленное оборудование", "металлообработка"]
+    hs_codes: ["8456", "8457", "8458", "8459", "8460", "8462", "8466"]
+    target_industries: ["machine tools", "industrial equipment", "metalworking"]
+    direction: import
+    language: ru
+    countries: ["Russia", "Kazakhstan"]
+    gis2:
+      domain: ru
+      cities: ["moscow", "spb", "ekaterinburg", "novosibirsk", "omsk"]
+      rubrics:
+        - {code: "614", name: "Металлообрабатывающее оборудование"}
+        - {code: "112", name: "Промышленное оборудование"}
+
+limits:
+  max_pages_per_query: 3
+  request_delay_seconds: 3
+  max_concurrency: 2
