@@ -118,3 +118,12 @@ jobs:
           for p in ${{ steps.profiles.outputs.list }}; do
             python -m leads stats --profile "$p"
           done
+
+      - name: Sync enriched leads to CRM (draft proposals)
+        if: steps.flag.outputs.enabled == 'true' && inputs.skip_enrich != true
+        env:
+          AGENT_ROUTER_API_KEY: ${{ secrets.AGENT_ROUTER_API_KEY }}
+        run: |
+          for p in ${{ steps.profiles.outputs.list }}; do
+            python -m leads sync-crm --profile "$p"
+          done
